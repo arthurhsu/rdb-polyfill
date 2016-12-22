@@ -6,7 +6,6 @@
       "check-space"
     ],
     "forin": true,
-    "interface-name": [true, "never-prefix"],
     "indent": [true, "spaces"],
     "jsdoc-format": true,
     "label-position": true,

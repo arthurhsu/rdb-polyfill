@@ -3,7 +3,7 @@
     "allowJs": false,
     "allowUnreachableCode": false,
     "module": "commonjs",
-    "newLine": "lf",
+    "newLine": "LF",
     "noEmitOnError": true,
     "noImplicitAny": true,
     "noImplicitReturns": true,
