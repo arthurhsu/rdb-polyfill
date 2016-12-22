@@ -48,6 +48,7 @@ const Dir = {
   TYPINGS: 'typings'
 };
 const TSCONFIG = 'tsconfig.json';
+const DIST_FILE = 'rdb.js';
 
 function releaseFilter(contents) {
   const START_TOKEN = '/// #if DEBUG';
@@ -68,14 +69,25 @@ function releaseFilter(contents) {
   return data;
 }
 
+let distMode = false;
 function build(srcs, defs, outs) {
   let knownOpts = {
-    'mode': ['debug', 'release']
+    'mode': ['debug', 'release'],
+    'dist': Boolean
   };
   let opts = nopt(knownOpts, null, process.argv, 2);
   let filter = (opts.mode == 'release') ? releaseFilter : (x) => x;
+  let override = undefined;
+  if (opts.dist) {
+    override = {
+      'module': 'system',
+      'outFile': DIST_FILE
+    };
+    distMode = true;
+    outs = path.resolve(Dir.OUTPUT);
+  }
 
-  let tsProject = tsc.createProject(TSCONFIG);
+  let tsProject = tsc.createProject(TSCONFIG, override);
   let tsResult = gulp.src(srcs)
       .pipe(transform(filter, {encoding: 'utf8'}))
       .pipe(sourcemaps.init())
@@ -147,6 +159,7 @@ gulp.task('default', () => {
   log('Options:');
   log('  --grep <pattern>: Mocha grep, can be used with debug/dev_test/test');
   log('  --mode <debug|release>: Choose build mode');
+  log('  --dist: Build only lib as a dist file');
 });
 
 gulp.task('typings', () => {
@@ -164,12 +177,14 @@ gulp.task('build_lib', ['typings'], () => {
 });
 
 gulp.task('build_testing', ['typings'], () => {
+  if (distMode) return;
   return build([Files.TESTING, TYPINGS_INDEX],
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTING));
 });
 
 gulp.task('build_tests', ['build_lib', 'build_testing'], () => {
+  if (distMode) return;
   return build([Files.TESTS, TYPINGS_INDEX],
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTS));
