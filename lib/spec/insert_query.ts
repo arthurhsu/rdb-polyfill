@@ -16,22 +16,10 @@
  */
 
 import {IBindableValue} from './bindable_value';
+import {IQuery} from './query';
+import {ITable} from './table';
 
-export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
-
-export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
-
-export type IndexableValueType = boolean | Date | number | string;
-
-export type Order = 'asc' | 'desc';
-
-export type ComparableValueType = IndexableValueType | IBindableValue;
-
-export type ForeignKeyAction = 'restrict' | 'cascade';
-
-export type ForeignKeyTiming = 'deferrable' | 'immediate';
-
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
-export type TransactionMode = 'readonly' | 'readwrite';
+export interface IInsertQuery extends IQuery {
+  into(table: ITable): IInsertQuery;
+  values(rows: Object|Object[]|IBindableValue|IBindableValue[]): IInsertQuery;
+}

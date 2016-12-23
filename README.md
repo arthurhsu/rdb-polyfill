@@ -17,16 +17,14 @@ gulp
 
 Supported command line and options will be listed in the gulp command.
 
-## How to Use It?
+## How to Use It? What's the Supported Browser?
 
-The final compiled ES6 script is located at `dist/rdb.js`.
-
-## What's the Supported Browser?
-
-Currently we only plan to support Chrome, since this is a polyfill. We plan
-to use deprecated WebSQL underneath to demonstrate the concept.
+Still evaluating two different options:
+* Node module that features SQLite3 native code
+* Chrome WebSQL polyfill
 
 ## Is this Compatible with Lovefield?
 
 Mostly. Some APIs have changed since we are no longer constrainted by
-IndexedDB.
+IndexedDB. Major change is in the syntax of search condition and database
+schema change.

@@ -15,23 +15,17 @@
  * limitations under the License.
  */
 
-import {IBindableValue} from './bindable_value';
+import {IColumn} from './column';
+import {IDeleteQuery} from './delete_query';
+import {IInsertQuery} from './insert_query';
+import {ISelectQuery} from './select_query';
+import {ITable} from './table';
+import {IUpdateQuery} from './update_query';
 
-export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
-
-export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
-
-export type IndexableValueType = boolean | Date | number | string;
-
-export type Order = 'asc' | 'desc';
-
-export type ComparableValueType = IndexableValueType | IBindableValue;
-
-export type ForeignKeyAction = 'restrict' | 'cascade';
-
-export type ForeignKeyTiming = 'deferrable' | 'immediate';
-
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
-export type TransactionMode = 'readonly' | 'readwrite';
+export interface IDataQueryProvider {
+  select(...columns: IColumn[]): ISelectQuery;
+  insert(): IInsertQuery;
+  insertOrReplace(): IInsertQuery;
+  update(table: ITable): IUpdateQuery;
+  delete(): IDeleteQuery;
+}

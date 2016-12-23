@@ -15,23 +15,12 @@
  * limitations under the License.
  */
 
-import {IBindableValue} from './bindable_value';
+import {IColumn} from './column';
+import {ValueType} from './enums';
+import {ILogicalPredicate} from './predicate';
+import {IQuery} from './query';
 
-export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
-
-export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
-
-export type IndexableValueType = boolean | Date | number | string;
-
-export type Order = 'asc' | 'desc';
-
-export type ComparableValueType = IndexableValueType | IBindableValue;
-
-export type ForeignKeyAction = 'restrict' | 'cascade';
-
-export type ForeignKeyTiming = 'deferrable' | 'immediate';
-
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
-export type TransactionMode = 'readonly' | 'readwrite';
+export interface IUpdateQuery extends IQuery {
+  set(column: IColumn, value: ValueType): IUpdateQuery;
+  where(searchCondition: ILogicalPredicate): IUpdateQuery;
+}

@@ -15,23 +15,10 @@
  * limitations under the License.
  */
 
-import {IBindableValue} from './bindable_value';
+import {IExecutionContext, TransactionResults} from './execution_context';
 
-export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
-
-export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
-
-export type IndexableValueType = boolean | Date | number | string;
-
-export type Order = 'asc' | 'desc';
-
-export type ComparableValueType = IndexableValueType | IBindableValue;
-
-export type ForeignKeyAction = 'restrict' | 'cascade';
-
-export type ForeignKeyTiming = 'deferrable' | 'immediate';
-
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
-export type TransactionMode = 'readonly' | 'readwrite';
+export interface ITransaction extends IExecutionContext {
+  begin(): Promise<void>;
+  exec(queries: IExecutionContext[]): Promise<TransactionResults>;
+  attach(query: IExecutionContext): Promise<TransactionResults>;
+}

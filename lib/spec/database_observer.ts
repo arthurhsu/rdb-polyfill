@@ -15,23 +15,11 @@
  * limitations under the License.
  */
 
-import {IBindableValue} from './bindable_value';
+import {ISelectQuery} from './select_query';
 
-export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
+export type ObserverCallback = () => void;
 
-export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
-
-export type IndexableValueType = boolean | Date | number | string;
-
-export type Order = 'asc' | 'desc';
-
-export type ComparableValueType = IndexableValueType | IBindableValue;
-
-export type ForeignKeyAction = 'restrict' | 'cascade';
-
-export type ForeignKeyTiming = 'deferrable' | 'immediate';
-
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
-export type TransactionMode = 'readonly' | 'readwrite';
+export interface IDatabaseObserver {
+  observe(query: ISelectQuery, callbackFn: ObserverCallback): string;
+  unobserve(observerKey: string): void;
+}

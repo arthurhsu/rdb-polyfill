@@ -15,23 +15,16 @@
  * limitations under the License.
  */
 
-import {IBindableValue} from './bindable_value';
+import {IColumn} from './column';
 
-export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
-
-export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
-
-export type IndexableValueType = boolean | Date | number | string;
-
-export type Order = 'asc' | 'desc';
-
-export type ComparableValueType = IndexableValueType | IBindableValue;
-
-export type ForeignKeyAction = 'restrict' | 'cascade';
-
-export type ForeignKeyTiming = 'deferrable' | 'immediate';
-
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
-export type TransactionMode = 'readonly' | 'readwrite';
+export interface IAggregateFunction {
+  avg(col: IColumn): IColumn;
+  count(col?: IColumn): IColumn;
+  distinct(...col: IColumn[]): IColumn;
+  geomean(col: IColumn): IColumn;
+  min(col: IColumn): IColumn;
+  max(col: IColumn): IColumn;
+  stddev(col: IColumn): IColumn;
+  sum(col: IColumn): IColumn;
+  var(col: IColumn): IColumn;
+}

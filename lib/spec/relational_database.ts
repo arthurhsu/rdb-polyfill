@@ -15,23 +15,16 @@
  * limitations under the License.
  */
 
-import {IBindableValue} from './bindable_value';
+import {DatabaseConnection} from './database_connection';
+import {IDatabaseFunctionProvider} from './database_function_provider';
 
-export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
+export type RDBStorageType = 'persistent' | 'temporary';
 
-export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
+export interface OpenDatabaseOptions { storageType: RDBStorageType; }
 
-export type IndexableValueType = boolean | Date | number | string;
+export interface IRelationalDatabase {
+  readonly fn: IDatabaseFunctionProvider;
 
-export type Order = 'asc' | 'desc';
-
-export type ComparableValueType = IndexableValueType | IBindableValue;
-
-export type ForeignKeyAction = 'restrict' | 'cascade';
-
-export type ForeignKeyTiming = 'deferrable' | 'immediate';
-
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
-export type TransactionMode = 'readonly' | 'readwrite';
+  open(name: string, opt?: OpenDatabaseOptions): Promise<DatabaseConnection>;
+  drop(name: string): Promise<void>;
+}
