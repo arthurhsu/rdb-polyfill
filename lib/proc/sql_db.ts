@@ -15,16 +15,10 @@
  * limitations under the License.
  */
 
-import {IDatabaseSchema} from './database_schema';
-import {IExecutionContext} from './execution_context';
-import {ITableBuilder} from './table_builder';
-import {ITableChanger} from './table_changer';
+import {TransactionResults} from '../spec/execution_context';
 
-export interface ISchemaQueryProvider {
-  setVersion(version: number): IExecutionContext;
-  setForeignKeyCheck(value: boolean): IExecutionContext;
-  schema(): IDatabaseSchema;
-  createTable(name: string): ITableBuilder;
-  alterTable(name: string): ITableChanger;
-  dropTable(name: string): IExecutionContext;
+export class SQLDB {
+  public execSQL(sql: string): Promise<TransactionResults> {
+    return null;
+  }
 }

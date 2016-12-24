@@ -18,11 +18,14 @@
 import {ColumnType, ForeignKeyAction, ForeignKeyTiming, IndexType, Order} from './enums';
 import {IExecutionContext} from './execution_context';
 
-export interface PrimaryKeySpec {
+export interface AutoIncrementPrimaryKey {
   name: string;
   autoIncrement: boolean;
 }
-export type PrimaryKeyDefinition = string | string[] | PrimaryKeySpec;
+
+export type PrimaryKeyDefinition =
+    string | string[] | AutoIncrementPrimaryKey | IndexedColumnSpec |
+    IndexedColumnSpec[];
 
 export interface ForeignKeySpec {
   name: string;
