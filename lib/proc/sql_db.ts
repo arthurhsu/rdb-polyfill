@@ -19,6 +19,10 @@ import {TransactionResults} from '../spec/execution_context';
 
 export class SQLDB {
   public execSQL(sql: string): Promise<TransactionResults> {
-    return null;
+    return Promise.resolve(null);
+  }
+
+  public rollback(): Promise<void> {
+    return Promise.resolve();
   }
 }

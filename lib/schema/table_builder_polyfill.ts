@@ -19,6 +19,7 @@ import {SQLDB} from '../proc/sql_db';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {TableSchema} from './schema';
 
 export class TableBuilderPolyfill implements ITableBuilder {
   private db: SQLDB;
@@ -26,6 +27,7 @@ export class TableBuilderPolyfill implements ITableBuilder {
   private columnSql: string[];
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
+  private schema: TableSchema;
 
   constructor(db: SQLDB, name: string) {
     this.db = db;
@@ -33,14 +35,20 @@ export class TableBuilderPolyfill implements ITableBuilder {
     this.columnSql = [];
     this.constraintSql = [];
     this.columnType = new Map<string, ColumnType>();
+
+    this.schema = new TableSchema(name);
   }
 
-  public column(name: string, type: ColumnType, notNull?: boolean):
+  public column(name: string, type: ColumnType, notNull = false):
       ITableBuilder {
+    if (this.columnType.has(name)) {
+      throw new Error('SyntaxError');
+    }
     let sqlType = this.getType(type);
     let postfix = notNull ? ' not null' : '';
     this.columnType.set(name, type);
     this.columnSql.push(`${name} ${sqlType}${postfix}`);
+    this.schema.column(name, type, notNull);
     return this;
   }
 
@@ -111,7 +119,10 @@ export class TableBuilderPolyfill implements ITableBuilder {
   }
 
   public rollback(): Promise<void> {
-    // No-effect on this class.
-    return Promise.resolve();
+    return this.db.rollback();
+  }
+
+  public getSchema(): TableSchema {
+    return this.schema;
   }
 }
