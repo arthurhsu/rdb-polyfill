@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {IBindableValue} from '../spec/bindable_value';
 import {Column, IColumn} from '../spec/column';
 import {ColumnType, ComparableValueType} from '../spec/enums';
@@ -97,11 +98,10 @@ export class ColumnSchema extends Column {
       return (value as ColumnSchema).canonicalName;
     }
 
-    if (value instanceof Date) {
-      return (value as Date).getTime().toString();
+    if (value instanceof BindableValueHolder) {
+      return value.toString();
     }
 
-    // TODO(arthurhsu): validate if this is okay for IBindableValue
-    return value.toString();
+    return BindableValueHolder.format(value);
   }
 }

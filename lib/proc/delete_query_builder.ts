@@ -65,6 +65,6 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
     }
 
     base += ` where ${(this.searchCondition as LogicalPredicate).sql}`;
-    return base;
+    return this.bindValues(base);
   }
 }

@@ -51,8 +51,8 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
 
   public values(rows: Object|Object[]|IBindableValue|
                 IBindableValue[]): IInsertQuery {
-    // TODO(arthurhsu): support IBindableValue
-    if (typeof rows == 'IBindableValue' || Array.isArray(rows)) {
+    // TODO(arthurhsu): support multiple rows
+    if (Array.isArray(rows)) {
       throw new Error('NotImplemented');
     }
     Object.keys(rows).forEach(key => {
@@ -86,7 +86,8 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
       keys.push(key);
       vals.push(super.toValueString(value, this.table._columns.get(key).type));
     });
-    return `insert into ${this.table._name}(${keys.join(',')}) ` +
+    let sql = `insert into ${this.table._name}(${keys.join(',')}) ` +
         `values(${vals.join(',')})`;
+    return this.bindValues(sql);
   }
 }

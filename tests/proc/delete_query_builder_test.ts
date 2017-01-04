@@ -43,7 +43,7 @@ describe('DeleteQueryBuilder', () => {
   });
 
   it('toSql_oneSearchCondition', () => {
-    const expected = 'delete from foo where foo.boolean = true';
+    const expected = 'delete from foo where foo.boolean = 1';
     let deleteBuilder = new DeleteQueryBuilder(null, schema);
     let foo = schema.tables.get('foo');
     deleteBuilder.from(foo).where(foo['boolean'].eq(true));
@@ -52,7 +52,7 @@ describe('DeleteQueryBuilder', () => {
 
   it('toSql_simpleAndSearchCondition', () => {
     const expected =
-        'delete from foo where (foo.boolean = true) and (foo.id = 1)';
+        'delete from foo where (foo.boolean = 1) and (foo.id = 1)';
     let deleteBuilder = new DeleteQueryBuilder(null, schema);
     let foo = schema.tables.get('foo');
     deleteBuilder.from(foo).where(foo['boolean'].eq(true).and(foo['id'].eq(1)));

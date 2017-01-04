@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
@@ -22,16 +23,52 @@ import {SQLDB} from './sql_db';
 
 export abstract class QueryBase implements IQuery {
   protected db: SQLDB;
+  protected boundValues: Map<number, BindableValueHolder>;
+  protected finalized: boolean;
+
   constructor(db: SQLDB) {
     this.db = db;
+    this.boundValues = null;
+    this.finalized = false;
   }
 
   public explain(): Promise<string> {
     return Promise.resolve('Explain not implemented');
   }
 
+  private createBinderMap(): void {
+    let sql = this.toSql();
+    this.boundValues = new Map<number, BindableValueHolder>();
+
+    sql.match(/\?[0-9]+/).forEach(token => {
+      let index = parseInt(token.substring(1), 10);
+      this.boundValues.set(index, new BindableValueHolder(index));
+    });
+  }
+
+  protected bindValues(sql: string): string {
+    if (this.boundValues === null) return sql;
+
+    let tokens: string[] = sql.match(/\?[0-9]+/);
+    for (let i = 0; i < tokens.length; ++i) {
+      let index = parseInt(tokens[i].substring(1), 10);
+      if (this.boundValues.has(index)) {
+        sql.replace(`${tokens[i]} `, this.boundValues.get(index).toString());
+      }
+    }
+    return sql;
+  }
+
   public bind(...values: any[]): IQuery {
-    throw new Error('Not implemented');
+    if (this.boundValues === null) {
+      this.createBinderMap();
+    }
+    for (let i = 0; i < values.length; ++i) {
+      if (this.boundValues.has(i)) {
+        this.boundValues.get(i).bind(values[i]);
+      }
+    }
+    return this;
   }
 
   abstract clone(): IQuery;

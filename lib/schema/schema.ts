@@ -44,17 +44,17 @@ export class TableSchema implements ITable {
     if (notNull) {
       this._notNull.add(name);
     }
-    Object.defineProperty(this, name, {
-      configurable: false,
-      enumerable: false,
-      value: col,
-      writable: false
-    });
+    Object.defineProperty(
+        this, name,
+        {configurable: false, enumerable: false, value: col, writable: false});
   }
 
   public as(alias: string) {
     let that = new TableSchema(this._name, alias);
-    that._columns = this._columns;  // TODO(arthurhsu): fix this
+    that._columns = new Map<string, ColumnSchema>();
+    this._columns.forEach(
+        col => new ColumnSchema(
+            alias, col.name, col.type, this._notNull.has(col.name)));
     that._primaryKey = this._primaryKey;
     that._foreignKey = this._foreignKey;
     that._indices = this._indices;
