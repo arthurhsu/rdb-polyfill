@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
+ * Copyright 2017 The Lovefield Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
  */
 
 import * as chai from 'chai';
-import {InsertQueryBuilder} from '../../lib/proc/insert_query_builder';
+import {DeleteQueryBuilder} from '../../lib/proc/delete_query_builder';
 import {Schema} from '../../lib/schema/schema';
 import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
 
 const assert = chai.assert;
 
-describe('InsertQueryBuilder', () => {
+describe('DeleteQueryBuilder', () => {
   let schema: Schema;
   before(() => {
     schema = new Schema('db', 1);
@@ -36,19 +36,9 @@ describe('InsertQueryBuilder', () => {
   });
 
   it('toSql_simple', () => {
-    let now = new Date();
-    let obj = {foo: 1, bar: 2};
-    const expected = 'insert into foo(id,name,date,boolean,object) values(' +
-                     `1,"bar",${now.getTime()},1,"${JSON.stringify(obj)}")`;
-
-    let insertBuilder = new InsertQueryBuilder(null, schema);
-    insertBuilder.into(schema.tables.get('foo')).values({
-      id: 1,
-      name: 'bar',
-      date: now,
-      boolean: true,
-      object: obj
-    });
-    assert.equal(expected, insertBuilder.toSql());
+    const expected = 'delete from foo';
+    let deleteBuilder = new DeleteQueryBuilder(null, schema);
+    deleteBuilder.from(schema.tables.get('foo'));
+    assert.equal(expected, deleteBuilder.toSql());
   });
 });

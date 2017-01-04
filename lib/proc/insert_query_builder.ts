@@ -75,6 +75,11 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   }
 
   public toSql(): string {
+    if (this.table === null || this.valueMap.size == 0) {
+      throw new Error('SyntaxError');
+    }
+
+    // TODO(arthurhsu): implement INSERT OR REPLACE (SQLite dialect)
     let keys: string[] = [];
     let vals: string[] = [];
     this.valueMap.forEach((value, key) => {
