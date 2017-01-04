@@ -43,7 +43,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     }
 
     this.table = table as TableSchema;
-    if (this.replace && this.table.primaryKey === null) {
+    if (this.replace && this.table._primaryKey === null) {
       throw new Error('IntegrityError');
     }
     return this;
@@ -56,12 +56,12 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
       throw new Error('NotImplemented');
     }
     Object.keys(rows).forEach(key => {
-      if (!this.table.columns.has(key)) {
+      if (!this.table._columns.has(key)) {
         throw new Error('SyntaxError');
       }
       this.valueMap.set(key, rows[key]);
     });
-    if (this.valueMap.size != this.table.columns.size) {
+    if (this.valueMap.size != this.table._columns.size) {
       throw new Error('SyntaxError');
     }
     return this;
@@ -84,9 +84,9 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     let vals: string[] = [];
     this.valueMap.forEach((value, key) => {
       keys.push(key);
-      vals.push(super.toValueString(value, this.table.columns.get(key).type));
+      vals.push(super.toValueString(value, this.table._columns.get(key).type));
     });
-    return `insert into ${this.table.name}(${keys.join(',')}) ` +
+    return `insert into ${this.table._name}(${keys.join(',')}) ` +
         `values(${vals.join(',')})`;
   }
 }

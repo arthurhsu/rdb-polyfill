@@ -15,54 +15,50 @@
  * limitations under the License.
  */
 
-import {IColumn} from '../spec/column';
 import {ColumnType} from '../spec/enums';
 import {ITable} from '../spec/table';
 import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexSpec} from '../spec/table_builder';
-
-export class ColumnSchema implements IColumn {
-  constructor(
-      readonly name: string, readonly type: ColumnType,
-      readonly nullable: boolean, readonly alias: string = null) {}
-
-  public as(alias: string): IColumn {
-    return new ColumnSchema(this.name, this.type, this.nullable, alias);
-  }
-}
+import {ColumnSchema} from './column_schema';
 
 export class TableSchema implements ITable {
-  readonly name: string;
-  readonly alias: string;
-  public columns: Map<string, ColumnSchema>;
-  public primaryKey: AutoIncrementPrimaryKey|IndexSpec;
-  public foreignKey: ForeignKeySpec[];
-  public indices: IndexSpec[];
-  public notNull: Set<string>;
+  readonly _name: string;
+  readonly _alias: string;
+  public _columns: Map<string, ColumnSchema>;
+  public _primaryKey: AutoIncrementPrimaryKey|IndexSpec;
+  public _foreignKey: ForeignKeySpec[];
+  public _indices: IndexSpec[];
+  public _notNull: Set<string>;
 
   constructor(name: string, alias: string = null) {
-    this.name = name;
-    this.columns = new Map<string, ColumnSchema>();
-    this.primaryKey = null;
-    this.foreignKey = [];
-    this.indices = [];
-    this.notNull = new Set<string>();
+    this._name = name;
+    this._columns = new Map<string, ColumnSchema>();
+    this._primaryKey = null;
+    this._foreignKey = [];
+    this._indices = [];
+    this._notNull = new Set<string>();
   }
 
   public column(name: string, type: ColumnType, notNull = false) {
-    let col = new ColumnSchema(name, type, !notNull);
-    this.columns.set(name, col);
+    let col = new ColumnSchema(this._alias || this._name, name, type, !notNull);
+    this._columns.set(name, col);
     if (notNull) {
-      this.notNull.add(name);
+      this._notNull.add(name);
     }
+    Object.defineProperty(this, name, {
+      configurable: false,
+      enumerable: false,
+      value: col,
+      writable: false
+    });
   }
 
   public as(alias: string) {
-    let that = new TableSchema(this.name, alias);
-    that.columns = this.columns;
-    that.primaryKey = this.primaryKey;
-    that.foreignKey = this.foreignKey;
-    that.indices = this.indices;
-    that.notNull = this.notNull;
+    let that = new TableSchema(this._name, alias);
+    that._columns = this._columns;  // TODO(arthurhsu): fix this
+    that._primaryKey = this._primaryKey;
+    that._foreignKey = this._foreignKey;
+    that._indices = this._indices;
+    that._notNull = this._notNull;
     return that;
   }
 }

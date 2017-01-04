@@ -41,4 +41,21 @@ describe('DeleteQueryBuilder', () => {
     deleteBuilder.from(schema.tables.get('foo'));
     assert.equal(expected, deleteBuilder.toSql());
   });
+
+  it('toSql_oneSearchCondition', () => {
+    const expected = 'delete from foo where foo.boolean = true';
+    let deleteBuilder = new DeleteQueryBuilder(null, schema);
+    let foo = schema.tables.get('foo');
+    deleteBuilder.from(foo).where(foo['boolean'].eq(true));
+    assert.equal(expected, deleteBuilder.toSql());
+  });
+
+  it('toSql_simpleAndSearchCondition', () => {
+    const expected =
+        'delete from foo where (foo.boolean = true) and (foo.id = 1)';
+    let deleteBuilder = new DeleteQueryBuilder(null, schema);
+    let foo = schema.tables.get('foo');
+    deleteBuilder.from(foo).where(foo['boolean'].eq(true).and(foo['id'].eq(1)));
+    assert.equal(expected, deleteBuilder.toSql());
+  });
 });

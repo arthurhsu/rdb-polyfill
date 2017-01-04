@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {LogicalPredicate} from '../schema/logical_predicate';
 import {Schema, TableSchema} from '../schema/schema';
 import {IDeleteQuery} from '../spec/delete_query';
 import {ILogicalPredicate} from '../spec/predicate';
@@ -58,13 +59,12 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
       throw new Error('SyntaxError');
     }
 
-    let base = `delete from ${this.table.name}`;
+    let base = `delete from ${this.table._name}`;
     if (this.searchCondition == null) {
       return base;
     }
 
-    // TODO(arthurhsu): implement search condition
-    // base += ` ${searchCondition.toSql()}`;
+    base += ` where ${(this.searchCondition as LogicalPredicate).sql}`;
     return base;
   }
 }
