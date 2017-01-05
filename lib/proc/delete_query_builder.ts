@@ -22,15 +22,15 @@ import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SQLDB} from './sql_db';
+import {SqlExecutionContext} from './sql_execution_context';
 
 export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
   private table: TableSchema;
   private schema: Schema;
   private searchCondition: ILogicalPredicate;
 
-  constructor(db: SQLDB, schema: Schema, replace = false) {
-    super(db);
+  constructor(context: SqlExecutionContext, schema: Schema, replace = false) {
+    super(context);
     this.table = null;
     this.schema = schema;
     this.searchCondition = null;

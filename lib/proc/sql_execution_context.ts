@@ -15,14 +15,28 @@
  * limitations under the License.
  */
 
-import {TransactionResults} from '../spec/execution_context';
+import {IExecutionContext, TransactionResults} from '../spec/execution_context';
+import {SqlConnection} from './sql_connection';
 
-export class SQLDB {
-  public execSQL(sql: string): Promise<TransactionResults> {
-    return Promise.resolve(null);
+export class SqlExecutionContext implements IExecutionContext {
+  private connection: SqlConnection;
+  private sql: string[];
+
+  constructor(connection: SqlConnection) {
+    this.connection = connection;
+  }
+
+  public prepare(sql: string) {
+    this.sql.push(sql);
+  }
+
+  public commit(): Promise<TransactionResults> {
+    // TODO(arthurhsu): implement
+    return Promise.resolve();
   }
 
   public rollback(): Promise<void> {
+    // TODO(arthurhsu): implement
     return Promise.resolve();
   }
 }

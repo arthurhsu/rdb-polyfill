@@ -19,15 +19,15 @@ import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {SQLDB} from './sql_db';
+import {SqlExecutionContext} from './sql_execution_context';
 
 export abstract class QueryBase implements IQuery {
-  protected db: SQLDB;
+  protected context: SqlExecutionContext;
   protected boundValues: Map<number, BindableValueHolder>;
   protected finalized: boolean;
 
-  constructor(db: SQLDB) {
-    this.db = db;
+  constructor(context: SqlExecutionContext) {
+    this.context = context;
     this.boundValues = null;
     this.finalized = false;
   }
@@ -76,11 +76,12 @@ export abstract class QueryBase implements IQuery {
 
   public commit(): Promise<TransactionResults> {
     // TODO(arthurhsu): handle multiple sql situation, e.g. insert() values.
-    return this.db.execSQL(this.toSql());
+    this.context.prepare(this.toSql());
+    return this.context.commit();
   }
 
   public rollback(): Promise<void> {
-    return this.db.rollback();
+    return this.context.rollback();
   }
 
   protected toValueString(value: any, type: ColumnType): string {

@@ -15,22 +15,22 @@
  * limitations under the License.
  */
 
-import {SQLDB} from '../proc/sql_db';
+import {SqlExecutionContext} from '../proc/sql_execution_context';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {TableSchema} from './schema';
 
 export class TableBuilderPolyfill implements ITableBuilder {
-  private db: SQLDB;
+  private context: SqlExecutionContext;
   private name: string;
   private columnSql: string[];
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
   private schema: TableSchema;
 
-  constructor(db: SQLDB, name: string) {
-    this.db = db;
+  constructor(context: SqlExecutionContext, name: string) {
+    this.context = context;
     this.name = name;
     this.columnSql = [];
     this.constraintSql = [];
@@ -115,11 +115,12 @@ export class TableBuilderPolyfill implements ITableBuilder {
   }
 
   public commit(): Promise<TransactionResults> {
-    return this.db.execSQL(this.toSql());
+    this.context.prepare(this.toSql());
+    return this.context.commit();
   }
 
   public rollback(): Promise<void> {
-    return this.db.rollback();
+    return this.context.rollback();
   }
 
   public getSchema(): TableSchema {
