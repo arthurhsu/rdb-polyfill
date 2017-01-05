@@ -63,9 +63,14 @@ export class BindableValueHolder implements IBindableValue {
     }
 
     if (typeof(value) == 'object') {
-      return JSON.stringify(value);
+      // TODO(arthurhsu): escape value.
+      return `"${JSON.stringify(value)}"`;
     }
 
+    if (typeof(value) == 'string') {
+      // TODO(arthurhsu): escape value.
+      return `"${value}"`;
+    }
     return value.toString();
   }
 }

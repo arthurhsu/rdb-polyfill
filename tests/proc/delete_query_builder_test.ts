@@ -17,6 +17,7 @@
 
 import * as chai from 'chai';
 import {DeleteQueryBuilder} from '../../lib/proc/delete_query_builder';
+import {SqlConnection} from '../../lib/proc/sql_connection';
 import {Schema} from '../../lib/schema/schema';
 import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
 
@@ -24,6 +25,7 @@ const assert = chai.assert;
 
 describe('DeleteQueryBuilder', () => {
   let schema: Schema;
+  let connection: SqlConnection;
   before(() => {
     schema = new Schema('db', 1);
     let builder = new TableBuilderPolyfill(null, 'foo');
@@ -33,6 +35,7 @@ describe('DeleteQueryBuilder', () => {
         .column('boolean', 'boolean')
         .column('object', 'object');
     schema.tables.set('foo', builder.getSchema());
+    connection = new SqlConnection('db');
   });
 
   it('toSql_simple', () => {
@@ -56,6 +59,17 @@ describe('DeleteQueryBuilder', () => {
     let deleteBuilder = new DeleteQueryBuilder(null, schema);
     let foo = schema.tables.get('foo');
     deleteBuilder.from(foo).where(foo['boolean'].eq(true).and(foo['id'].eq(1)));
+    assert.equal(expected, deleteBuilder.toSql());
+  });
+
+  it('toSql_simpleOrUnbound', () => {
+    const expected =
+        'delete from foo where (foo.boolean = ?1 ) and (foo.id = ?0 )';
+    let deleteBuilder = new DeleteQueryBuilder(null, schema);
+    let foo = schema.tables.get('foo');
+    deleteBuilder.from(foo)
+                 .where(foo['boolean'].eq(connection.bind(1)).and(
+                        foo['id'].eq(connection.bind(0))));
     assert.equal(expected, deleteBuilder.toSql());
   });
 });

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -45,7 +46,7 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public bind(index: number): IBindableValue  {
-    throw new Error('NotImplemented');
+    return new BindableValueHolder(index);
   }
 
   public select(...columns: IColumn[]): ISelectQuery  {

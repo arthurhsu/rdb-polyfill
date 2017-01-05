@@ -36,6 +36,7 @@ export abstract class QueryBase implements IQuery {
     return Promise.resolve('Explain not implemented');
   }
 
+  // TODO(arthurhsu): change this design, this is not good.
   private createBinderMap(): void {
     let sql = this.toSql();
     this.boundValues = new Map<number, BindableValueHolder>();
