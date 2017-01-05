@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {IBindableValue} from '../spec/bindable_value';
 import {Column, IColumn} from '../spec/column';
 import {ColumnType, ComparableValueType} from '../spec/enums';
 import {ILogicalPredicate, OperandType} from '../spec/predicate';
 import {LogicalPredicate} from './logical_predicate';
+import {BinaryPredicateHolder, UnaryPredicateHolder} from './predicate_holder';
 
 export class ColumnSchema extends Column {
-  private canonicalName: string;
+  readonly canonicalName: string;
 
   constructor(
       readonly tableName: string, readonly name: string,
@@ -39,33 +39,27 @@ export class ColumnSchema extends Column {
   }
 
   public eq(value: OperandType): ILogicalPredicate {
-    return new LogicalPredicate(
-        `${this.canonicalName} = ${ColumnSchema.operandToSql(value)}`);
+    return new LogicalPredicate(new BinaryPredicateHolder(this, '=', value));
   }
 
   public neq(value: OperandType): ILogicalPredicate {
-    return new LogicalPredicate(
-        `${this.canonicalName} <> ${ColumnSchema.operandToSql(value)}`);
+    return new LogicalPredicate(new BinaryPredicateHolder(this, '<>', value));
   }
 
   public lt(value: OperandType): ILogicalPredicate {
-    return new LogicalPredicate(
-        `${this.canonicalName} < ${ColumnSchema.operandToSql(value)}`);
+    return new LogicalPredicate(new BinaryPredicateHolder(this, '<', value));
   }
 
   public lte(value: OperandType): ILogicalPredicate {
-    return new LogicalPredicate(
-        `${this.canonicalName} <= ${ColumnSchema.operandToSql(value)}`);
+    return new LogicalPredicate(new BinaryPredicateHolder(this, '<=', value));
   }
 
   public gt(value: OperandType): ILogicalPredicate {
-    return new LogicalPredicate(
-        `${this.canonicalName} > ${ColumnSchema.operandToSql(value)}`);
+    return new LogicalPredicate(new BinaryPredicateHolder(this, '>', value));
   }
 
   public gte(value: OperandType): ILogicalPredicate {
-    return new LogicalPredicate(
-        `${this.canonicalName} >= ${ColumnSchema.operandToSql(value)}`);
+    return new LogicalPredicate(new BinaryPredicateHolder(this, '>=', value));
   }
 
   public match(value: IBindableValue|RegExp|string): ILogicalPredicate {
@@ -74,9 +68,7 @@ export class ColumnSchema extends Column {
 
   public between(lhs: ComparableValueType, rhs: ComparableValueType):
       ILogicalPredicate {
-    return new LogicalPredicate(
-        `${this.canonicalName} between ${ColumnSchema.operandToSql(lhs)} ` +
-        `and ${ColumnSchema.operandToSql(rhs)}`);
+    throw new Error('NotImplemented');
   }
 
   // clang-format off
@@ -86,22 +78,10 @@ export class ColumnSchema extends Column {
   // clang-format on
 
   public isNull(): ILogicalPredicate {
-    return new LogicalPredicate(`${this.canonicalName} is null`);
+    return new LogicalPredicate(new UnaryPredicateHolder(this, 'is null'));
   }
 
   public isNotNull(): ILogicalPredicate {
-    return new LogicalPredicate(`${this.canonicalName} is not null`);
-  }
-
-  private static operandToSql(value: OperandType): string {
-    if (value instanceof ColumnSchema) {
-      return (value as ColumnSchema).canonicalName;
-    }
-
-    if (value instanceof BindableValueHolder) {
-      return value.toString();
-    }
-
-    return BindableValueHolder.format(value);
+    return new LogicalPredicate(new UnaryPredicateHolder(this, 'is null'));
   }
 }

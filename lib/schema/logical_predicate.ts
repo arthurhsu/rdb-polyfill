@@ -16,19 +16,40 @@
  */
 
 import {ILogicalPredicate} from '../spec/predicate';
+import {PredicateHolder} from './predicate_holder';
 
 export class LogicalPredicate implements ILogicalPredicate {
-  constructor(public sql: string) {}
+  private lhs: PredicateHolder|LogicalPredicate;
+  private sql: string;
+  private operands: ILogicalPredicate[];
+
+  constructor(lhs: PredicateHolder|LogicalPredicate) {
+    this.lhs = lhs;
+    this.sql = null;
+    this.operands = null;
+  }
 
   public and(...values: ILogicalPredicate[]): ILogicalPredicate {
-    let sqlStatements = values.map(val => `(${(val as LogicalPredicate).sql})`);
-    this.sql = `(${this.sql}) and ${sqlStatements.join(' and ')}`;
+    if (this.sql !== null) throw new Error('SyntaxError');
+    this.sql = ' and ';
+    this.operands = values;
     return this;
   }
 
   public or(...values: ILogicalPredicate[]): ILogicalPredicate {
-    let sqlStatements = values.map(val => `(${(val as LogicalPredicate).sql})`);
-    this.sql = `(${this.sql}) or ${sqlStatements.join(' or ')}`;
+    if (this.sql !== null) throw new Error('SyntaxError');
+    this.sql = ' or ';
+    this.operands = values;
     return this;
+  }
+
+  public toSql(): string {
+    if (this.sql === null && this.operands === null) {
+      return this.lhs.toSql();
+    }
+
+    let sqlExpressions = this.operands.map(
+        val => `(${(val as LogicalPredicate).toSql()})`);
+    return `(${this.lhs.toSql()})${this.sql}${sqlExpressions.join(this.sql)}`;
   }
 }

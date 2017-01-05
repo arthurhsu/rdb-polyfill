@@ -30,7 +30,7 @@ export class BindableValueHolder implements IBindableValue {
   }
 
   public toString(): string {
-    return (this.val === undefined) ? `?${this.index} ` :
+    return (this.val === undefined) ? `?${this.index}` :
                                       BindableValueHolder.format(this.val);
   }
 

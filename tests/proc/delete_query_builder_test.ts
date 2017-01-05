@@ -64,7 +64,7 @@ describe('DeleteQueryBuilder', () => {
 
   it('toSql_simpleOrUnbound', () => {
     const expected =
-        'delete from foo where (foo.boolean = ?1 ) and (foo.id = ?0 )';
+        'delete from foo where (foo.boolean = ?1) and (foo.id = ?0)';
     let deleteBuilder = new DeleteQueryBuilder(null, schema);
     let foo = schema.tables.get('foo');
     deleteBuilder.from(foo)
