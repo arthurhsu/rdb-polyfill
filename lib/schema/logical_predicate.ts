@@ -49,8 +49,8 @@ export class LogicalPredicate implements ILogicalPredicate {
       return this.lhs.toSql();
     }
 
-    let sqlExpressions = this.operands.map(
-        val => `(${(val as LogicalPredicate).toSql()})`);
+    let sqlExpressions =
+        this.operands.map(val => `(${(val as LogicalPredicate).toSql()})`);
     return `(${this.lhs.toSql()})${this.sql}${sqlExpressions.join(this.sql)}`;
   }
 

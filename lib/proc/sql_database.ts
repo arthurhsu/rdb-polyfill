@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import {IRelationalDatabase, OpenDatabaseOptions} from '../spec/relational_database';
 import {DatabaseConnection} from '../spec/database_connection';
+import {IRelationalDatabase, OpenDatabaseOptions} from '../spec/relational_database';
 import {FunctionProvider} from './function_provider';
 import {SqlConnection} from './sql_connection';
 
@@ -27,7 +27,8 @@ export class SqlDatabase implements IRelationalDatabase {
     this.fn = new FunctionProvider();
   }
 
-  public open(name: string, opt?: OpenDatabaseOptions): Promise<DatabaseConnection> {
+  public open(name: string, opt?: OpenDatabaseOptions):
+      Promise<DatabaseConnection> {
     // TODO(arthurhsu): implement
     return Promise.resolve(new SqlConnection(name));
   }

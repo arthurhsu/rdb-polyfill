@@ -71,8 +71,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   public createBinderMap(): void {
     this.valueMap.forEach(value => {
       if (value instanceof BindableValueHolder) {
-        let binder = value.clone();
-        this.boundValues.set(binder.index, binder);
+        this.boundValues.set(value.index, value);
       }
     });
   }

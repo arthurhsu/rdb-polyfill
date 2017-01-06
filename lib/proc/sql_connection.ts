@@ -41,31 +41,31 @@ export class SqlConnection extends DatabaseConnection {
     throw new Error('NotImplemented');
   }
 
-  public close(): Promise<void>  {
+  public close(): Promise<void> {
     throw new Error('NotImplemented');
   }
 
-  public bind(index: number): IBindableValue  {
+  public bind(index: number): IBindableValue {
     return new BindableValueHolder(index);
   }
 
-  public select(...columns: IColumn[]): ISelectQuery  {
+  public select(...columns: IColumn[]): ISelectQuery {
     throw new Error('NotImplemented');
   }
 
-  public insert(): IInsertQuery  {
+  public insert(): IInsertQuery {
     throw new Error('NotImplemented');
   }
 
-  public insertOrReplace(): IInsertQuery  {
+  public insertOrReplace(): IInsertQuery {
     throw new Error('NotImplemented');
   }
 
-  public update(table: ITable): IUpdateQuery  {
+  public update(table: ITable): IUpdateQuery {
     throw new Error('NotImplemented');
   }
 
-  public delete(): IDeleteQuery  {
+  public delete(): IDeleteQuery {
     throw new Error('NotImplemented');
   }
 

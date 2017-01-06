@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
 import {IColumn} from '../spec/column';
+import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
 import {ILogicalPredicate} from '../spec/predicate';
 
 export class FunctionProvider implements IDatabaseFunctionProvider {

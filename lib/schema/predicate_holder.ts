@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import {BindableValueHolder} from './bindable_value_holder';
 import {OperandType} from '../spec/predicate';
+import {BindableValueHolder} from './bindable_value_holder';
 import {ColumnSchema} from './column_schema';
 
 export abstract class PredicateHolder {
@@ -51,14 +51,15 @@ export class UnaryPredicateHolder extends PredicateHolder {
 }
 
 export class BinaryPredicateHolder extends PredicateHolder {
-  constructor(readonly column: ColumnSchema, readonly sql: string,
-              readonly value: OperandType) {
+  constructor(
+      readonly column: ColumnSchema, readonly sql: string,
+      readonly value: OperandType) {
     super();
   }
 
   public toSql(): string {
     return `${this.column.canonicalName} ${this.sql} ` +
-           `${PredicateHolder.eval(this.value)}`;
+        `${PredicateHolder.eval(this.value)}`;
   }
 
   public createBinderMap(map: Map<number, BindableValueHolder>) {
