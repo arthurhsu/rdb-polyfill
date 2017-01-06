@@ -16,13 +16,13 @@
  */
 
 import * as chai from 'chai';
-import {UpdateQueryBuilder} from '../../lib/proc/update_query_builder';
+import {SelectQueryBuilder} from '../../lib/proc/select_query_builder';
 import {Schema} from '../../lib/schema/schema';
 import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
 
 const assert = chai.assert;
 
-describe('UpdateQueryBuilder', () => {
+describe('SelectQueryBuilder', () => {
   let schema: Schema;
   before(() => {
     schema = new Schema('db', 1);
@@ -36,16 +36,11 @@ describe('UpdateQueryBuilder', () => {
   });
 
   it('toSql_simple', () => {
-    let now = new Date();
-    const expected = 'update foo set name="bar", ' +
-                     `date=${now.getTime()}, boolean=1 where foo.id = 1`;
+    const expected = 'select * from foo where foo.boolean = 1';
 
     let foo = schema.tables.get('foo');
-    let updateBuilder = new UpdateQueryBuilder(null, schema, foo);
-    updateBuilder.set(foo['name'], 'bar')
-                 .set(foo['date'], now)
-                 .set(foo['boolean'], true)
-                 .where(foo['id'].eq(1));
-    assert.equal(expected, updateBuilder.toSql());
+    let selectBuilder = new SelectQueryBuilder(null, schema);
+    selectBuilder.from(foo).where(foo['boolean'].eq(true));
+    assert.equal(expected, selectBuilder.toSql());
   });
 });
