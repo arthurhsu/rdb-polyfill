@@ -19,7 +19,7 @@ import {SqlExecutionContext} from '../proc/sql_execution_context';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
-import {TableSchema} from './schema';
+import {TableSchema} from './table_schema';
 
 export class TableBuilderPolyfill implements ITableBuilder {
   private context: SqlExecutionContext;

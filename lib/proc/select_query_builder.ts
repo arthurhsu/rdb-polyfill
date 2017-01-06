@@ -18,7 +18,8 @@
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnSchema} from '../schema/column_schema';
 import {LogicalPredicate} from '../schema/logical_predicate';
-import {Schema, TableSchema} from '../schema/schema';
+import {Schema} from '../schema/schema';
+import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {Order} from '../spec/enums';
@@ -38,7 +39,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private skipCount: number|IBindableValue;
 
   constructor(
-      context: SqlExecutionContext, schema: Schema, ...columns: IColumn[]) {
+      context: SqlExecutionContext, schema: Schema, columns: IColumn[]) {
     super(context);
     this.tables = new Map<string, TableSchema>();
     this.schema = schema;

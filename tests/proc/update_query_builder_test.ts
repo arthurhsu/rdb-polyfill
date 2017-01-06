@@ -17,22 +17,18 @@
 
 import * as chai from 'chai';
 import {UpdateQueryBuilder} from '../../lib/proc/update_query_builder';
-import {Schema} from '../../lib/schema/schema';
-import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
+import {SqlConnection} from '../../lib/proc/sql_connection';
+import {Table} from '../../lib/spec/table';
+import {getMockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('UpdateQueryBuilder', () => {
-  let schema: Schema;
+  let foo: Table;
+  let conn: SqlConnection;
   before(() => {
-    schema = new Schema('db', 1);
-    let builder = new TableBuilderPolyfill(null, 'foo');
-    builder.column('id', 'number')
-        .column('name', 'string')
-        .column('date', 'date')
-        .column('boolean', 'boolean')
-        .column('object', 'object');
-    schema.tables.set('foo', builder.getSchema());
+    conn = getMockConnection();
+    foo = conn.schema().table('foo');
   });
 
   it('toSql_simple', () => {
@@ -40,12 +36,12 @@ describe('UpdateQueryBuilder', () => {
     const expected = 'update foo set name="bar", ' +
                      `date=${now.getTime()}, boolean=1 where foo.id = 1`;
 
-    let foo = schema.tables.get('foo');
-    let updateBuilder = new UpdateQueryBuilder(null, schema, foo);
-    updateBuilder.set(foo['name'], 'bar')
-                 .set(foo['date'], now)
-                 .set(foo['boolean'], true)
-                 .where(foo['id'].eq(1));
+    let updateBuilder =
+        conn.update(foo)
+            .set(foo['name'], 'bar')
+            .set(foo['date'], now)
+            .set(foo['boolean'], true)
+            .where(foo['id'].eq(1)) as UpdateQueryBuilder;
     assert.equal(expected, updateBuilder.toSql());
   });
 });

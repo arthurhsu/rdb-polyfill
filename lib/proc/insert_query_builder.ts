@@ -16,7 +16,8 @@
  */
 
 import {BindableValueHolder} from '../schema/bindable_value_holder';
-import {Schema, TableSchema} from '../schema/schema';
+import {Schema} from '../schema/schema';
+import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IInsertQuery} from '../spec/insert_query';
 import {IQuery} from '../spec/query';

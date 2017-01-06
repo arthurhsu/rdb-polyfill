@@ -30,7 +30,7 @@ export class SqlDatabase implements IRelationalDatabase {
   public open(name: string, opt?: OpenDatabaseOptions):
       Promise<DatabaseConnection> {
     // TODO(arthurhsu): implement
-    return Promise.resolve(new SqlConnection(name));
+    return Promise.resolve(new SqlConnection(name, 0));
   }
 
   public drop(name: string): Promise<void> {

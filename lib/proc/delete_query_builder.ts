@@ -16,7 +16,8 @@
  */
 
 import {LogicalPredicate} from '../schema/logical_predicate';
-import {Schema, TableSchema} from '../schema/schema';
+import {Schema} from '../schema/schema';
+import {TableSchema} from '../schema/table_schema';
 import {IDeleteQuery} from '../spec/delete_query';
 import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
@@ -29,7 +30,7 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
   private schema: Schema;
   private searchCondition: LogicalPredicate;
 
-  constructor(context: SqlExecutionContext, schema: Schema, replace = false) {
+  constructor(context: SqlExecutionContext, schema: Schema) {
     super(context);
     this.table = null;
     this.schema = schema;

@@ -16,6 +16,7 @@
  */
 
 import {BindableValueHolder} from '../schema/bindable_value_holder';
+import {Schema} from '../schema/schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -31,9 +32,16 @@ import {ITableBuilder} from '../spec/table_builder';
 import {ITableChanger} from '../spec/table_changer';
 import {ITransaction} from '../spec/transaction';
 import {IUpdateQuery} from '../spec/update_query';
+import {DeleteQueryBuilder} from './delete_query_builder';
+import {InsertQueryBuilder} from './insert_query_builder';
+import {SelectQueryBuilder} from './select_query_builder';
+import {SqlExecutionContext} from './sql_execution_context';
+import {UpdateQueryBuilder} from './update_query_builder';
 
 export class SqlConnection extends DatabaseConnection {
-  constructor(readonly name: string) {
+  private dbSchema: Schema;
+
+  constructor(readonly name: string, public version: number) {
     super();
   }
 
@@ -50,23 +58,23 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public select(...columns: IColumn[]): ISelectQuery {
-    throw new Error('NotImplemented');
+    return new SelectQueryBuilder(this.createContext(), this.dbSchema, columns);
   }
 
   public insert(): IInsertQuery {
-    throw new Error('NotImplemented');
+    return new InsertQueryBuilder(this.createContext(), this.dbSchema);
   }
 
   public insertOrReplace(): IInsertQuery {
-    throw new Error('NotImplemented');
+    return new InsertQueryBuilder(this.createContext(), this.dbSchema, true);
   }
 
   public update(table: ITable): IUpdateQuery {
-    throw new Error('NotImplemented');
+    return new UpdateQueryBuilder(this.createContext(), this.dbSchema, table);
   }
 
   public delete(): IDeleteQuery {
-    throw new Error('NotImplemented');
+    return new DeleteQueryBuilder(this.createContext(), this.dbSchema);
   }
 
   public setVersion(version: number): IExecutionContext {
@@ -78,7 +86,11 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public schema(): IDatabaseSchema {
-    throw new Error('NotImplemented');
+    if (this.dbSchema == undefined) {
+      // New database
+      this.dbSchema = new Schema(this.name, this.version);
+    }
+    return this.dbSchema;
   }
 
   public createTable(name: string): ITableBuilder {
@@ -99,5 +111,9 @@ export class SqlConnection extends DatabaseConnection {
 
   public unobserve(observerKey: string): void {
     throw new Error('NotImplemented');
+  }
+
+  private createContext(): SqlExecutionContext {
+    return new SqlExecutionContext(this);
   }
 }

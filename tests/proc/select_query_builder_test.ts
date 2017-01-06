@@ -17,30 +17,26 @@
 
 import * as chai from 'chai';
 import {SelectQueryBuilder} from '../../lib/proc/select_query_builder';
-import {Schema} from '../../lib/schema/schema';
-import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
+import {SqlConnection} from '../../lib/proc/sql_connection';
+import {Table} from '../../lib/spec/table';
+import {getMockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('SelectQueryBuilder', () => {
-  let schema: Schema;
+  let foo: Table;
+  let conn: SqlConnection;
   before(() => {
-    schema = new Schema('db', 1);
-    let builder = new TableBuilderPolyfill(null, 'foo');
-    builder.column('id', 'number')
-        .column('name', 'string')
-        .column('date', 'date')
-        .column('boolean', 'boolean')
-        .column('object', 'object');
-    schema.tables.set('foo', builder.getSchema());
+    conn = getMockConnection();
+    foo = conn.schema().table('foo');
   });
 
   it('toSql_simple', () => {
     const expected = 'select * from foo where foo.boolean = 1';
 
-    let foo = schema.tables.get('foo');
-    let selectBuilder = new SelectQueryBuilder(null, schema);
-    selectBuilder.from(foo).where(foo['boolean'].eq(true));
+    let selectBuilder =
+        conn.select().from(foo).where(foo['boolean'].eq(true)) as
+        SelectQueryBuilder;
     assert.equal(expected, selectBuilder.toSql());
   });
 });

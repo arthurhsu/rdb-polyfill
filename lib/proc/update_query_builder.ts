@@ -18,11 +18,13 @@
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnSchema} from '../schema/column_schema';
 import {LogicalPredicate} from '../schema/logical_predicate';
-import {Schema, TableSchema} from '../schema/schema';
+import {Schema} from '../schema/schema';
+import {TableSchema} from '../schema/table_schema';
 import {IColumn} from '../spec/column';
 import {ValueType} from '../spec/enums';
 import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
+import {ITable} from '../spec/table';
 import {IUpdateQuery} from '../spec/update_query';
 import {QueryBase} from './query_base';
 import {SqlExecutionContext} from './sql_execution_context';
@@ -34,10 +36,9 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
   private values: ValueType[];
   private searchCondition: LogicalPredicate;
 
-  constructor(
-      context: SqlExecutionContext, schema: Schema, table: TableSchema) {
+  constructor(context: SqlExecutionContext, schema: Schema, table: ITable) {
     super(context);
-    this.table = table;
+    this.table = table as TableSchema;
     this.schema = schema;
     this.columns = [];
     this.values = [];

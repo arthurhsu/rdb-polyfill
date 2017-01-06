@@ -17,22 +17,18 @@
 
 import * as chai from 'chai';
 import {InsertQueryBuilder} from '../../lib/proc/insert_query_builder';
-import {Schema} from '../../lib/schema/schema';
-import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
+import {SqlConnection} from '../../lib/proc/sql_connection';
+import {Table} from '../../lib/spec/table';
+import {getMockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('InsertQueryBuilder', () => {
-  let schema: Schema;
+  let foo: Table;
+  let conn: SqlConnection;
   before(() => {
-    schema = new Schema('db', 1);
-    let builder = new TableBuilderPolyfill(null, 'foo');
-    builder.column('id', 'number')
-        .column('name', 'string')
-        .column('date', 'date')
-        .column('boolean', 'boolean')
-        .column('object', 'object');
-    schema.tables.set('foo', builder.getSchema());
+    conn = getMockConnection();
+    foo = conn.schema().table('foo');
   });
 
   it('toSql_simple', () => {
@@ -41,14 +37,13 @@ describe('InsertQueryBuilder', () => {
     const expected = 'insert into foo(id,name,date,boolean,object) values(' +
                      `1,"bar",${now.getTime()},1,"${JSON.stringify(obj)}")`;
 
-    let insertBuilder = new InsertQueryBuilder(null, schema);
-    insertBuilder.into(schema.tables.get('foo')).values({
+    let insertBuilder = conn.insert().into(foo).values({
       id: 1,
       name: 'bar',
       date: now,
       boolean: true,
       object: obj
-    });
+    }) as InsertQueryBuilder;
     assert.equal(expected, insertBuilder.toSql());
   });
 });
