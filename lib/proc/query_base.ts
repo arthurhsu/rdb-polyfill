@@ -28,50 +28,30 @@ export abstract class QueryBase implements IQuery {
 
   constructor(context: SqlExecutionContext) {
     this.context = context;
-    this.boundValues = null;
     this.finalized = false;
+    this.boundValues = new Map<number, BindableValueHolder>();
   }
 
   public explain(): Promise<string> {
     return Promise.resolve('Explain not implemented');
   }
 
-  // TODO(arthurhsu): change this design, this is not good.
-  private createBinderMap(): void {
-    let sql = this.toSql();
-    this.boundValues = new Map<number, BindableValueHolder>();
-
-    sql.match(/\?[0-9]+/).forEach(token => {
-      let index = parseInt(token.substring(1), 10);
-      this.boundValues.set(index, new BindableValueHolder(index));
-    });
-  }
-
-  protected bindValues(sql: string): string {
-    if (this.boundValues === null) return sql;
-
-    let tokens: string[] = sql.match(/\?[0-9]+/);
-    for (let i = 0; i < tokens.length; ++i) {
-      let index = parseInt(tokens[i].substring(1), 10);
-      if (this.boundValues.has(index)) {
-        sql.replace(`${tokens[i]} `, this.boundValues.get(index).toString());
-      }
-    }
-    return sql;
-  }
-
   public bind(...values: any[]): IQuery {
-    if (this.boundValues === null) {
+    if (this.boundValues.size == 0) {
       this.createBinderMap();
     }
-    for (let i = 0; i < values.length; ++i) {
-      if (this.boundValues.has(i)) {
-        this.boundValues.get(i).bind(values[i]);
+
+    if (this.boundValues.size > 0) {
+      for (let i = 0; i < values.length; ++i) {
+        if (this.boundValues.has(i)) {
+          this.boundValues.get(i).bind(values[i]);
+        }
       }
     }
     return this;
   }
 
+  abstract createBinderMap(): void;
   abstract clone(): IQuery;
   abstract toSql(): string;
 
@@ -100,6 +80,9 @@ export abstract class QueryBase implements IQuery {
         return `"${value}"`;
 
       case 'object':
+        if (value instanceof BindableValueHolder) {
+          return this.toValueString(value.value, type);
+        }
         return `"${JSON.stringify(value)}"`;
 
       default:

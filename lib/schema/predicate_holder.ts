@@ -21,6 +21,7 @@ import {ColumnSchema} from './column_schema';
 
 export abstract class PredicateHolder {
   abstract toSql(): string;
+  abstract createBinderMap(map: Map<number, BindableValueHolder>): void;
 
   static eval(value: OperandType): string {
     if (value instanceof ColumnSchema) {
@@ -45,6 +46,8 @@ export class UnaryPredicateHolder extends PredicateHolder {
   public toSql(): string {
     return this.sql;
   }
+
+  public createBinderMap(map: Map<number, BindableValueHolder>) {}
 }
 
 export class BinaryPredicateHolder extends PredicateHolder {
@@ -56,5 +59,11 @@ export class BinaryPredicateHolder extends PredicateHolder {
   public toSql(): string {
     return `${this.column.canonicalName} ${this.sql} ` +
            `${PredicateHolder.eval(this.value)}`;
+  }
+
+  public createBinderMap(map: Map<number, BindableValueHolder>) {
+    if (this.value instanceof BindableValueHolder) {
+      map.set(this.value.index, this.value);
+    }
   }
 }

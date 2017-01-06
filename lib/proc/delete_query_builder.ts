@@ -50,6 +50,13 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
     return this;
   }
 
+  public createBinderMap(): void {
+    if (this.searchCondition) {
+      (this.searchCondition as LogicalPredicate)
+          .createBinderMap(this.boundValues);
+    }
+  }
+
   public clone(): IQuery {
     throw new Error('Not implemented');
   }
@@ -59,12 +66,10 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
       throw new Error('SyntaxError');
     }
 
-    let base = `delete from ${this.table._name}`;
-    if (this.searchCondition == null) {
-      return base;
+    let sql = `delete from ${this.table._name}`;
+    if (this.searchCondition != null) {
+      sql += ` where ${(this.searchCondition as LogicalPredicate).toSql()}`;
     }
-
-    base += ` where ${(this.searchCondition as LogicalPredicate).toSql()}`;
-    return this.bindValues(base);
+    return sql;
   }
 }

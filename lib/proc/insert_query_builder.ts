@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema, TableSchema} from '../schema/schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IInsertQuery} from '../spec/insert_query';
@@ -67,6 +68,15 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     return this;
   }
 
+  public createBinderMap(): void {
+    this.valueMap.forEach(value => {
+      if (value instanceof BindableValueHolder) {
+        let binder = value.clone();
+        this.boundValues.set(binder.index, binder);
+      }
+    });
+  }
+
   public clone(): IQuery {
     let that = new InsertQueryBuilder(this.context, this.schema, this.replace);
     that.table = this.table;
@@ -86,8 +96,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
       keys.push(key);
       vals.push(super.toValueString(value, this.table._columns.get(key).type));
     });
-    let sql = `insert into ${this.table._name}(${keys.join(',')}) ` +
+    return `insert into ${this.table._name}(${keys.join(',')}) ` +
         `values(${vals.join(',')})`;
-    return this.bindValues(sql);
   }
 }

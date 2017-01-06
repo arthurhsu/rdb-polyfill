@@ -64,12 +64,24 @@ describe('DeleteQueryBuilder', () => {
 
   it('toSql_simpleOrUnbound', () => {
     const expected =
-        'delete from foo where (foo.boolean = ?1) and (foo.id = ?0)';
+        'delete from foo where (foo.boolean = ?1) or (foo.id = ?0)';
+    let deleteBuilder = new DeleteQueryBuilder(null, schema);
+    let foo = schema.tables.get('foo');
+    deleteBuilder.from(foo)
+                 .where(foo['boolean'].eq(connection.bind(1)).or(
+                        foo['id'].eq(connection.bind(0))));
+    assert.equal(expected, deleteBuilder.toSql());
+  });
+
+  it('toSql_simpleAndBounded', () => {
+    const expected =
+        'delete from foo where (foo.boolean = 1) and (foo.id = 1)';
     let deleteBuilder = new DeleteQueryBuilder(null, schema);
     let foo = schema.tables.get('foo');
     deleteBuilder.from(foo)
                  .where(foo['boolean'].eq(connection.bind(1)).and(
-                        foo['id'].eq(connection.bind(0))));
+                        foo['id'].eq(connection.bind(0))))
+                 .bind(1, true);
     assert.equal(expected, deleteBuilder.toSql());
   });
 });

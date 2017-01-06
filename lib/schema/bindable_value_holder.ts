@@ -29,6 +29,12 @@ export class BindableValueHolder implements IBindableValue {
     this.val = val;
   }
 
+  public clone(): BindableValueHolder {
+    let that = new BindableValueHolder(this.index);
+    that.val = this.val;
+    return that;
+  }
+
   public toString(): string {
     return (this.val === undefined) ? `?${this.index}` :
                                       BindableValueHolder.format(this.val);

@@ -16,6 +16,7 @@
  */
 
 import {ILogicalPredicate} from '../spec/predicate';
+import {BindableValueHolder} from './bindable_value_holder';
 import {PredicateHolder} from './predicate_holder';
 
 export class LogicalPredicate implements ILogicalPredicate {
@@ -51,5 +52,13 @@ export class LogicalPredicate implements ILogicalPredicate {
     let sqlExpressions = this.operands.map(
         val => `(${(val as LogicalPredicate).toSql()})`);
     return `(${this.lhs.toSql()})${this.sql}${sqlExpressions.join(this.sql)}`;
+  }
+
+  public createBinderMap(map: Map<number, BindableValueHolder>) {
+    this.lhs.createBinderMap(map);
+    if (this.operands) {
+      this.operands.forEach(
+          op => (op as LogicalPredicate).createBinderMap(map));
+    }
   }
 }
