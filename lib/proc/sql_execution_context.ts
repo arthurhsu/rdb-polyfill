@@ -24,6 +24,7 @@ export class SqlExecutionContext implements IExecutionContext {
 
   constructor(connection: SqlConnection) {
     this.connection = connection;
+    this.sql = [];
   }
 
   public prepare(sql: string) {
@@ -38,5 +39,9 @@ export class SqlExecutionContext implements IExecutionContext {
   public rollback(): Promise<void> {
     // TODO(arthurhsu): implement
     return Promise.resolve();
+  }
+
+  public inspect(): string[] {
+    return this.sql;
   }
 }

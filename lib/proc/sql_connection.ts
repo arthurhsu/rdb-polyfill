@@ -17,6 +17,8 @@
 
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
+import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
+import {TableChangerPolyfill} from '../schema/table_changer_polyfill';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -94,15 +96,17 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public createTable(name: string): ITableBuilder {
-    throw new Error('NotImplemented');
+    return new TableBuilderPolyfill(this.createContext(), name);
   }
 
-  public alterTable(): ITableChanger {
-    throw new Error('NotImplemented');
+  public alterTable(name: string): ITableChanger {
+    return new TableChangerPolyfill(this.createContext(), name);
   }
 
   public dropTable(name: string): IExecutionContext {
-    throw new Error('NotImplemented');
+    let context = this.createContext();
+    context.prepare(`drop table ${name}`);
+    return context;
   }
 
   public observe(query: ISelectQuery, callbackFn: ObserverCallback): string {

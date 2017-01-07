@@ -19,19 +19,18 @@ import {SqlExecutionContext} from '../proc/sql_execution_context';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {CommonBase} from './common_base';
 import {TableSchema} from './table_schema';
 
 export class TableBuilderPolyfill implements ITableBuilder {
   private context: SqlExecutionContext;
-  private name: string;
   private columnSql: string[];
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
   private schema: TableSchema;
 
-  constructor(context: SqlExecutionContext, name: string) {
+  constructor(context: SqlExecutionContext, readonly name: string) {
     this.context = context;
-    this.name = name;
     this.columnSql = [];
     this.constraintSql = [];
     this.columnType = new Map<string, ColumnType>();
@@ -44,46 +43,20 @@ export class TableBuilderPolyfill implements ITableBuilder {
     if (this.columnType.has(name)) {
       throw new Error('SyntaxError');
     }
-    let sqlType = this.getType(type);
-    let postfix = notNull ? ' not null' : '';
+
     this.columnType.set(name, type);
-    this.columnSql.push(`${name} ${sqlType}${postfix}`);
+    this.columnSql.push(CommonBase.columnDefToSql(name, type, notNull));
     this.schema.column(name, type, notNull);
     return this;
   }
 
-  private getType(type: ColumnType): string {
-    switch (type) {
-      case 'blob':
-        return 'blob';
-
-      case 'number':
-      case 'date':
-        return 'real';
-
-      case 'boolean':
-        return 'integer';
-
-      case 'string':
-      case 'object':
-        return 'text';
-
-      default:
-        throw new Error('InvalidSchemaError');
-    }
-  }
-
   public primaryKey(primaryKey: PrimaryKeyDefinition): ITableBuilder {
-    if (typeof primaryKey != 'string') {
-      throw new Error('NotImplementedYet');
-    }
-
     let type = this.columnType.get(primaryKey as string);
     if (type == 'blob' || type == 'object') {
       throw new Error('InvalidSchemaError');
     }
 
-    this.constraintSql.push(`primary key (${primaryKey})`);
+    this.constraintSql.push(CommonBase.primaryKeyToSql(primaryKey));
     return this;
   }
 
