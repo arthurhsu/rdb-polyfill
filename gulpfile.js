@@ -26,7 +26,6 @@ const sourcemaps = require('gulp-sourcemaps');
 const transform = require('gulp-transform');
 const tslint = require('gulp-tslint');
 const tsc = require('gulp-typescript');
-const typings = require('gulp-typings');
 const karma = require('karma');
 const merge = require('merge2');
 const nopt = require('nopt');
@@ -38,14 +37,12 @@ const Files = {
   TESTING: 'testing/**/*.ts',
   TESTS: 'tests/**/*.ts'
 };
-const TYPINGS_INDEX = 'typings/index.d.ts';
 const Dir = {
   DEF: 'def',
   LIB: 'lib',
   OUTPUT: 'out',
   TESTING: 'testing',
-  TESTS: 'tests',
-  TYPINGS: 'typings'
+  TESTS: 'tests'
 };
 const TSCONFIG = 'tsconfig.json';
 const DIST_FILE = 'rdb.js';
@@ -162,30 +159,22 @@ gulp.task('default', () => {
   log('  --dist: Build only lib as a dist file');
 });
 
-gulp.task('typings', () => {
-  if (fs.existsSync(Dir.TYPINGS)) {
-    return;  // Already run
-  }
-  return gulp.src('typings.json')
-      .pipe(typings());
-});
-
-gulp.task('build_lib', ['typings'], () => {
+gulp.task('build_lib', () => {
   return build(Files.LIB,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.LIB));
 });
 
-gulp.task('build_testing', ['typings'], () => {
+gulp.task('build_testing', () => {
   if (distMode) return;
-  return build([Files.TESTING, TYPINGS_INDEX],
+  return build(Files.TESTING,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTING));
 });
 
 gulp.task('build_tests', ['build_lib', 'build_testing'], () => {
   if (distMode) return;
-  return build([Files.TESTS, TYPINGS_INDEX],
+  return build(Files.TESTS,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTS));
 });
@@ -226,7 +215,6 @@ gulp.task('dev_test', ['build'], () => {
 
 gulp.task('clean', () => {
   fs.removeSync(Dir.OUTPUT);
-  fs.removeSync(Dir.TYPINGS);
 });
 
 gulp.task('test', ['build'], (done) => {
