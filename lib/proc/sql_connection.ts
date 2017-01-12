@@ -126,6 +126,6 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   private createContext(): SqlExecutionContext {
-    return new SqlExecutionContext(this);
+    return new SqlExecutionContext(this.db);
   }
 }

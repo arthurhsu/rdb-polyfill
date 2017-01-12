@@ -15,33 +15,31 @@
  * limitations under the License.
  */
 
+import {NativeDB} from '../dep/sqlite';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
-import {SqlConnection} from './sql_connection';
 
 export class SqlExecutionContext implements IExecutionContext {
-  private connection: SqlConnection;
-  private sql: string[];
+  private db: NativeDB;
+  private sqls: string[];
 
-  constructor(connection: SqlConnection) {
-    this.connection = connection;
-    this.sql = [];
+  constructor(db: NativeDB) {
+    this.db = db;
+    this.sqls = [];
   }
 
   public prepare(sql: string) {
-    this.sql.push(sql);
+    this.sqls.push(sql);
   }
 
   public commit(): Promise<TransactionResults> {
-    // TODO(arthurhsu): implement
-    return Promise.resolve();
+    return this.db.run(this.sqls);
   }
 
   public rollback(): Promise<void> {
-    // TODO(arthurhsu): implement
-    return Promise.resolve();
+    return this.db.exec('rollback');
   }
 
   public inspect(): string[] {
-    return this.sql;
+    return this.sqls;
   }
 }

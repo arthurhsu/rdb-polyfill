@@ -16,7 +16,8 @@
  */
 
 import {Resolver} from '../base/resolver';
-import {DBResponse, NativeDB} from '../dep/sqlite';
+import {NativeDB} from '../dep/sqlite';
+import {TransactionResults} from '../spec/execution_context';
 import {Schema} from '../schema/schema';
 import {DatabaseConnection} from '../spec/database_connection';
 import {IRelationalDatabase, OpenDatabaseOptions} from '../spec/relational_database';
@@ -64,8 +65,8 @@ export class SqlDatabase implements IRelationalDatabase {
     let resolver = new Resolver<SqlConnection>();
     let db = new NativeDB(this.dbName);
     let dbVersion: number;
-    db.get('pragma schema_version').then((result: DBResponse) => {
-      dbVersion = result.row['schema_version'] as number;
+    db.get('pragma schema_version').then((result: TransactionResults) => {
+      dbVersion = result[0]['schema_version'] as number;
       return this.constructSchema(dbVersion);
     }).then((schema: Schema) => {
       resolver.resolve(new SqlConnection(db, schema));
