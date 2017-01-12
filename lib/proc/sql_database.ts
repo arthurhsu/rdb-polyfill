@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {Database} from 'sqlite3';
 import {Resolver} from '../base/resolver';
 import {sqlite3} from '../dep/sqlite';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -25,8 +26,10 @@ import {SqlConnection} from './sql_connection';
 export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
   private dbName: string;
+  private dbVersion: number;
+  private db: Database;
 
-  constructor() {
+  constructor(readonly persistPath: string) {
     this.fn = new FunctionProvider();
   }
 
@@ -35,10 +38,10 @@ export class SqlDatabase implements IRelationalDatabase {
     let resolver = new Resolver<DatabaseConnection>();
 
     this.dbName = (opt && opt.storageType == 'temporary') ? ':memory:' : name;
-    let db = new sqlite3.Database(this.dbName);
-    db.get('pragma schema_version', [], (err: any, row: any) => {
-      console.log(err, row);
-      resolver.resolve(new SqlConnection(name, 0));
+    this.db = new sqlite3.Database(`${this.persistPath}/${this.dbName}`);
+    this.db.get('pragma schema_version', [], (err: any, row: any) => {
+      this.dbVersion = row['schema_version'] as number;
+      resolver.resolve(new SqlConnection(name, this.dbVersion, this.db));
     });
 
     return resolver.promise;
@@ -46,5 +49,9 @@ export class SqlDatabase implements IRelationalDatabase {
 
   public drop(name: string): Promise<void> {
     return Promise.reject('Not implemented');
+  }
+
+  public clone(): Database {
+    return new sqlite3.Database(this.dbName);
   }
 }

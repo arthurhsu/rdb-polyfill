@@ -22,7 +22,7 @@ import {SqlDatabase} from '../../lib/proc/sql_database';
 
 describe('SqlDatabase', () => {
   it('should connect', () => {
-    let db = new SqlDatabase();
+    let db = new SqlDatabase('out');
     db.open('foo').then(connection => {
       console.log(connection);
     });

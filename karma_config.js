@@ -22,6 +22,7 @@ module.exports = function(config) {
 
     // list of files to exclude
     exclude: [
+      'out/tests/**/*_node_test.js'
     ],
 
 

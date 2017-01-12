@@ -58,7 +58,7 @@ export abstract class DatabaseConnection implements IDatabaseConnection,
   public abstract setForeignKeyCheck(value: boolean): IExecutionContext;
   public abstract schema(): IDatabaseSchema;
   public abstract createTable(name: string): ITableBuilder;
-  public abstract alterTable(name:string): ITableChanger;
+  public abstract alterTable(name: string): ITableChanger;
   public abstract dropTable(name: string): IExecutionContext;
 
   public abstract observe(query: ISelectQuery, callbackFn: ObserverCallback):

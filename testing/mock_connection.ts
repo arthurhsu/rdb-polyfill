@@ -21,7 +21,7 @@ import {TableBuilderPolyfill} from '../lib/schema/table_builder_polyfill';
 
 // Returns a mock connection for schema/builder testing.
 export function getMockConnection(): SqlConnection {
-  let connection = new SqlConnection('db', 1);
+  let connection = new SqlConnection('db', 1, null);
   let schema: Schema = connection.schema() as Schema;
   let builder = new TableBuilderPolyfill(null, 'foo');
   builder.column('id', 'number')

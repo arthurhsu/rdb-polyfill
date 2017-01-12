@@ -26,7 +26,6 @@ const sourcemaps = require('gulp-sourcemaps');
 const transform = require('gulp-transform');
 const tslint = require('gulp-tslint');
 const tsc = require('gulp-typescript');
-const karma = require('karma');
 const merge = require('merge2');
 const nopt = require('nopt');
 const path = require('path');
@@ -147,11 +146,10 @@ gulp.task('default', () => {
   log('Usage:');
   log('gulp build: build all libraries and tests');
   log('gulp clean: remove all intermediate files');
-  log('gulp debug: run a Karma server and wait for debug');
-  log('gulp dev_test: run Mocha-only tests');
+  log('gulp debug: run mocha debug');
+  log('gulp test: run mocha tests');
   log('gulp format_check: check files against clang-format')
   log('gulp lint: run tslint against code');
-  log('gulp test: run tests using Karma');
   log('');
   log('Options:');
   log('  --grep <pattern>: Mocha grep, can be used with debug/dev_test/test');
@@ -202,7 +200,7 @@ function getGrepPattern() {
   return opts.grep ? opts.grep : undefined;
 }
 
-gulp.task('dev_test', ['build'], () => {
+gulp.task('test', ['build'], () => {
   let mochaOptions = {
     reporter: 'spec',
     require: ['source-map-support/register'],
@@ -213,22 +211,21 @@ gulp.task('dev_test', ['build'], () => {
       .pipe(mocha(mochaOptions));
 });
 
+gulp.task('debug', ['build'], () => {
+  // Not working yet
+  // need npm install -g node_inspector
+  // then node-debug _mocha??
+  let mochaOptions = {
+    require: ['source-map-support/register'],
+    'debug-brk': true,
+    inspect: true,
+    grep: getGrepPattern()
+  };
+
+  gulp.src('out/tests/**/*.js', {read: false})
+      .pipe(mocha(mochaOptions));
+});
+
 gulp.task('clean', () => {
   fs.removeSync(Dir.OUTPUT);
-});
-
-gulp.task('test', ['build'], (done) => {
-  new karma.Server({
-    configFile: path.join(__dirname, 'karma_config.js'),
-    singleRun: true,
-    client: { mocha: { grep: getGrepPattern() } }
-  }, done).start();
-});
-
-gulp.task('debug', (done) => {
-  new karma.Server({
-    configFile: path.join(__dirname, 'karma_config.js'),
-    singleRun: false,
-    client: { mocha: { grep: getGrepPattern() } }
-  }, done).start();
 });

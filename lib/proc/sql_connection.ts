@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {Database} from 'sqlite3';
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
 import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
@@ -42,9 +43,11 @@ import {UpdateQueryBuilder} from './update_query_builder';
 
 export class SqlConnection extends DatabaseConnection {
   private dbSchema: Schema;
+  private db: Database;
 
-  constructor(readonly name: string, public version: number) {
+  constructor(readonly name: string, public version: number, db: Database) {
     super();
+    this.db = db;
   }
 
   public createTransaction(mode?: TransactionMode): ITransaction {

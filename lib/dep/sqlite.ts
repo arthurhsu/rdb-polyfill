@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-/* tslint: disable */
+/* tslint:disable */
 let sqlite3NodeWrapper = require('sqlite3');
-/* tslint: enable */
+/* tslint:enable */
 
 export const sqlite3 = sqlite3NodeWrapper.verbose();
