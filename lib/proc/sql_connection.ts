@@ -63,7 +63,7 @@ export class SqlConnection extends DatabaseConnection {
     throw new Error('NotImplemented');
   }
 
-  public close(): Promise<any> {
+  public close(): Promise<Error> {
     return this.db.close();
   }
 

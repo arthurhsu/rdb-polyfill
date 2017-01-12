@@ -45,11 +45,9 @@ export class NativeDB {
     return resolver.promise;
   }
 
-  public close(): Promise<DBResponse> {
-    let resolver = new Resolver<DBResponse>();
-    this.db.close(err => {
-      resolver.resolve({err: err} as DBResponse);
-    });
+  public close(): Promise<Error> {
+    let resolver = new Resolver<Error>();
+    this.db.close(err => resolver.resolve(err));
     return resolver.promise;
   }
 }

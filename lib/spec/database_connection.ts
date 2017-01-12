@@ -34,7 +34,7 @@ import {IUpdateQuery} from './update_query';
 
 export interface IDatabaseConnection {
   createTransaction(mode?: TransactionMode): ITransaction;
-  close(): Promise<void>;
+  close(): Promise<Error>;
   bind(index: number): IBindableValue;
 }
 
@@ -45,7 +45,7 @@ export abstract class DatabaseConnection implements IDatabaseConnection,
   readonly name: string;
 
   public abstract createTransaction(mode?: TransactionMode): ITransaction;
-  public abstract close(): Promise<void>;
+  public abstract close(): Promise<Error>;
   public abstract bind(index: number): IBindableValue;
 
   public abstract select(...columns: IColumn[]): ISelectQuery;
