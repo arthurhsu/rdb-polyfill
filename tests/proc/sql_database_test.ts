@@ -23,8 +23,20 @@ import {SqlDatabase} from '../../lib/proc/sql_database';
 describe('SqlDatabase', () => {
   it('should connect', () => {
     let db = new SqlDatabase('out');
-    db.open('foo', {storageType: 'temporary'}).then(connection => {
-      console.log(connection);
+    db.open('foo', {storageType: 'temporary'}).then(conn => {
+      // The following code fragment does not look right.
+      // When it changes schema, the schema object inside sqlconnection does not
+      // know it should change.
+      /*
+      conn.createTable('foo')
+          .column('blob', 'blob')
+          .column('boolean', 'boolean')
+          .column('date', 'date')
+          .column('number', 'number')
+          .column('string', 'string')
+          .column('object', 'object')
+          .commit();
+      */
     });
   });
 });
