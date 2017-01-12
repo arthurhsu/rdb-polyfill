@@ -16,6 +16,7 @@
  */
 
 const chalk = require('chalk');
+const fork = require('child_process').fork;
 const diff = require('diff');
 const fs = require('fs-extra');
 const gulp = require('gulp');
@@ -212,18 +213,23 @@ gulp.task('test', ['build'], () => {
 });
 
 gulp.task('debug', ['build'], () => {
-  // Not working yet
-  // need npm install -g node_inspector
-  // then node-debug _mocha??
-  let mochaOptions = {
-    require: ['source-map-support/register'],
-    'debug-brk': true,
-    inspect: true,
-    grep: getGrepPattern()
-  };
+  let grepPattern = getGrepPattern();
+  let nodeDebug =
+      path.resolve(__dirname, 'node_modules/node-inspector/bin/node-debug.js');
+  let mochaCmd =
+      path.resolve(__dirname, 'node_modules/mocha/bin/_mocha');
+  let commandLine = [
+      mochaCmd,
+      'debug',
+      '--no-timeouts',
+      '--require', 'source-map-support/register',
+      '--recursive', 'out/tests/**/*.js'];
+  if (grepPattern) {
+    commandLine.push('--grep');
+    commandLine.push(grepPattern);
+  }
 
-  gulp.src('out/tests/**/*.js', {read: false})
-      .pipe(mocha(mochaOptions));
+  fork(nodeDebug, commandLine);
 });
 
 gulp.task('clean', () => {
