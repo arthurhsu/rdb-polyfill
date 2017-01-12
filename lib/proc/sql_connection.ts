@@ -45,20 +45,26 @@ export class SqlConnection extends DatabaseConnection {
   private dbSchema: Schema;
   private db: NativeDB;
 
-  constructor(
-      readonly name: string, public version: number, db: NativeDB,
-      schema: Schema) {
+  constructor(db: NativeDB, schema: Schema) {
     super();
     this.db = db;
     this.dbSchema = schema;
+  }
+
+  public get name() {
+    return this.dbSchema.name;
+  }
+
+  public get version() {
+    return this.dbSchema.version;
   }
 
   public createTransaction(mode?: TransactionMode): ITransaction {
     throw new Error('NotImplemented');
   }
 
-  public close(): Promise<void> {
-    throw new Error('NotImplemented');
+  public close(): Promise<any> {
+    return this.db.close();
   }
 
   public bind(index: number): IBindableValue {

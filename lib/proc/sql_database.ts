@@ -27,8 +27,6 @@ export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
   private givenName: string;
   private dbName: string;
-  private dbVersion: number;
-  private db: NativeDB;
   private dbOptions: OpenDatabaseOptions;
 
   constructor(readonly persistPath: string) {
@@ -54,7 +52,7 @@ export class SqlDatabase implements IRelationalDatabase {
   }
 
   public reopen(): Promise<SqlConnection> {
-    if (!this.givenName || this.db) {
+    if (!this.givenName) {
       throw new Error('Invalid reopen request');
     }
 
@@ -64,21 +62,21 @@ export class SqlDatabase implements IRelationalDatabase {
         volatile ? ':memory:' : `${this.persistPath}/${this.givenName}`;
 
     let resolver = new Resolver<SqlConnection>();
-    this.db = new NativeDB(this.dbName);
-    this.db.get('pragma schema_version').then((result: DBResponse) => {
-      this.dbVersion = result.row['schema_version'] as number;
-      return this.constructSchema();
+    let db = new NativeDB(this.dbName);
+    let dbVersion: number;
+    db.get('pragma schema_version').then((result: DBResponse) => {
+      dbVersion = result.row['schema_version'] as number;
+      return this.constructSchema(dbVersion);
     }).then((schema: Schema) => {
-      resolver.resolve(
-          new SqlConnection(this.givenName, this.dbVersion, this.db, schema));
+      resolver.resolve(new SqlConnection(db, schema));
     });
     return resolver.promise;
   }
 
-  private constructSchema(): Promise<Schema> {
+  private constructSchema(version: number): Promise<Schema> {
     let resolver = new Resolver<Schema>();
-    let schema = new Schema(this.givenName, this.dbVersion);
-    if (this.givenName == this.dbName && this.dbVersion > 0) {
+    let schema = new Schema(this.givenName, version);
+    if (this.givenName == this.dbName && version > 0) {
       // TODO(arthurhsu): construct schema
     } else {
       // Volatile or new database
