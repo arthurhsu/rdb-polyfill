@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {Database} from 'sqlite3';
+import {NativeDB} from '../dep/sqlite';
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
 import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
@@ -43,11 +43,14 @@ import {UpdateQueryBuilder} from './update_query_builder';
 
 export class SqlConnection extends DatabaseConnection {
   private dbSchema: Schema;
-  private db: Database;
+  private db: NativeDB;
 
-  constructor(readonly name: string, public version: number, db: Database) {
+  constructor(
+      readonly name: string, public version: number, db: NativeDB,
+      schema: Schema) {
     super();
     this.db = db;
+    this.dbSchema = schema;
   }
 
   public createTransaction(mode?: TransactionMode): ITransaction {
@@ -91,10 +94,6 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public schema(): IDatabaseSchema {
-    if (this.dbSchema == undefined) {
-      // New database
-      this.dbSchema = new Schema(this.name, this.version);
-    }
     return this.dbSchema;
   }
 

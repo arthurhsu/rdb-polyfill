@@ -2,3 +2,4 @@ node_modules/
 out/
 settings.json
 typings/
+.vscode/

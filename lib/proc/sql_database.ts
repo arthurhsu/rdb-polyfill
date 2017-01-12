@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import {Database} from 'sqlite3';
 import {Resolver} from '../base/resolver';
-import {sqlite3} from '../dep/sqlite';
+import {DBResponse, NativeDB} from '../dep/sqlite';
+import {Schema} from '../schema/schema';
 import {DatabaseConnection} from '../spec/database_connection';
 import {IRelationalDatabase, OpenDatabaseOptions} from '../spec/relational_database';
 import {FunctionProvider} from './function_provider';
@@ -25,9 +25,11 @@ import {SqlConnection} from './sql_connection';
 
 export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
+  private givenName: string;
   private dbName: string;
   private dbVersion: number;
-  private db: Database;
+  private db: NativeDB;
+  private dbOptions: OpenDatabaseOptions;
 
   constructor(readonly persistPath: string) {
     this.fn = new FunctionProvider();
@@ -35,23 +37,53 @@ export class SqlDatabase implements IRelationalDatabase {
 
   public open(name: string, opt?: OpenDatabaseOptions):
       Promise<DatabaseConnection> {
-    let resolver = new Resolver<DatabaseConnection>();
-
-    this.dbName = (opt && opt.storageType == 'temporary') ? ':memory:' : name;
-    this.db = new sqlite3.Database(`${this.persistPath}/${this.dbName}`);
-    this.db.get('pragma schema_version', [], (err: any, row: any) => {
-      this.dbVersion = row['schema_version'] as number;
-      resolver.resolve(new SqlConnection(name, this.dbVersion, this.db));
-    });
-
-    return resolver.promise;
+    this.dbOptions = opt;
+    this.givenName = name;
+    return this.reopen();
   }
 
   public drop(name: string): Promise<void> {
     return Promise.reject('Not implemented');
   }
 
-  public clone(): Database {
-    return new sqlite3.Database(this.dbName);
+  public clone(): SqlDatabase {
+    let that = new SqlDatabase(this.persistPath);
+    that.dbOptions = this.dbOptions;
+    that.givenName = this.givenName;
+    return that;
+  }
+
+  public reopen(): Promise<SqlConnection> {
+    if (!this.givenName || this.db) {
+      throw new Error('Invalid reopen request');
+    }
+
+    let volatile =
+        (this.dbOptions && this.dbOptions.storageType == 'temporary');
+    this.dbName =
+        volatile ? ':memory:' : `${this.persistPath}/${this.givenName}`;
+
+    let resolver = new Resolver<SqlConnection>();
+    this.db = new NativeDB(this.dbName);
+    this.db.get('pragma schema_version').then((result: DBResponse) => {
+      this.dbVersion = result.row['schema_version'] as number;
+      return this.constructSchema();
+    }).then((schema: Schema) => {
+      resolver.resolve(
+          new SqlConnection(this.givenName, this.dbVersion, this.db, schema));
+    });
+    return resolver.promise;
+  }
+
+  private constructSchema(): Promise<Schema> {
+    let resolver = new Resolver<Schema>();
+    let schema = new Schema(this.givenName, this.dbVersion);
+    if (this.givenName == this.dbName && this.dbVersion > 0) {
+      // TODO(arthurhsu): construct schema
+    } else {
+      // Volatile or new database
+      resolver.resolve(schema);
+    }
+    return resolver.promise;
   }
 }
