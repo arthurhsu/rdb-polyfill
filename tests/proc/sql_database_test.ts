@@ -23,7 +23,7 @@ import {SqlDatabase} from '../../lib/proc/sql_database';
 describe('SqlDatabase', () => {
   it('should connect', () => {
     let db = new SqlDatabase('out');
-    db.open('foo').then(connection => {
+    db.open('foo', {storageType: 'temporary'}).then(connection => {
       console.log(connection);
     });
   });

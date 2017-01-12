@@ -217,7 +217,7 @@ gulp.task('debug', ['build'], () => {
   let nodeDebug =
       path.resolve(__dirname, 'node_modules/node-inspector/bin/node-debug.js');
   let mochaCmd =
-      path.resolve(__dirname, 'node_modules/mocha/bin/_mocha');
+      path.resolve(__dirname, 'node_modules/mocha/bin/mocha');
   let commandLine = [
       mochaCmd,
       'debug',

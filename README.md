@@ -11,6 +11,7 @@ chosen. The end product is still in ES6, located under `dist/` directory.
 ## How to Build It?
 
 ```bash
+npm install -g gulp
 npm install
 gulp
 ```
