@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import {Resolver} from '../base/resolver';
+import {sqlite3} from '../dep/sqlite';
 import {DatabaseConnection} from '../spec/database_connection';
 import {IRelationalDatabase, OpenDatabaseOptions} from '../spec/relational_database';
 import {FunctionProvider} from './function_provider';
@@ -22,6 +24,7 @@ import {SqlConnection} from './sql_connection';
 
 export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
+  private dbName: string;
 
   constructor() {
     this.fn = new FunctionProvider();
@@ -29,14 +32,19 @@ export class SqlDatabase implements IRelationalDatabase {
 
   public open(name: string, opt?: OpenDatabaseOptions):
       Promise<DatabaseConnection> {
-    // TODO(arthurhsu): implement
-    return Promise.resolve(new SqlConnection(name, 0));
+    let resolver = new Resolver<DatabaseConnection>();
+
+    this.dbName = (opt && opt.storageType == 'temporary') ? ':memory:' : name;
+    let db = new sqlite3.Database(this.dbName);
+    db.get('pragma schema_version', [], (err: any, row: any) => {
+      console.log(err, row);
+      resolver.resolve(new SqlConnection(name, 0));
+    });
+
+    return resolver.promise;
   }
 
   public drop(name: string): Promise<void> {
     return Promise.reject('Not implemented');
   }
 }
-
-// Polyfill the navigator.db.
-navigator['db'] = new SqlDatabase();

@@ -171,7 +171,7 @@ gulp.task('typings', () => {
 });
 
 gulp.task('build_lib', ['typings'], () => {
-  return build(Files.LIB,
+  return build([Files.LIB, TYPINGS_INDEX],
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.LIB));
 });
