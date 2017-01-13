@@ -68,6 +68,7 @@ export class NativeDB {
     let runner = () => {
       if (index == sqls.length) {
         resolver.resolve(result);
+        return;
       }
       let sql = sqls[index];
       this.get(sql).then(res => {

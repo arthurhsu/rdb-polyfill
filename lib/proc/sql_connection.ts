@@ -20,6 +20,7 @@ import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
 import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
 import {TableChangerPolyfill} from '../schema/table_changer_polyfill';
+import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -125,7 +126,15 @@ export class SqlConnection extends DatabaseConnection {
     throw new Error('NotImplemented');
   }
 
+  public getImplicitContext(): NativeDB {
+    return this.db;
+  }
+
+  public reportSchemaChange(change: Map<string, TableSchema>): void {
+    this.dbSchema.reportChange(change);
+  }
+
   private createContext(): SqlExecutionContext {
-    return new SqlExecutionContext(this.db);
+    return new SqlExecutionContext(this, true);
   }
 }

@@ -20,11 +20,14 @@ import {ITable, Table} from '../spec/table';
 import {TableSchema} from './table_schema';
 
 export class Schema implements IDatabaseSchema {
+  static serial: number = 0;
   readonly name: string;
   readonly version: number;
   public tables: Map<string, TableSchema>;
+  readonly id: number;
 
   constructor(name: string, version: number) {
+    this.id = Schema.serial++;
     this.name = name;
     this.version = version;
     this.tables = new Map<string, TableSchema>();
@@ -32,5 +35,16 @@ export class Schema implements IDatabaseSchema {
 
   public table(name: string): Table {
     return this.tables.get(name) as ITable as Table;
+  }
+
+  public reportChange(change: Map<string, TableSchema>): void {
+    console.log('changing', this.id);
+    change.forEach((value, key) => {
+      if (value === null) {
+        this.tables.delete(key);
+      } else {
+        this.tables.set(key, value);
+      }
+    });
   }
 }

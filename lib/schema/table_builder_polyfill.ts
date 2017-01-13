@@ -89,6 +89,7 @@ export class TableBuilderPolyfill implements ITableBuilder {
 
   public commit(): Promise<TransactionResults> {
     this.context.prepare(this.toSql());
+    this.context.reportSchemaChange(this.schema._name, this.schema);
     return this.context.commit();
   }
 
