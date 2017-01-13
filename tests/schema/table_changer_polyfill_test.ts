@@ -23,7 +23,7 @@ const assert = chai.assert;
 
 describe('TableChangerPolyfill', () => {
   let context: SqlExecutionContext;
-  beforeEach(() => context = new SqlExecutionContext(null));
+  beforeEach(() => context = new SqlExecutionContext(null, false));
 
   it('rename', () => {
     let changer = new TableChangerPolyfill(context, 'foo');

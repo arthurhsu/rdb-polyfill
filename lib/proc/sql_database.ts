@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import {Resolver} from '../base/resolver';
+import {NativeDB} from '../dep/sqlite';
+import {TransactionResults} from '../spec/execution_context';
+import {Schema} from '../schema/schema';
 import {DatabaseConnection} from '../spec/database_connection';
 import {IRelationalDatabase, OpenDatabaseOptions} from '../spec/relational_database';
 import {FunctionProvider} from './function_provider';
@@ -22,21 +26,63 @@ import {SqlConnection} from './sql_connection';
 
 export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
+  private givenName: string;
+  private dbName: string;
+  private dbOptions: OpenDatabaseOptions;
 
-  constructor() {
+  constructor(readonly persistPath: string) {
     this.fn = new FunctionProvider();
   }
 
   public open(name: string, opt?: OpenDatabaseOptions):
       Promise<DatabaseConnection> {
-    // TODO(arthurhsu): implement
-    return Promise.resolve(new SqlConnection(name, 0));
+    this.dbOptions = opt;
+    this.givenName = name;
+    return this.reopen();
   }
 
   public drop(name: string): Promise<void> {
     return Promise.reject('Not implemented');
   }
-}
 
-// Polyfill the navigator.db.
-navigator['db'] = new SqlDatabase();
+  public clone(): SqlDatabase {
+    let that = new SqlDatabase(this.persistPath);
+    that.dbOptions = this.dbOptions;
+    that.givenName = this.givenName;
+    return that;
+  }
+
+  public reopen(): Promise<SqlConnection> {
+    if (!this.givenName) {
+      throw new Error('Invalid reopen request');
+    }
+
+    let volatile =
+        (this.dbOptions && this.dbOptions.storageType == 'temporary');
+    this.dbName =
+        volatile ? ':memory:' : `${this.persistPath}/${this.givenName}`;
+
+    let resolver = new Resolver<SqlConnection>();
+    let db = new NativeDB(this.dbName);
+    let dbVersion: number;
+    db.get('pragma schema_version').then((result: TransactionResults) => {
+      dbVersion = result[0]['schema_version'] as number;
+      return this.constructSchema(dbVersion);
+    }).then((schema: Schema) => {
+      resolver.resolve(new SqlConnection(db, schema));
+    });
+    return resolver.promise;
+  }
+
+  private constructSchema(version: number): Promise<Schema> {
+    let resolver = new Resolver<Schema>();
+    let schema = new Schema(this.givenName, version);
+    if (this.givenName == this.dbName && version > 0) {
+      // TODO(arthurhsu): construct schema
+    } else {
+      // Volatile or new database
+      resolver.resolve(schema);
+    }
+    return resolver.promise;
+  }
+}

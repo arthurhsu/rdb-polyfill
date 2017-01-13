@@ -15,33 +15,44 @@
  * limitations under the License.
  */
 
+import {NativeDB} from '../dep/sqlite';
+import {TableSchema} from '../schema/table_schema';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
 import {SqlConnection} from './sql_connection';
 
 export class SqlExecutionContext implements IExecutionContext {
   private connection: SqlConnection;
-  private sql: string[];
+  private db: NativeDB;
+  private sqls: string[];
+  private schemaChange: Map<string, TableSchema>;
 
-  constructor(connection: SqlConnection) {
+  constructor(connection: SqlConnection, implicit = true) {
     this.connection = connection;
-    this.sql = [];
+    this.db = implicit ? connection.getImplicitContext() : null;
+    this.sqls = [];
+    this.schemaChange = new Map<string, TableSchema>();
   }
 
-  public prepare(sql: string) {
-    this.sql.push(sql);
+  public prepare(sql: string): void {
+    this.sqls.push(sql);
+  }
+
+  // Set table to null to report a dropped table.
+  public reportSchemaChange(name: string, table: TableSchema): void {
+    this.schemaChange.set(name, table);
   }
 
   public commit(): Promise<TransactionResults> {
-    // TODO(arthurhsu): implement
-    return Promise.resolve();
+    return this.db.run(this.sqls).then(() => {
+      this.connection.reportSchemaChange(this.schemaChange);
+    });
   }
 
   public rollback(): Promise<void> {
-    // TODO(arthurhsu): implement
-    return Promise.resolve();
+    return this.db.exec('rollback');
   }
 
   public inspect(): string[] {
-    return this.sql;
+    return this.sqls;
   }
 }

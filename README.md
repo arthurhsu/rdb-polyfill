@@ -11,6 +11,7 @@ chosen. The end product is still in ES6, located under `dist/` directory.
 ## How to Build It?
 
 ```bash
+npm install -g gulp
 npm install
 gulp
 ```
@@ -21,7 +22,12 @@ Supported command line and options will be listed in the gulp command.
 
 Still evaluating two different options:
 * Node module that features SQLite3 native code
-* Chrome WebSQL polyfill
+  * Very limited support for `ALTER TABLE`
+  * Temporarily using node-sqlite3 underneath, no support of observers.
+* ~~Chrome WebSQL polyfill~~
+  * WebSQL does not support `BEGIN`, `COMMIT` and `ROLLBACK`
+  * WebSQL transaction callback is not chainable with other asynchronous calls:
+    it will automatically commit.
 
 ## Is this Compatible with Lovefield?
 

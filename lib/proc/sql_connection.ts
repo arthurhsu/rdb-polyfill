@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
+import {NativeDB} from '../dep/sqlite';
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
 import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
 import {TableChangerPolyfill} from '../schema/table_changer_polyfill';
+import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -42,17 +44,28 @@ import {UpdateQueryBuilder} from './update_query_builder';
 
 export class SqlConnection extends DatabaseConnection {
   private dbSchema: Schema;
+  private db: NativeDB;
 
-  constructor(readonly name: string, public version: number) {
+  constructor(db: NativeDB, schema: Schema) {
     super();
+    this.db = db;
+    this.dbSchema = schema;
+  }
+
+  public get name() {
+    return this.dbSchema.name;
+  }
+
+  public get version() {
+    return this.dbSchema.version;
   }
 
   public createTransaction(mode?: TransactionMode): ITransaction {
     throw new Error('NotImplemented');
   }
 
-  public close(): Promise<void> {
-    throw new Error('NotImplemented');
+  public close(): Promise<Error> {
+    return this.db.close();
   }
 
   public bind(index: number): IBindableValue {
@@ -88,10 +101,6 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public schema(): IDatabaseSchema {
-    if (this.dbSchema == undefined) {
-      // New database
-      this.dbSchema = new Schema(this.name, this.version);
-    }
     return this.dbSchema;
   }
 
@@ -117,7 +126,15 @@ export class SqlConnection extends DatabaseConnection {
     throw new Error('NotImplemented');
   }
 
+  public getImplicitContext(): NativeDB {
+    return this.db;
+  }
+
+  public reportSchemaChange(change: Map<string, TableSchema>): void {
+    this.dbSchema.reportChange(change);
+  }
+
   private createContext(): SqlExecutionContext {
-    return new SqlExecutionContext(this);
+    return new SqlExecutionContext(this, true);
   }
 }
