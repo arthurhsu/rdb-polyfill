@@ -49,6 +49,7 @@ export class NativeDB {
     let resolver = new Resolver<TransactionResults>();
     this.db.all(sql, [], (err: Error, rows: any[]) => {
       if (err) {
+        console.error('ERROR:', sql, err.message);
         resolver.reject(err);
       } else {
         resolver.resolve(rows.length ? rows as Object[] : undefined);
@@ -58,10 +59,13 @@ export class NativeDB {
   }
 
   // Sequentially run the SQL statements given. All results will be
-  // concatenated into one single response, and only last error stays.
-  public run(sqls: string[]): Promise<TransactionResults> {
+  // concatenated into one single response. All statement are run in a single
+  // transaction.
+  public run(origSqls: string[]): Promise<TransactionResults> {
     let resolver = new Resolver<TransactionResults>();
 
+    let sqls = ['begin transaction'].concat(origSqls);
+    sqls.push('commit');
     let index = 0;
     let result: Object[] = [];
 
@@ -71,40 +75,25 @@ export class NativeDB {
         return;
       }
       let sql = sqls[index];
-      this.get(sql).then(res => {
+      let promise = sql.startsWith('select') ? this.get(sql) : this.exec(sql);
+      promise.then(res => {
         if (res) {
           Array.prototype.push.apply(result, res);
         }
         index++;
         runner();
-      }, resolver.reject);
+      }, (e) => resolver.reject(e));
     };
 
     runner();
     return resolver.promise;
   }
 
-  // Parallelly run SQL statements and don't really care their return values.
-  // Anything failed will result in rejection. This can result in
-  // partial-update. Caller is responsible for ensuring transaction.
-  public parallel(sqls: string[]): Promise<void> {
-    let promises = new Array<Promise<void>>(sqls.length);
-    sqls.forEach((sql, index) => {
-      this.db.run(sql, (err: Error) => {
-        promises[index] = err ? Promise.reject(err) : Promise.resolve();
-      });
-    });
-    return Promise.all(promises).then(() => {
-      return Promise.resolve();
-    }, (e) => {
-      return Promise.reject(e);
-    });
-  }
-
   public exec(sql: string): Promise<void> {
     let resolver = new Resolver<void>();
     this.db.exec(sql, err => {
       if (err) {
+        console.error('ERROR:', sql, err.message);
         resolver.reject(err);
       } else {
         resolver.resolve();

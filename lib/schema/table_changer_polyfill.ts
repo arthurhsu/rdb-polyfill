@@ -24,9 +24,12 @@ import {CommonBase} from './common_base';
 
 export class TableChangerPolyfill implements ITableChanger {
   private context: SqlExecutionContext;
+  private dbName: string;
 
-  constructor(context: SqlExecutionContext, readonly name: string) {
+  constructor(context: SqlExecutionContext, readonly name: string,
+              dbName: string) {
     this.context = context;
+    this.dbName = dbName;
   }
 
   public rename(newTableName: string): ITableChanger {

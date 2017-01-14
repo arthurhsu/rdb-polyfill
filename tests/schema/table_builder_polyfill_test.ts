@@ -30,7 +30,7 @@ describe('TableBuilderPolyfill', () => {
                      'object text not null, ' +
                      'blob blob' +
                      ')';
-    let builder = new TableBuilderPolyfill(null, 'foo');
+    let builder = new TableBuilderPolyfill(null, 'foo', 'db');
     builder.column('number', 'number')
         .column('string', 'string')
         .column('boolean', 'boolean')
@@ -46,7 +46,7 @@ describe('TableBuilderPolyfill', () => {
                      'name text, ' +
                      'primary key (id)' +
                      ')';
-    let builder = new TableBuilderPolyfill(null, 'foo');
+    let builder = new TableBuilderPolyfill(null, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
         .primaryKey('id');

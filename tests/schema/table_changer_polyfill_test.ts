@@ -26,14 +26,14 @@ describe('TableChangerPolyfill', () => {
   beforeEach(() => context = new SqlExecutionContext(null, false));
 
   it('rename', () => {
-    let changer = new TableChangerPolyfill(context, 'foo');
+    let changer = new TableChangerPolyfill(context, 'foo', 'db');
     const expected = 'alter table foo rename to bar';
     changer.rename('bar');
     assert.equal(expected, changer.toSql());
   });
 
   it('addColumn', () => {
-    let changer = new TableChangerPolyfill(context, 'foo');
+    let changer = new TableChangerPolyfill(context, 'foo', 'db');
     const expected = 'alter table foo add column bar text not null';
     changer.addColumn('bar', 'string', true);
     assert.equal(expected, changer.toSql());

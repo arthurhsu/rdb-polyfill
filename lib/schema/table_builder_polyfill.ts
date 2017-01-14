@@ -28,12 +28,15 @@ export class TableBuilderPolyfill implements ITableBuilder {
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
   private schema: TableSchema;
+  private dbName: string;
 
-  constructor(context: SqlExecutionContext, readonly name: string) {
+  constructor(context: SqlExecutionContext, readonly name: string,
+              dbName: string) {
     this.context = context;
     this.columnSql = [];
     this.constraintSql = [];
     this.columnType = new Map<string, ColumnType>();
+    this.dbName = dbName;
 
     this.schema = new TableSchema(name);
   }
@@ -89,6 +92,12 @@ export class TableBuilderPolyfill implements ITableBuilder {
 
   public commit(): Promise<TransactionResults> {
     this.context.prepare(this.toSql());
+    this.context.prepare(
+        `insert into "$rdb_table" values ("${this.name}", "${this.dbName}")`);
+    this.columnType.forEach((type, name) => {
+      this.context.prepare('insert into "$rdb_column" values ' +
+          `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
+    });
     this.context.reportSchemaChange(this.schema._name, this.schema);
     return this.context.commit();
   }

@@ -20,14 +20,11 @@ import {ITable, Table} from '../spec/table';
 import {TableSchema} from './table_schema';
 
 export class Schema implements IDatabaseSchema {
-  static serial: number = 0;
   readonly name: string;
   readonly version: number;
-  public tables: Map<string, TableSchema>;
-  readonly id: number;
+  private tables: Map<string, TableSchema>;
 
   constructor(name: string, version: number) {
-    this.id = Schema.serial++;
     this.name = name;
     this.version = version;
     this.tables = new Map<string, TableSchema>();
@@ -38,7 +35,6 @@ export class Schema implements IDatabaseSchema {
   }
 
   public reportChange(change: Map<string, TableSchema>): void {
-    console.log('changing', this.id);
     change.forEach((value, key) => {
       if (value === null) {
         this.tables.delete(key);
@@ -46,5 +42,20 @@ export class Schema implements IDatabaseSchema {
         this.tables.set(key, value);
       }
     });
+  }
+
+  public isEqual(schema: Schema): boolean {
+    if (schema.name != this.name || schema.version != this.version) {
+      return false;
+    }
+
+    let tables = Array.from(this.tables.values());
+    for (let i = 0; i < tables.length; i++) {
+      let table = tables[i];
+      let table2 = schema.tables.get(table._name);
+      if (!table.isEqual(table2)) return false;
+    }
+
+    return true;
   }
 }

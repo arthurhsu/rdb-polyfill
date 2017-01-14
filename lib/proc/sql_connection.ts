@@ -105,11 +105,13 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public createTable(name: string): ITableBuilder {
-    return new TableBuilderPolyfill(this.createContext(), name);
+    return new TableBuilderPolyfill(
+        this.createContext(), name, this.dbSchema.name);
   }
 
   public alterTable(name: string): ITableChanger {
-    return new TableChangerPolyfill(this.createContext(), name);
+    return new TableChangerPolyfill(
+        this.createContext(), name, this.dbSchema.name);
   }
 
   public dropTable(name: string): IExecutionContext {

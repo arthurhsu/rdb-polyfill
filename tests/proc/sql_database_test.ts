@@ -15,29 +15,38 @@
  * limitations under the License.
  */
 
-// import * as chai from 'chai';
+import * as chai from 'chai';
 import {SqlConnection} from '../../lib/proc/sql_connection';
 import {SqlDatabase} from '../../lib/proc/sql_database';
+import {Schema} from '../../lib/schema/schema';
 
-// const assert = chai.assert;
+const assert = chai.assert;
 
 describe('SqlDatabase', () => {
-  it('should connect', () => {
-    let db = new SqlDatabase('out');
-    db.open('foo', {storageType: 'temporary'}).then(conn => {
-      let nativeDb = (conn as SqlConnection).getImplicitContext();
-      conn.createTable('foo')
+  it('createTable_persisting', () => {
+    // Use a different named space so that the shared memory will not blocking
+    // the tests shall anything failed.
+    let dbName = new Date().getTime().toString();
+    let inst = new SqlDatabase('out');
+    let inst2 = new SqlDatabase('out');
+    let db: SqlConnection;
+    return inst.open(dbName, {storageType: 'temporary'}).then(conn => {
+      db = conn as SqlConnection;
+      return db.createTable('foo')
           .column('blob', 'blob')
           .column('boolean', 'boolean')
           .column('date', 'date')
           .column('number', 'number')
           .column('string', 'string')
           .column('object', 'object')
-          .commit().then(() => {
-        return nativeDb.get('select * from sqlite_master');
-      }).then(rows => {
-        console.log(rows);
-      });
+          .commit();
+    }).then(() => {
+      return inst2.open(dbName, {storageType: 'temporary'});
+    }).then(db2 => {
+      assert.isTrue((db2.schema() as Schema).isEqual(db.schema() as Schema));
+      return db2.close();
+    }).then(() => {
+      return db.close();
     });
   });
 });
