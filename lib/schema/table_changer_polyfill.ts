@@ -26,8 +26,8 @@ export class TableChangerPolyfill implements ITableChanger {
   private context: SqlExecutionContext;
   private dbName: string;
 
-  constructor(context: SqlExecutionContext, readonly name: string,
-              dbName: string) {
+  constructor(
+      context: SqlExecutionContext, readonly name: string, dbName: string) {
     this.context = context;
     this.dbName = dbName;
   }

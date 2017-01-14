@@ -30,8 +30,8 @@ export class TableBuilderPolyfill implements ITableBuilder {
   private schema: TableSchema;
   private dbName: string;
 
-  constructor(context: SqlExecutionContext, readonly name: string,
-              dbName: string) {
+  constructor(
+      context: SqlExecutionContext, readonly name: string, dbName: string) {
     this.context = context;
     this.columnSql = [];
     this.constraintSql = [];
@@ -95,7 +95,8 @@ export class TableBuilderPolyfill implements ITableBuilder {
     this.context.prepare(
         `insert into "$rdb_table" values ("${this.name}", "${this.dbName}")`);
     this.columnType.forEach((type, name) => {
-      this.context.prepare('insert into "$rdb_column" values ' +
+      this.context.prepare(
+          'insert into "$rdb_column" values ' +
           `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
     });
     this.context.reportSchemaChange(this.schema._name, this.schema);

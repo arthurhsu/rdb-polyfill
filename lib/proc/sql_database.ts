@@ -61,13 +61,22 @@ export class SqlDatabase implements IRelationalDatabase {
 
     let volatile =
         (this.dbOptions && this.dbOptions.storageType == 'temporary');
+    // TODO(arthurhsu): we want to use URI-based in-memory database for volatile
+    // databases, however, node-sqlite3 does not support that. Therefore we'll
+    // need to use this buggy implementation of put everything on the temporary
+    // database for now.
     this.dbName = volatile ? '' : `${this.persistPath}/${this.givenName}`;
 
     let resolver = new Resolver<SqlConnection>();
     let db = new NativeDB(this.dbName);
-    this.constructSchema(db, this.givenName).then((schema: Schema) => {
-      resolver.resolve(new SqlConnection(db, schema));
-    }, (e) => { resolver.reject(e); });
+    this.constructSchema(db, this.givenName)
+        .then(
+            (schema: Schema) => {
+              resolver.resolve(new SqlConnection(db, schema));
+            },
+            (e) => {
+              resolver.reject(e);
+            });
     return resolver.promise;
   }
 
@@ -75,46 +84,51 @@ export class SqlDatabase implements IRelationalDatabase {
     let specialTables: string[];
     return db.get('select name from sqlite_master where type="table"')
         .then((rows: Object[]) => {
-      let tableNames = rows ? rows.map(row => row['name']) : [];
-      specialTables = tableNames.filter(value => value.startsWith('$rdb_'));
-      if (specialTables.length != 0 &&
-          specialTables.length != SqlDatabase.NUM_SPECIAL_TABLE) {
-        throw new Error('DataError: corrupted database');
-      }
+          let tableNames = rows ? rows.map(row => row['name']) : [];
+          specialTables = tableNames.filter(value => value.startsWith('$rdb_'));
+          if (specialTables.length != 0 &&
+              specialTables.length != SqlDatabase.NUM_SPECIAL_TABLE) {
+            throw new Error('DataError: corrupted database');
+          }
 
-      return specialTables.length ? this.getVersion(db, name)
-                                  : Promise.resolve(0);
-    }).then(version => {
-      let schema = new Schema(name, version);
-      if (specialTables.length) {
-        return this.scanSchema(db, schema);
-      } else {
-        // Volatile or new database
-        return this.initializeSchema(db, schema);
-      }
-    });
+          return specialTables.length ? this.getVersion(db, name) :
+                                        Promise.resolve(0);
+        })
+        .then(version => {
+          let schema = new Schema(name, version);
+          if (specialTables.length) {
+            return this.scanSchema(db, schema);
+          } else {
+            // Volatile or new database
+            return this.initializeSchema(db, schema);
+          }
+        });
   }
 
   private getVersion(db: NativeDB, name: string): Promise<number> {
     return db.get(`select version from "$rdb_version" where name="${name}"`)
-             .then(results => {
-               return results['version'] || 0;
-             });
+        .then(results => {
+          return results['version'] || 0;
+        });
   }
 
-  private initializeSchema(db: NativeDB, schema: Schema):
-      Promise<Schema> {
+  private initializeSchema(db: NativeDB, schema: Schema): Promise<Schema> {
     let resolver = new Resolver<Schema>();
 
     db.run([
-      'create table "$rdb_version" (name text, version integer)',
-      `insert into "$rdb_version" values (${schema.name}, 0)`,
-      'create table "$rdb_table" (name text, db text, primary key (name, db))',
-      'create table "$rdb_column" (name text, db text, tbl text, type text, ' +
-          'primary key (name, tbl, db))'
-    ]).then(() => {
-      resolver.resolve(schema);
-    }, (e) => { resolver.reject(e); });
+        'create table "$rdb_version" (name text, version integer)',
+        `insert into "$rdb_version" values (${schema.name}, 0)`,
+        'create table "$rdb_table" (name text, db text, primary key(name, db))',
+        'create table "$rdb_column" (name text, db text, tbl text, type text,' +
+            ' primary key(name, tbl, db))'
+      ])
+        .then(
+            () => {
+              resolver.resolve(schema);
+            },
+            (e) => {
+              resolver.reject(e);
+            });
     return resolver.promise;
   }
 
@@ -122,26 +136,33 @@ export class SqlDatabase implements IRelationalDatabase {
     let resolver = new Resolver<Schema>();
     let change = new Map<string, TableSchema>();
 
-    db.get(`select name from "$rdb_table" where db="${schema.name}"`).then(
-        (rows: Object[]) => {
-      let tableNames = rows.map(row => row['name']);
-      let promises = new Array<Promise<void>>(tableNames.length);
-      tableNames.forEach(tableName => {
-        let promise = db.get(
-            'select name, type from "$rdb_column"' +
-            ` where tbl="${tableName}" and db="${schema.name}"`)
-            .then((rows: Object[]) => {
-              let tableSchema = new TableSchema(tableName);
-              rows.forEach(row => tableSchema.column(row['name'], row['type']));
-              change.set(tableName, tableSchema);
-            }, (e) => { resolver.reject(e); });
-        promises.push(promise);
-      });
-      Promise.all(promises).then(() => {
-        schema.reportChange(change);
-        resolver.resolve(schema);
-      })
-    });
+    db.get(`select name from "$rdb_table" where db="${schema.name}"`)
+        .then((rows: Object[]) => {
+          let tableNames = rows.map(row => row['name']);
+          let promises = new Array<Promise<void>>(tableNames.length);
+          tableNames.forEach(tableName => {
+            let promise =
+                db.get(
+                      'select name, type from "$rdb_column"' +
+                      ` where tbl="${tableName}" and db="${schema.name}"`)
+                    .then(
+                        (rows: Object[]) => {
+                          let tableSchema = new TableSchema(tableName);
+                          rows.forEach(
+                              row =>
+                                  tableSchema.column(row['name'], row['type']));
+                          change.set(tableName, tableSchema);
+                        },
+                        (e) => {
+                          resolver.reject(e);
+                        });
+            promises.push(promise);
+          });
+          Promise.all(promises).then(() => {
+            schema.reportChange(change);
+            resolver.resolve(schema);
+          });
+        });
     return resolver.promise;
   }
 }

@@ -17,7 +17,7 @@
 
 export class Resolver<T> {
   readonly promise: Promise<T>;
-  private resolveFn: (value?: T | PromiseLike<T>) => void;
+  private resolveFn: (value?: T|PromiseLike<T>) => void;
   private rejectFn: (reason?: any) => void;
 
   constructor() {
@@ -27,7 +27,7 @@ export class Resolver<T> {
     });
   }
 
-  public resolve(value?: T | PromiseLike<T>): void {
+  public resolve(value?: T|PromiseLike<T>): void {
     this.resolveFn(value);
   }
 
