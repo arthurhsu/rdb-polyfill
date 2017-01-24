@@ -16,7 +16,7 @@
  */
 
 const chalk = require('chalk');
-const fork = require('child_process').fork;
+const spawn = require('child_process').spawn;
 const diff = require('diff');
 const fs = require('fs-extra');
 const gulp = require('gulp');
@@ -214,22 +214,23 @@ gulp.task('test', ['build'], () => {
 
 gulp.task('debug', ['build'], () => {
   let grepPattern = getGrepPattern();
-  let nodeDebug =
-      path.resolve(__dirname, 'node_modules/node-inspector/bin/node-debug.js');
+  let nodeDebug = 'node';
   let mochaCmd =
       path.resolve(__dirname, 'node_modules/mocha/bin/mocha');
   let commandLine = [
+      '--inspect',
       mochaCmd,
       'debug',
       '--no-timeouts',
-      '--require', 'source-map-support/register',
-      '--recursive', 'out/tests/**/*.js'];
+      '--require', '"source-map-support/register"',
+      '--recursive', '"out/tests/**/*.js"'];
   if (grepPattern) {
     commandLine.push('--grep');
     commandLine.push(grepPattern);
   }
 
-  fork(nodeDebug, commandLine);
+  console.log('Run this command line in your shell:');
+  console.log('node', commandLine.join(' '));
 });
 
 gulp.task('clean', () => {
