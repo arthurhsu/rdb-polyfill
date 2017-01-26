@@ -210,7 +210,7 @@ function getGrepPattern() {
   return opts.grep ? opts.grep : undefined;
 }
 
-gulp.task('test', ['build'], () => {
+gulp.task('test', () => {
   let mochaOptions = {
     reporter: 'spec',
     require: ['source-map-support/register'],

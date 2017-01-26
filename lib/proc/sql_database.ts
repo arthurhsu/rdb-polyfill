@@ -117,7 +117,7 @@ export class SqlDatabase implements IRelationalDatabase {
 
     db.run([
         'create table "$rdb_version" (name text, version integer)',
-        `insert into "$rdb_version" values (${schema.name}, 0)`,
+        `insert into "$rdb_version" values ("${schema.name}", 0)`,
         'create table "$rdb_table" (name text, db text, primary key(name, db))',
         'create table "$rdb_column" (name text, db text, tbl text, type text,' +
             ' primary key(name, tbl, db))'
