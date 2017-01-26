@@ -28,7 +28,7 @@ describe('SimpleEndToEnd', () => {
     let connection: DatabaseConnection = null;
     let payload = {'id': 1, 'name': 'what'};
     let table: Table = null;
-    return db.open('foo' /*, {storageType: 'temporary'}*/)
+    return db.open('foo', {storageType: 'temporary'})
       .then((conn) => {
         assert.isNotNull(conn);
         connection = conn;

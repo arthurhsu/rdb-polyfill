@@ -221,7 +221,7 @@ gulp.task('test', () => {
       .pipe(mocha(mochaOptions));
 });
 
-gulp.task('debug', ['build'], () => {
+gulp.task('debug', () => {
   let grepPattern = getGrepPattern();
   let nodeDebug = 'node';
   let mochaCmd =

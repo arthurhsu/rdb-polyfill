@@ -43,8 +43,9 @@ export class SqlExecutionContext implements IExecutionContext {
   }
 
   public commit(): Promise<TransactionResults> {
-    return this.db.run(this.sqls).then(() => {
+    return this.db.run(this.sqls).then((ret: TransactionResults) => {
       this.connection.reportSchemaChange(this.schemaChange);
+      return ret;
     });
   }
 
