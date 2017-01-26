@@ -6,7 +6,8 @@ This repo provides a polyfill of
 ## Why TypeScript?
 
 The authors need a fast tool to develop polyfill, and thus TypeScript is
-chosen. The end product is still in ES6, located under `dist/` directory.
+chosen. The end product is still in ES6, located under `dist/` directory
+(You need to call `gulp build` to generate the `dist/` directory).
 
 ## How to Build It?
 

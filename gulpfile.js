@@ -39,6 +39,7 @@ const Files = {
 };
 const Dir = {
   DEF: 'def',
+  DIST: 'dist',
   LIB: 'lib',
   OUTPUT: 'out',
   TESTING: 'testing',
@@ -66,24 +67,7 @@ function releaseFilter(contents) {
   return data;
 }
 
-let distMode = false;
-function build(srcs, defs, outs) {
-  let knownOpts = {
-    'mode': ['debug', 'release'],
-    'dist': Boolean
-  };
-  let opts = nopt(knownOpts, null, process.argv, 2);
-  let filter = (opts.mode == 'release') ? releaseFilter : (x) => x;
-  let override = undefined;
-  if (opts.dist) {
-    override = {
-      'module': 'system',
-      'outFile': DIST_FILE
-    };
-    distMode = true;
-    outs = path.resolve(Dir.OUTPUT);
-  }
-
+function doBuild(srcs, defs, outs, filter, override) {
   let tsProject = tsc.createProject(TSCONFIG, override);
   let tsResult = gulp.src(srcs)
       .pipe(transform(filter, {encoding: 'utf8'}))
@@ -97,6 +81,29 @@ function build(srcs, defs, outs) {
         .pipe(sourcemaps.write())
         .pipe(gulp.dest(outs))
   ]);
+}
+
+function getFilter() {
+  let knownOpts = {
+    'mode': ['debug', 'release'],
+  };
+  let opts = nopt(knownOpts, null, process.argv, 2);
+  return (opts.mode == 'release') ? releaseFilter : (x) => x;
+}
+
+function build(srcs, defs, outs) {
+  let filter = getFilter();
+  doBuild(srcs, defs, outs, filter, {});
+}
+
+function buildDist(srcs, defs, outs) {
+  let filter = getFilter();
+  let override = {
+    'declaration': true,
+    'module': 'system',
+    'outFile': DIST_FILE
+  };
+  doBuild(srcs, defs, outs, filter, override);
 }
 
 function prettyPrint(patch) {
@@ -165,17 +172,19 @@ gulp.task('build_lib', () => {
 });
 
 gulp.task('build_testing', () => {
-  if (distMode) return;
   return build(Files.TESTING,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTING));
 });
 
 gulp.task('build_tests', ['build_lib', 'build_testing'], () => {
-  if (distMode) return;
   return build(Files.TESTS,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTS));
+});
+
+gulp.task('build_dist', () => {
+  return buildDist(Files.LIB, Dir.DIST, Dir.DIST);
 });
 
 gulp.task('format_check', () => {
@@ -192,7 +201,7 @@ gulp.task('lint', () => {
       }));
 });
 
-gulp.task('build', ['build_tests'], () => {
+gulp.task('build', ['build_tests', 'build_dist'], () => {
 });
 
 function getGrepPattern() {
@@ -235,4 +244,5 @@ gulp.task('debug', ['build'], () => {
 
 gulp.task('clean', () => {
   fs.removeSync(Dir.OUTPUT);
+  fs.removeSync(Dir.DIST);
 });
