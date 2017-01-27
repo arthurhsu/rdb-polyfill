@@ -21,6 +21,7 @@ import {ITableBuilder} from './table_builder';
 import {ITableChanger} from './table_changer';
 
 export interface ISchemaQueryProvider {
+  readonly supportTransactionalSchemaChange: boolean;
   setVersion(version: number): IExecutionContext;
   setForeignKeyCheck(value: boolean): IExecutionContext;
   schema(): IDatabaseSchema;

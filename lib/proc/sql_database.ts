@@ -16,12 +16,13 @@
  */
 
 import {Resolver} from '../base/resolver';
-import {NativeDB} from '../dep/sqlite';
+import {createNativeDB} from '../dep/create_native_db';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {DatabaseConnection} from '../spec/database_connection';
 import {IRelationalDatabase, OpenDatabaseOptions} from '../spec/relational_database';
 import {FunctionProvider} from './function_provider';
+import {NativeDB} from './native_db';
 import {SqlConnection} from './sql_connection';
 
 export class SqlDatabase implements IRelationalDatabase {
@@ -68,7 +69,7 @@ export class SqlDatabase implements IRelationalDatabase {
     this.dbName = volatile ? '' : `${this.persistPath}/${this.givenName}`;
 
     let resolver = new Resolver<SqlConnection>();
-    let db = new NativeDB(this.dbName);
+    let db = createNativeDB(this.dbName);
     this.constructSchema(db, this.givenName)
         .then(
             (schema: Schema) => {

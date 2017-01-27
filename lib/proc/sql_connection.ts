@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import {NativeDB} from '../dep/sqlite';
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
 import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
@@ -38,6 +37,7 @@ import {ITransaction} from '../spec/transaction';
 import {IUpdateQuery} from '../spec/update_query';
 import {DeleteQueryBuilder} from './delete_query_builder';
 import {InsertQueryBuilder} from './insert_query_builder';
+import {NativeDB} from './native_db';
 import {SelectQueryBuilder} from './select_query_builder';
 import {SqlExecutionContext} from './sql_execution_context';
 import {UpdateQueryBuilder} from './update_query_builder';
@@ -52,12 +52,16 @@ export class SqlConnection extends DatabaseConnection {
     this.dbSchema = schema;
   }
 
-  public get name() {
+  public get name(): string {
     return this.dbSchema.name;
   }
 
-  public get version() {
+  public get version(): number {
     return this.dbSchema.version;
+  }
+
+  public get supportTransactionalSchemaChange(): boolean {
+    return this.db.supportTransactionalSchemaChange();
   }
 
   public createTransaction(mode?: TransactionMode): ITransaction {

@@ -17,6 +17,7 @@
 
 import {Database} from 'sqlite3';
 import {Resolver} from '../base/resolver';
+import {NativeDB} from '../proc/native_db';
 import {TransactionResults} from '../spec/execution_context';
 
 /* tslint:disable */
@@ -27,7 +28,7 @@ export const sqlite3 = sqlite3NodeWrapper.verbose();
 
 // Promise-based wrapper of sqlite3 APIs.
 // Each instance wraps one connection to the database.
-export class NativeDB {
+export class Sqlite3DB implements NativeDB {
   private db: Database;
   private path: string;
 
@@ -100,5 +101,9 @@ export class NativeDB {
       }
     });
     return resolver.promise;
+  }
+
+  public supportTransactionalSchemaChange(): boolean {
+    return true;
   }
 }

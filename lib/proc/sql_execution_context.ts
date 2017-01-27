@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import {NativeDB} from '../dep/sqlite';
 import {TableSchema} from '../schema/table_schema';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
+import {NativeDB} from './native_db';
 import {SqlConnection} from './sql_connection';
 
 export class SqlExecutionContext implements IExecutionContext {

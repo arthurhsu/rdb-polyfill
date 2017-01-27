@@ -43,6 +43,7 @@ export abstract class DatabaseConnection implements IDatabaseConnection,
                                                     IDataQueryProvider,
                                                     ISchemaQueryProvider {
   readonly name: string;
+  readonly supportTransactionalSchemaChange: boolean;
 
   public abstract createTransaction(mode?: TransactionMode): ITransaction;
   public abstract close(): Promise<Error>;
