@@ -51,11 +51,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     return this;
   }
 
-  public values(rows: Object|Object[]|IBindableValue): IInsertQuery {
-    // TODO(arthurhsu): support multiple rows
-    if (Array.isArray(rows)) {
-      throw new Error('NotImplemented');
-    }
+  private singleValue(rows: Object|IBindableValue): IInsertQuery {
     Object.keys(rows).forEach(key => {
       if (!this.table._columns.has(key)) {
         throw new Error('SyntaxError');
@@ -66,6 +62,15 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
       throw new Error('SyntaxError');
     }
     return this;
+  }
+
+  private multiValues(rows: Object[]): IInsertQuery {
+    throw new Error('NotImplemented');
+  }
+
+  public values(rows: Object|Object[]|IBindableValue): IInsertQuery {
+    return Array.isArray(rows) ? this.multiValues(rows)
+                               : this.singleValue(rows);
   }
 
   public createBinderMap(): void {
