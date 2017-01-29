@@ -51,8 +51,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     return this;
   }
 
-  public values(rows: Object|Object[]|IBindableValue|
-                IBindableValue[]): IInsertQuery {
+  public values(rows: Object|Object[]|IBindableValue): IInsertQuery {
     // TODO(arthurhsu): support multiple rows
     if (Array.isArray(rows)) {
       throw new Error('NotImplemented');
@@ -70,6 +69,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   }
 
   public createBinderMap(): void {
+    // TODO(arthurhsu): handle binder resolved into array
     this.valueMap.forEach(value => {
       if (value instanceof BindableValueHolder) {
         this.boundValues.set(value.index, value);

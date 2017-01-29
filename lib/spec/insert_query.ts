@@ -21,5 +21,5 @@ import {ITable} from './table';
 
 export interface IInsertQuery extends IQuery {
   into(table: ITable): IInsertQuery;
-  values(rows: Object|Object[]|IBindableValue|IBindableValue[]): IInsertQuery;
+  values(rows: Object|Object[]|IBindableValue): IInsertQuery;
 }
