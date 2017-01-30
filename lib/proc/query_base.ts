@@ -56,8 +56,8 @@ export abstract class QueryBase implements IQuery {
   abstract toSql(): string;
 
   public commit(): Promise<TransactionResults> {
-    // TODO(arthurhsu): handle multiple sql situation, e.g. insert() values.
-    this.context.prepare(this.toSql());
+    let sqls = this.toSql().split(';\n');
+    sqls.forEach(sql => this.context.prepare(sql));
     return this.context.commit();
   }
 

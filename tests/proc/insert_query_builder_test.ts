@@ -46,4 +46,33 @@ describe('InsertQueryBuilder', () => {
     }) as InsertQueryBuilder;
     assert.equal(expected, insertBuilder.toSql());
   });
+
+  it('toSql_multiRow', () => {
+    let now = new Date();
+    let obj = {foo: 1, bar: 2};
+    const expected = 'insert into foo(id,name,date,boolean,object) values(' +
+                     `1,"bar",${now.getTime()},1,"${JSON.stringify(obj)}");\n` +
+                     'insert into foo(id,name,date,boolean,object) values(' +
+                     `2,"ror",${now.getTime()},0,"${JSON.stringify(obj)}")`;
+
+    let values = [
+      {
+        id: 1,
+        name: 'bar',
+        date: now,
+        boolean: true,
+        object: obj
+      },
+      {
+        id: 2,
+        name: 'ror',
+        date: now,
+        boolean: false,
+        object: obj
+      }
+    ];
+    let insertBuilder =
+        conn.insert().into(foo).values(values) as InsertQueryBuilder;
+    assert.equal(expected, insertBuilder.toSql());
+  });
 });

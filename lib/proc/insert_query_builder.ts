@@ -29,14 +29,13 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   private replace: boolean;
   private table: TableSchema;
   private schema: Schema;
-  private valueMap: Map<string, any>;
+  private value: Object|Object[];
 
   constructor(context: SqlExecutionContext, schema: Schema, replace = false) {
     super(context);
     this.replace = replace;
     this.table = null;
     this.schema = schema;
-    this.valueMap = new Map<string, any>();
   }
 
   public into(table: ITable): IInsertQuery {
@@ -51,57 +50,52 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     return this;
   }
 
-  private singleValue(rows: Object|IBindableValue): IInsertQuery {
-    Object.keys(rows).forEach(key => {
-      if (!this.table._columns.has(key)) {
-        throw new Error('SyntaxError');
-      }
-      this.valueMap.set(key, rows[key]);
-    });
-    if (this.valueMap.size != this.table._columns.size) {
-      throw new Error('SyntaxError');
+  public values(rows: Object|Object[]|IBindableValue): IInsertQuery {
+    if (rows instanceof BindableValueHolder) {
+      this.boundValues.set(rows.index, rows);
+    } else {
+      this.value = rows;
     }
     return this;
   }
 
-  private multiValues(rows: Object[]): IInsertQuery {
-    throw new Error('NotImplemented');
-  }
-
-  public values(rows: Object|Object[]|IBindableValue): IInsertQuery {
-    return Array.isArray(rows) ? this.multiValues(rows)
-                               : this.singleValue(rows);
-  }
-
   public createBinderMap(): void {
-    // TODO(arthurhsu): handle binder resolved into array
-    this.valueMap.forEach(value => {
-      if (value instanceof BindableValueHolder) {
-        this.boundValues.set(value.index, value);
-      }
-    });
+    // Do nothing, already handled in values().
   }
 
   public clone(): IQuery {
     let that = new InsertQueryBuilder(this.context, this.schema, this.replace);
     that.table = this.table;
-    that.valueMap = new Map<string, any>(this.valueMap);
     return that;
   }
 
+  private getValueString(keys: string[], value: Object): string {
+    return keys.map(key => {
+      let type = this.table._columns.get(key).type;
+      return super.toValueString(value[key], type);
+    }).join(',');
+  }
+
+  private getSingleSql(key: string, val: string): string {
+    let prefix = this.replace ? 'insert or replace' : 'insert';
+    return `${prefix} into ${this.table._name}(${key}) values(${val})`;
+  }
+
   public toSql(): string {
-    if (this.table === null || this.valueMap.size == 0) {
+    if (this.table === null ||
+        (this.value === undefined && this.boundValues.size == 0)) {
       throw new Error('SyntaxError');
     }
 
-    // TODO(arthurhsu): implement INSERT OR REPLACE (SQLite dialect)
-    let keys: string[] = [];
-    let vals: string[] = [];
-    this.valueMap.forEach((value, key) => {
-      keys.push(key);
-      vals.push(super.toValueString(value, this.table._columns.get(key).type));
-    });
-    return `insert into ${this.table._name}(${keys.join(',')}) ` +
-        `values(${vals.join(',')})`;
+    let keys = Array.from(this.table._columns.keys());
+    let keyString = keys.join(',');
+    if (Array.isArray(this.value)) {
+      return this.value.map(
+          v => this.getSingleSql(keyString, this.getValueString(keys, v)))
+          .join(';\n');
+    } else {
+      return this.getSingleSql(
+          keyString, this.getValueString(keys, this.value));
+    }
   }
 }
