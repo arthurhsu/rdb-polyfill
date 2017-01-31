@@ -64,8 +64,8 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   }
 
   public clone(): IQuery {
-    let that = new InsertQueryBuilder(
-        this.connection, this.schema, this.replace);
+    let that =
+        new InsertQueryBuilder(this.connection, this.schema, this.replace);
     that.table = this.table;
     that.value = this.value;
     that.cloneBoundValues(this);
@@ -73,10 +73,12 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   }
 
   private getValueString(keys: string[], value: Object): string {
-    return keys.map(key => {
-      let type = this.table._columns.get(key).type;
-      return super.toValueString(value[key], type);
-    }).join(',');
+    return keys
+        .map(key => {
+          let type = this.table._columns.get(key).type;
+          return super.toValueString(value[key], type);
+        })
+        .join(',');
   }
 
   private getSingleSql(key: string, val: string): string {
@@ -93,8 +95,8 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     let keys = Array.from(this.table._columns.keys());
     let keyString = keys.join(',');
     if (Array.isArray(this.value)) {
-      return this.value.map(
-          v => this.getSingleSql(keyString, this.getValueString(keys, v)))
+      return this.value
+          .map(v => this.getSingleSql(keyString, this.getValueString(keys, v)))
           .join(';\n');
     } else {
       return this.getSingleSql(
