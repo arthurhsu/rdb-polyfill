@@ -23,7 +23,7 @@ import {IInsertQuery} from '../spec/insert_query';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SqlExecutionContext} from './sql_execution_context';
+import {SqlConnection} from './sql_connection';
 
 export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   private replace: boolean;
@@ -31,8 +31,8 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   private schema: Schema;
   private value: Object|Object[];
 
-  constructor(context: SqlExecutionContext, schema: Schema, replace = false) {
-    super(context);
+  constructor(connection: SqlConnection, schema: Schema, replace = false) {
+    super(connection);
     this.replace = replace;
     this.table = null;
     this.schema = schema;
@@ -64,8 +64,11 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   }
 
   public clone(): IQuery {
-    let that = new InsertQueryBuilder(this.context, this.schema, this.replace);
+    let that = new InsertQueryBuilder(
+        this.connection, this.schema, this.replace);
     that.table = this.table;
+    that.value = this.value;
+    that.cloneBoundValues(this);
     return that;
   }
 

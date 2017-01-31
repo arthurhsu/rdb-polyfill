@@ -35,6 +35,7 @@ describe('DeleteQueryBuilder', () => {
     const expected = 'delete from foo';
     let deleteBuilder = conn.delete().from(foo) as DeleteQueryBuilder;
     assert.equal(expected, deleteBuilder.toSql());
+    assert.equal(expected, deleteBuilder.clone().toSql());
   });
 
   it('toSql_oneSearchCondition', () => {
@@ -43,6 +44,7 @@ describe('DeleteQueryBuilder', () => {
         conn.delete().from(foo).where(foo['boolean'].eq(true)) as
         DeleteQueryBuilder;
     assert.equal(expected, deleteBuilder.toSql());
+    assert.equal(expected, deleteBuilder.clone().toSql());
   });
 
   it('toSql_simpleAndSearchCondition', () => {
@@ -53,6 +55,7 @@ describe('DeleteQueryBuilder', () => {
             .where(foo['boolean'].eq(true).and(foo['id'].eq(1))) as
         DeleteQueryBuilder;
     assert.equal(expected, deleteBuilder.toSql());
+    assert.equal(expected, deleteBuilder.clone().toSql());
   });
 
   it('toSql_simpleOrUnbound', () => {
@@ -63,6 +66,7 @@ describe('DeleteQueryBuilder', () => {
             .where(foo['boolean'].eq(conn.bind(1)).or(
                 foo['id'].eq(conn.bind(0)))) as DeleteQueryBuilder;
     assert.equal(expected, deleteBuilder.toSql());
+    assert.equal(expected, deleteBuilder.clone().toSql());
   });
 
   it('toSql_simpleAndBounded', () => {
@@ -74,5 +78,6 @@ describe('DeleteQueryBuilder', () => {
                 foo['id'].eq(conn.bind(0))))
             .bind(1, true) as DeleteQueryBuilder;
     assert.equal(expected, deleteBuilder.toSql());
+    assert.equal(expected, deleteBuilder.clone().bind(1, true).toSql());
   });
 });

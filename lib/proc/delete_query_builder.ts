@@ -23,15 +23,15 @@ import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SqlExecutionContext} from './sql_execution_context';
+import {SqlConnection} from './sql_connection';
 
 export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
   private table: TableSchema;
   private schema: Schema;
   private searchCondition: LogicalPredicate;
 
-  constructor(context: SqlExecutionContext, schema: Schema) {
-    super(context);
+  constructor(connection: SqlConnection, schema: Schema) {
+    super(connection);
     this.table = null;
     this.schema = schema;
     this.searchCondition = null;
@@ -58,7 +58,12 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
   }
 
   public clone(): IQuery {
-    throw new Error('Not implemented');
+    let that = new DeleteQueryBuilder(this.connection, this.schema);
+    that.table = this.table;
+    that.searchCondition =
+        this.searchCondition ? this.searchCondition.clone() : null;
+    that.cloneBoundValues(this);
+    return that;
   }
 
   public toSql(): string {

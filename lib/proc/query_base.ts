@@ -19,17 +19,24 @@ import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
+import {SqlConnection} from './sql_connection';
 import {SqlExecutionContext} from './sql_execution_context';
 
 export abstract class QueryBase implements IQuery {
+  protected connection: SqlConnection;
   protected context: SqlExecutionContext;
   protected boundValues: Map<number, BindableValueHolder>;
   protected finalized: boolean;
 
-  constructor(context: SqlExecutionContext) {
-    this.context = context;
+  constructor(connection: SqlConnection) {
+    this.connection = connection;
+    this.context = null;
     this.finalized = false;
     this.boundValues = new Map<number, BindableValueHolder>();
+  }
+
+  public attach(context: SqlExecutionContext): void {
+    this.context = context;
   }
 
   public explain(): Promise<string> {
@@ -55,13 +62,27 @@ export abstract class QueryBase implements IQuery {
   abstract clone(): IQuery;
   abstract toSql(): string;
 
+  protected cloneBoundValues(source: QueryBase): void {
+    source.boundValues.forEach((val, key) => {
+      this.boundValues.set(key, val.clone());
+    });
+  }
+
+  private ensureContext(): void {
+    if (this.context === null) {
+      this.context = this.connection.createContext();
+    }
+  }
+
   public commit(): Promise<TransactionResults> {
+    this.ensureContext();
     let sqls = this.toSql().split(';\n');
     sqls.forEach(sql => this.context.prepare(sql));
     return this.context.commit();
   }
 
   public rollback(): Promise<void> {
+    this.ensureContext();
     return this.context.rollback();
   }
 

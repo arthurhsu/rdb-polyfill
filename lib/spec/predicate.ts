@@ -42,4 +42,5 @@ export interface ITruthPredicate {
 export interface ILogicalPredicate {
   and(...values: ILogicalPredicate[]): ILogicalPredicate;
   or(...values: ILogicalPredicate[]): ILogicalPredicate;
+  clone(): ILogicalPredicate;
 }

@@ -77,23 +77,23 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public select(...columns: IColumn[]): ISelectQuery {
-    return new SelectQueryBuilder(this.createContext(), this.dbSchema, columns);
+    return new SelectQueryBuilder(this, this.dbSchema, columns);
   }
 
   public insert(): IInsertQuery {
-    return new InsertQueryBuilder(this.createContext(), this.dbSchema);
+    return new InsertQueryBuilder(this, this.dbSchema);
   }
 
   public insertOrReplace(): IInsertQuery {
-    return new InsertQueryBuilder(this.createContext(), this.dbSchema, true);
+    return new InsertQueryBuilder(this, this.dbSchema, true);
   }
 
   public update(table: ITable): IUpdateQuery {
-    return new UpdateQueryBuilder(this.createContext(), this.dbSchema, table);
+    return new UpdateQueryBuilder(this, this.dbSchema, table);
   }
 
   public delete(): IDeleteQuery {
-    return new DeleteQueryBuilder(this.createContext(), this.dbSchema);
+    return new DeleteQueryBuilder(this, this.dbSchema);
   }
 
   public setVersion(version: number): IExecutionContext {
@@ -119,6 +119,7 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public dropTable(name: string): IExecutionContext {
+    // TODO(arthurhsu): this should be a QueryBase class to be in tx.
     let context = this.createContext();
     context.prepare(`drop table ${name}`);
     return context;
@@ -140,7 +141,7 @@ export class SqlConnection extends DatabaseConnection {
     this.dbSchema.reportChange(change);
   }
 
-  private createContext(): SqlExecutionContext {
+  public createContext(): SqlExecutionContext {
     return new SqlExecutionContext(this, true);
   }
 }

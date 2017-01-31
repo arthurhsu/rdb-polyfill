@@ -45,6 +45,7 @@ describe('InsertQueryBuilder', () => {
       object: obj
     }) as InsertQueryBuilder;
     assert.equal(expected, insertBuilder.toSql());
+    assert.equal(expected, insertBuilder.clone().toSql());
   });
 
   it('toSql_multiRow', () => {
@@ -74,5 +75,6 @@ describe('InsertQueryBuilder', () => {
     let insertBuilder =
         conn.insert().into(foo).values(values) as InsertQueryBuilder;
     assert.equal(expected, insertBuilder.toSql());
+    assert.equal(expected, insertBuilder.clone().toSql());
   });
 });

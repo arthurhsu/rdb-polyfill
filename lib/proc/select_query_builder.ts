@@ -28,7 +28,7 @@ import {IQuery} from '../spec/query';
 import {ISelectQuery} from '../spec/select_query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SqlExecutionContext} from './sql_execution_context';
+import {SqlConnection} from './sql_connection';
 
 export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private tables: Map<string, TableSchema>;
@@ -38,9 +38,8 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private limitCount: number|IBindableValue;
   private skipCount: number|IBindableValue;
 
-  constructor(
-      context: SqlExecutionContext, schema: Schema, columns: IColumn[]) {
-    super(context);
+  constructor(connection: SqlConnection, schema: Schema, columns: IColumn[]) {
+    super(connection);
     this.tables = new Map<string, TableSchema>();
     this.schema = schema;
     this.columns = [];

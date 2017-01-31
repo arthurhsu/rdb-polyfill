@@ -27,7 +27,7 @@ import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {IUpdateQuery} from '../spec/update_query';
 import {QueryBase} from './query_base';
-import {SqlExecutionContext} from './sql_execution_context';
+import {SqlConnection} from './sql_connection';
 
 export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
   private table: TableSchema;
@@ -36,12 +36,13 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
   private values: ValueType[];
   private searchCondition: LogicalPredicate;
 
-  constructor(context: SqlExecutionContext, schema: Schema, table: ITable) {
-    super(context);
+  constructor(connection: SqlConnection, schema: Schema, table: ITable) {
+    super(connection);
     this.table = table as TableSchema;
     this.schema = schema;
     this.columns = [];
     this.values = [];
+    this.searchCondition = null;
   }
 
   public set(column: IColumn, value: ValueType): IUpdateQuery {
@@ -69,7 +70,13 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
   }
 
   public clone(): IQuery {
-    throw new Error('Not implemented');
+    let that = new UpdateQueryBuilder(this.connection, this.schema, this.table);
+    that.columns = this.columns;
+    that.values = this.values;
+    that.searchCondition =
+        this.searchCondition ? this.searchCondition.clone() : null;
+    that.cloneBoundValues(this);
+    return that;
   }
 
   public toSql(): string {

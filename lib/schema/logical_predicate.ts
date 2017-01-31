@@ -61,4 +61,11 @@ export class LogicalPredicate implements ILogicalPredicate {
           op => (op as LogicalPredicate).createBinderMap(map));
     }
   }
+
+  public clone(): LogicalPredicate {
+    let that = new LogicalPredicate(this.lhs);
+    that.sql = this.sql;
+    that.operands = this.operands ? this.operands.map(v => v.clone()) : null;
+    return that;
+  }
 }

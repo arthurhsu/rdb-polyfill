@@ -43,5 +43,6 @@ describe('UpdateQueryBuilder', () => {
             .set(foo['boolean'], true)
             .where(foo['id'].eq(1)) as UpdateQueryBuilder;
     assert.equal(expected, updateBuilder.toSql());
+    assert.equal(expected, updateBuilder.clone().toSql());
   });
 });
