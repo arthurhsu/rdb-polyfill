@@ -26,7 +26,7 @@ describe('SimpleEndToEnd', () => {
   it('simple_SCUD', () => {
     let db = new SqlDatabase('./out');
     let connection: DatabaseConnection = null;
-    let payload = {'id': 1, 'name': 'what'};
+    let payloads = [{'id': 1, 'name': 'what'}, {'id': 2, 'name': 'whom'}];
     let table: Table = null;
     return db.open('foo', {storageType: 'temporary'})
       .then((conn) => {
@@ -38,20 +38,21 @@ describe('SimpleEndToEnd', () => {
                          .commit();
       }).then(() => {
         table = connection.schema().table('foo');
-        return connection.insert().into(table).values(payload).commit();
+        return connection.insert().into(table).values(payloads).commit();
       }).then(() => {
         return connection.select().from(table)
                                   .where(table['id'].eq(1))
                                   .commit();
       }).then((rows: Object[]) => {
         assert.equal(1, rows.length);
-        assert.deepEqual(payload, rows[0]);
+        assert.deepEqual(payloads[0], rows[0]);
         return connection.update(table).set(table['name'], 'nono').commit();
       }).then(() => {
         return connection.select(table['name']).from(table).commit();
       }).then((rows: Object[]) => {
-        assert.equal(1, rows.length);
+        assert.equal(2, rows.length);
         assert.deepEqual({'name': 'nono'}, rows[0]);
+        assert.deepEqual({'name': 'nono'}, rows[1]);
 
         return connection.delete().from(table).commit();
       }).then(() => {
