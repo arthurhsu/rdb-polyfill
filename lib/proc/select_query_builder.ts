@@ -127,7 +127,15 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
       sql += ` where ${this.searchCondition.toSql()}`;
     }
 
-    // TODO(arthurhsu): limit, skip, orderby, groupby, union, ...
+    if (this.limitCount) {
+      sql += ` limit ${this.toValueString(this.limitCount, 'number')}`;
+    }
+
+    if (this.skipCount) {
+      sql += ` skip ${this.toValueString(this.skipCount, 'number')}`;
+    }
+
+    // TODO(arthurhsu): orderby, groupby, union, ...
     return sql;
   }
 }

@@ -87,6 +87,10 @@ export abstract class QueryBase implements IQuery {
   }
 
   protected toValueString(value: any, type: ColumnType): string {
+    if (value instanceof BindableValueHolder) {
+      return this.toValueString(value.value, type);
+    }
+
     switch (type) {
       case 'number':
         return value.toString();
@@ -101,9 +105,6 @@ export abstract class QueryBase implements IQuery {
         return `"${value}"`;
 
       case 'object':
-        if (value instanceof BindableValueHolder) {
-          return this.toValueString(value.value, type);
-        }
         return `"${JSON.stringify(value)}"`;
 
       default:

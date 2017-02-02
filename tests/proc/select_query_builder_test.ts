@@ -39,4 +39,18 @@ describe('SelectQueryBuilder', () => {
         SelectQueryBuilder;
     assert.equal(expected, selectBuilder.toSql());
   });
+
+  it('toSql_simpleBind', () => {
+    const expected = 'select * from foo where foo.boolean = 1 limit 2 skip 3';
+
+    let bind = [conn.bind(0), conn.bind(1), conn.bind(2)];
+    let selectBuilder =
+        conn.select()
+            .from(foo)
+            .where(foo['boolean'].eq(bind[0]))
+            .skip(bind[2])
+            .limit(bind[1]) as
+        SelectQueryBuilder;
+    assert.equal(expected, selectBuilder.bind(true, 2, 3).toSql());
+  });
 });
