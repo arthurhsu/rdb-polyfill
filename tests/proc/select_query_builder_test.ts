@@ -66,7 +66,6 @@ describe('SelectQueryBuilder', () => {
                      ' where (a.id = b.id) and (a.boolean = 1)';
     let a = foo.as('a');
     let b = foo.as('b');
-    console.log(a['id'], a['boolean']);
     let selectBuilder =
         conn.select(a['id'], a['name'])
             .from(a, b)
