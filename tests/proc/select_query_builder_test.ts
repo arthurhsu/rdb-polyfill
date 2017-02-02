@@ -60,4 +60,17 @@ describe('SelectQueryBuilder', () => {
         SelectQueryBuilder;
     assert.equal(expected, selectBuilder.bind(true, 2, 3).toSql());
   });
+
+  it('toSql_selfJoin', () => {
+    const expected = 'select a.id, a.name from foo a, foo b' +
+                     ' where (a.id = b.id) and (a.boolean = 1)';
+    let a = foo.as('a');
+    let b = foo.as('b');
+    console.log(a['id'], a['boolean']);
+    let selectBuilder =
+        conn.select(a['id'], a['name'])
+            .from(a, b)
+            .where(a['id'].eq(b['id']).and(a['boolean'].eq(true)));
+    assert.equal(expected, selectBuilder.toSql());
+  });
 });

@@ -61,9 +61,18 @@ export class TableSchema implements ITable {
   public as(alias: string) {
     let that = new TableSchema(this._name, alias);
     that._columns = new Map<string, ColumnSchema>();
-    this._columns.forEach(
-        col => new ColumnSchema(
-            alias, col.name, col.type, this._notNull.has(col.name)));
+    this._columns.forEach(col => {
+      let col2 = new ColumnSchema(
+          alias, col.name, col.type, this._notNull.has(col.name));
+      that._columns.set(col.name, col2);
+      Object.defineProperty(that, col.name, {
+        configurable: false,
+        enumerable: false,
+        value: col2,
+        writable: false
+      });
+    });
+
     that._primaryKey = this._primaryKey;
     that._foreignKey = this._foreignKey;
     that._indices = this._indices;

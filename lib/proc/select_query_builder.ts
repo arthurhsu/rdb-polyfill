@@ -132,11 +132,16 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   public toSql(): string {
-    let projection =
-        this.columns.length ? this.columns.map(col => col.name).join(',') : '*';
+    let projection = this.columns.length ?
+        this.columns.map(col => col.fullName).join(', ') :
+        '*';
     let tableList = Array.from(this.tables.values())
-                        .map(table => table.getName())
-                        .join(',');
+                        .map(table => {
+                          return table.getAlias() ?
+                              `${table.getName()} ${table.getAlias()}` :
+                              table.getName();
+                        })
+                        .join(', ');
     let sql = `select ${projection} from ${tableList}`;
     if (this.searchCondition) {
       sql += ` where ${this.searchCondition.toSql()}`;
