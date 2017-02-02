@@ -25,7 +25,7 @@ export abstract class PredicateHolder {
 
   static eval(value: OperandType): string {
     if (value instanceof ColumnSchema) {
-      return (value as ColumnSchema).canonicalName;
+      return (value as ColumnSchema).fullName;
     }
 
     if (value instanceof BindableValueHolder) {
@@ -40,7 +40,7 @@ export class UnaryPredicateHolder extends PredicateHolder {
   private sql: string;
   constructor(column: ColumnSchema, sql: string) {
     super();
-    this.sql = `${column.canonicalName} ${sql}`;
+    this.sql = `${column.fullName} ${sql}`;
   }
 
   public toSql(): string {
@@ -58,7 +58,7 @@ export class BinaryPredicateHolder extends PredicateHolder {
   }
 
   public toSql(): string {
-    return `${this.column.canonicalName} ${this.sql} ` +
+    return `${this.column.fullName} ${this.sql} ` +
         `${PredicateHolder.eval(this.value)}`;
   }
 

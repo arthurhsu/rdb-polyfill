@@ -71,7 +71,7 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
       throw new Error('SyntaxError');
     }
 
-    let sql = `delete from ${this.table._name}`;
+    let sql = `delete from ${this.table.getName()}`;
     if (this.searchCondition != null) {
       sql += ` where ${(this.searchCondition.toSql())}`;
     }

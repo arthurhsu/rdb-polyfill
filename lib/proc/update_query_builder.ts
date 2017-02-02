@@ -89,7 +89,7 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
       let val = super.toValueString(this.values[i], this.columns[i].type);
       setters.push(`${this.columns[i].name}=${val}`);
     }
-    let sql = `update ${this.table._name} set ${setters.join(', ')}`;
+    let sql = `update ${this.table.getName()} set ${setters.join(', ')}`;
     if (this.searchCondition != null) {
       sql += ` where ${this.searchCondition.toSql()}`;
     }

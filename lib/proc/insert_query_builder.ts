@@ -83,7 +83,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
 
   private getSingleSql(key: string, val: string): string {
     let prefix = this.replace ? 'insert or replace' : 'insert';
-    return `${prefix} into ${this.table._name}(${key}) values(${val})`;
+    return `${prefix} into ${this.table.getName()}(${key}) values(${val})`;
   }
 
   public toSql(): string {

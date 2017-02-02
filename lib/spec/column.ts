@@ -22,6 +22,7 @@ import {IComparisonPredicate, ILogicalPredicate, ITruthPredicate, OperandType} f
 export interface IColumn {
   readonly name: string;
   readonly type: ColumnType;
+  readonly fullName: string;
   readonly nullable: boolean;
   as(alias: string): IColumn;
 }
@@ -30,6 +31,7 @@ export abstract class Column implements IColumn, IComparisonPredicate,
                                         ITruthPredicate {
   public abstract get name(): string;
   public abstract get type(): ColumnType;
+  public abstract get fullName(): string;
   public abstract get nullable(): boolean;
   public abstract as(alias: string): IColumn;
 

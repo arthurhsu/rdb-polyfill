@@ -99,7 +99,7 @@ export class TableBuilderPolyfill implements ITableBuilder {
           'insert into "$rdb_column" values ' +
           `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
     });
-    this.context.reportSchemaChange(this.schema._name, this.schema);
+    this.context.reportSchemaChange(this.schema.getName(), this.schema);
     return this.context.commit();
   }
 

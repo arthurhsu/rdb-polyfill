@@ -23,14 +23,14 @@ import {LogicalPredicate} from './logical_predicate';
 import {BinaryPredicateHolder, UnaryPredicateHolder} from './predicate_holder';
 
 export class ColumnSchema extends Column {
-  readonly canonicalName: string;
+  readonly fullName: string;
 
   constructor(
       readonly tableName: string, readonly name: string,
       readonly type: ColumnType, readonly nullable: boolean,
       readonly alias: string = null) {
     super();
-    this.canonicalName = `${tableName}.${name}`;
+    this.fullName = `${tableName}.${name}`;
   }
 
   public as(alias: string): IColumn {

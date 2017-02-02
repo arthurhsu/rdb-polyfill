@@ -32,11 +32,18 @@ describe('SelectQueryBuilder', () => {
   });
 
   it('toSql_simple', () => {
-    const expected = 'select * from foo where foo.boolean = 1';
+    const expected =
+        'select * from foo where foo.boolean = 1' +
+        ' order by foo.id asc, foo.name desc' +
+        ' group by foo.date';
 
     let selectBuilder =
-        conn.select().from(foo).where(foo['boolean'].eq(true)) as
-        SelectQueryBuilder;
+        conn.select()
+            .from(foo)
+            .where(foo['boolean'].eq(true))
+            .orderBy(foo['id'])
+            .orderBy(foo['name'], 'desc')
+            .groupBy(foo['date']) as SelectQueryBuilder;
     assert.equal(expected, selectBuilder.toSql());
   });
 

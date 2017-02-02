@@ -17,6 +17,10 @@
 
 import {Column} from './column';
 
-export interface ITable { as(alias: string): ITable; }
+export interface ITable {
+  as(alias: string): ITable;
+  getName(): string;
+  getAlias(): string;
+}
 
 export type Table = ITable & {[index: string]: Column};

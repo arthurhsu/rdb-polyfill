@@ -37,12 +37,16 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private searchCondition: LogicalPredicate;
   private limitCount: number|IBindableValue;
   private skipCount: number|IBindableValue;
+  private ordering: string[];
+  private grouping: string[];
 
   constructor(connection: SqlConnection, schema: Schema, columns: IColumn[]) {
     super(connection);
     this.tables = new Map<string, TableSchema>();
     this.schema = schema;
     this.columns = [];
+    this.ordering = [];
+    this.grouping = [];
     columns.forEach(col => this.columns.push(col as ColumnSchema));
   }
 
@@ -50,7 +54,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     if (tables.length == 0) throw new Error('SyntaxError');
     tables.forEach(tbl => {
       let table = tbl as TableSchema;
-      this.tables.set(table._name, table);
+      this.tables.set(table.getAlias() || table.getName(), table);
     });
     return this;
   }
@@ -71,21 +75,32 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   public limit(numberOfRows: number|IBindableValue): ISelectQuery {
+    if (this.limitCount) {
+      throw new Error('SyntaxError');
+    }
     this.limitCount = numberOfRows;
     return this;
   }
 
   public skip(numberOfRows: number|IBindableValue): ISelectQuery {
+    if (this.skipCount) {
+      throw new Error('SyntaxError');
+    }
     this.skipCount = numberOfRows;
     return this;
   }
 
-  public orderBy(column: IColumn, order?: Order): ISelectQuery {
-    throw new Error('NotImplemented');
+  public orderBy(column: IColumn, order = 'asc' as Order): ISelectQuery {
+    this.ordering.push(`${column.fullName} ${order}`);
+    return this;
   }
 
   public groupBy(...column: IColumn[]): ISelectQuery {
-    throw new Error('NotImplemented');
+    if (this.grouping.length > 0) {
+      throw new Error('SyntaxError');
+    }
+    column.forEach(col => this.grouping.push(col.fullName));
+    return this;
   }
 
   public union(...query: ISelectQuery[]): ISelectQuery {
@@ -117,14 +132,22 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   public toSql(): string {
-    let projection = this.columns.length ?
-        this.columns.map(col => col.canonicalName).join(',') :
-        '*';
-    let tableList =
-        Array.from(this.tables.values()).map(table => table._name).join(',');
+    let projection =
+        this.columns.length ? this.columns.map(col => col.name).join(',') : '*';
+    let tableList = Array.from(this.tables.values())
+                        .map(table => table.getName())
+                        .join(',');
     let sql = `select ${projection} from ${tableList}`;
     if (this.searchCondition) {
       sql += ` where ${this.searchCondition.toSql()}`;
+    }
+
+    if (this.ordering.length > 0) {
+      sql += ` order by ${this.ordering.join(', ')}`;
+    }
+
+    if (this.grouping.length > 0) {
+      sql += ` group by ${this.grouping.join(', ')}`;
     }
 
     if (this.limitCount) {

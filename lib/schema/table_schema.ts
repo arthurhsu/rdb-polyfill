@@ -21,8 +21,8 @@ import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexSpec} from '../spec/table_
 import {ColumnSchema} from './column_schema';
 
 export class TableSchema implements ITable {
-  readonly _name: string;
-  readonly _alias: string;
+  private _name: string;
+  private _alias: string;
   public _columns: Map<string, ColumnSchema>;
   public _primaryKey: AutoIncrementPrimaryKey|IndexSpec;
   public _foreignKey: ForeignKeySpec[];
@@ -36,6 +36,15 @@ export class TableSchema implements ITable {
     this._foreignKey = [];
     this._indices = [];
     this._notNull = new Set<string>();
+    this._alias = alias;
+  }
+
+  public getName(): string {
+    return this._name;
+  }
+
+  public getAlias(): string {
+    return this._alias;
   }
 
   public column(name: string, type: ColumnType, notNull = false) {
