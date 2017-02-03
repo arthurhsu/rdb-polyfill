@@ -72,4 +72,21 @@ describe('SelectQueryBuilder', () => {
             .where(a['id'].eq(b['id']).and(a['boolean'].eq(true)));
     assert.equal(expected, selectBuilder.toSql());
   });
+
+  it('toSql_subquery', () => {
+    const expected =
+        'select foo.id from foo where foo.boolean = 1 union ' +
+        '(select foo.id from foo where foo.name = "b" intersect ' +
+        '(select foo.id from foo where foo.boolean = 0))';
+    let selectBuilder =
+        conn.select(foo['id']).from(foo).where(foo['boolean'].eq(true))
+            .union(
+                conn.select(foo['id']).from(foo).where(foo['name'].eq('b'))
+                    .intersect(
+                        conn.select(foo['id']).from(foo)
+                            .where(foo['boolean'].eq(false))
+                    )
+            );
+    assert.equal(expected, selectBuilder.toSql());
+  });
 });

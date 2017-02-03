@@ -30,6 +30,11 @@ import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
 import {SqlConnection} from './sql_connection';
 
+type SubQueryType = {
+  op: string,
+  query: ISelectQuery
+};
+
 export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private tables: Map<string, TableSchema>;
   private columns: ColumnSchema[];
@@ -39,6 +44,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private skipCount: number|IBindableValue;
   private ordering: string[];
   private grouping: string[];
+  private subqueries: SubQueryType[];
 
   constructor(connection: SqlConnection, schema: Schema, columns: IColumn[]) {
     super(connection);
@@ -47,6 +53,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     this.columns = [];
     this.ordering = [];
     this.grouping = [];
+    this.subqueries = [];
     columns.forEach(col => this.columns.push(col as ColumnSchema));
   }
 
@@ -103,16 +110,21 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     return this;
   }
 
+  private subquery(op: string, queries: ISelectQuery[]): ISelectQuery {
+    queries.forEach(q => this.subqueries.push({op: op, query: q}));
+    return this;
+  }
+
   public union(...query: ISelectQuery[]): ISelectQuery {
-    throw new Error('NotImplemented');
+    return this.subquery('union', query);
   }
 
   public intersect(...query: ISelectQuery[]): ISelectQuery {
-    throw new Error('NotImplemented');
+    return this.subquery('intersect', query);
   }
 
   public except(...query: ISelectQuery[]): ISelectQuery {
-    throw new Error('NotImplemented');
+    return this.subquery('except', query);
   }
 
   public createBinderMap(): void {
@@ -163,7 +175,14 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
       sql += ` skip ${this.toValueString(this.skipCount, 'number')}`;
     }
 
-    // TODO(arthurhsu): orderby, groupby, union, ...
+    // TODO(arthurhsu): inner join, left outer join
+
+    if (this.subqueries.length) {
+      let subquerySqls = this.subqueries.map(q => {
+        return `${q.op} (${q.query.toSql()})`;
+      });
+      sql = `${sql} ${subquerySqls.join(' ')}`;
+    }
     return sql;
   }
 }
