@@ -65,6 +65,7 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public createTransaction(mode?: TransactionMode): ITransaction {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
@@ -97,10 +98,12 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public setVersion(version: number): IExecutionContext {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public setForeignKeyCheck(value: boolean): IExecutionContext {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
@@ -126,10 +129,12 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public observe(query: ISelectQuery, callbackFn: ObserverCallback): string {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public unobserve(observerKey: string): void {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 

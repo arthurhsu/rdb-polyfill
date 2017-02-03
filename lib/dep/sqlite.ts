@@ -47,6 +47,7 @@ export class Sqlite3DB implements NativeDB {
     // There are many different flavors of Database execution, and we only use
     // Database#all in our code, because it returns all rows. This can/should
     // be further optimized.
+    // TODO(arthurhsu): optimize it
     let resolver = new Resolver<TransactionResults>();
     this.db.all(sql, [], (err: Error, rows: any[]) => {
       if (err) {

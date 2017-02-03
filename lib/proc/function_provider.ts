@@ -21,42 +21,52 @@ import {ILogicalPredicate} from '../spec/predicate';
 
 export class FunctionProvider implements IDatabaseFunctionProvider {
   public not(predicate: ILogicalPredicate): ILogicalPredicate {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public avg(col: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public count(col?: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public distinct(...col: IColumn[]): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public geomean(col: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public min(col: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public max(col: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public stddev(col: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public sum(col: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public var(col: IColumn): IColumn {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 }

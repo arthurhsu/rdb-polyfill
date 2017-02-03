@@ -73,11 +73,13 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
 
   public innerJoin(table: ITable, joinCondition: ILogicalPredicate):
       ISelectQuery {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public leftOuterJoin(table: ITable, joinCondition: ILogicalPredicate):
       ISelectQuery {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
@@ -140,6 +142,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   public clone(): IQuery {
+    // TODO(arthurhsu): implement
     throw new Error('Not implemented');
   }
 

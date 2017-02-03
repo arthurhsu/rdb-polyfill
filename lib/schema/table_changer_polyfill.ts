@@ -43,36 +43,44 @@ export class TableChangerPolyfill implements ITableChanger {
     let columnDef = CommonBase.columnDefToSql(name, type, notNull);
     this.context.prepare(`alter table ${this.name} add column ${columnDef}`);
     if (defaultValue !== undefined) {
+      // TODO(arthurhsu): implement
       throw new Error('NotImplemented');
     }
     return this;
   }
 
   public dropColumn(name: string): ITableChanger {
+    // TODO(arthurhsu): implement, heavy lifting is possible
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
   public addPrimaryKey(primaryKey: PrimaryKeyDefinition): ITableChanger {
+    // TODO(arthurhsu): implement, heavy lifting is possible
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
   public dropPrimaryKey(): ITableChanger {
+    // TODO(arthurhsu): implement, heavy lifting is possible
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
   public addForeignKey(foreignKey: ForeignKeySpec): ITableChanger {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public addIndex(index: IndexSpec): ITableChanger {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public dropConstraintOrIndex(name: string): ITableChanger {
+    // TODO(arthurhsu): implement, heavy lifting is possible
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
   public setColumn(name: string): IColumnChanger {
+    // TODO(arthurhsu): implement, heavy lifting is possible
     throw new Error('NotSupported: SQLite does not have native support');
   }
 

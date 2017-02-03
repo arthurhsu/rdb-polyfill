@@ -50,7 +50,8 @@ export class CommonBase {
 
   static primaryKeyToSql(primaryKey: PrimaryKeyDefinition): string {
     if (typeof primaryKey != 'string') {
-      throw new Error('NotImplementedYet');
+      // TODO(arthurhsu): implement
+      throw new Error('NotImplemented');
     }
     return `primary key (${primaryKey})`;
   }

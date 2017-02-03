@@ -63,16 +63,19 @@ export class ColumnSchema extends Column {
   }
 
   public match(value: IBindableValue|RegExp|string): ILogicalPredicate {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   public between(lhs: ComparableValueType, rhs: ComparableValueType):
       ILogicalPredicate {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
   // clang-format off
   public in(values: ComparableValueType[] | IBindableValue): ILogicalPredicate {
+    // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
   // clang-format on

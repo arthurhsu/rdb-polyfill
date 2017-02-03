@@ -108,6 +108,7 @@ export abstract class QueryBase implements IQuery {
         return `"${JSON.stringify(value)}"`;
 
       default:
+        // TODO(arthurhsu): implement blob
         throw new Error('NotImplemented');
     }
   }
