@@ -40,6 +40,7 @@ import {InsertQueryBuilder} from './insert_query_builder';
 import {NativeDB} from './native_db';
 import {SelectQueryBuilder} from './select_query_builder';
 import {SqlExecutionContext} from './sql_execution_context';
+import {Tx} from './tx';
 import {UpdateQueryBuilder} from './update_query_builder';
 
 export class SqlConnection extends DatabaseConnection {
@@ -64,9 +65,8 @@ export class SqlConnection extends DatabaseConnection {
     return this.db.supportTransactionalSchemaChange();
   }
 
-  public createTransaction(mode?: TransactionMode): ITransaction {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+  public createTransaction(mode = 'readonly' as TransactionMode): ITransaction {
+    return new Tx(this.db, mode);
   }
 
   public close(): Promise<Error> {
