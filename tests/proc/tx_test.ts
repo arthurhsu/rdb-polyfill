@@ -38,6 +38,10 @@ describe('Tx', () => {
         });
   });
 
+  afterEach(() => {
+    db.clear();
+  });
+
   it('exec', () => {
     let expected = 'begin transaction;' +
                    'insert into foo(id,name) values(1,"2");' +
@@ -49,6 +53,25 @@ describe('Tx', () => {
     return conn
         .createTransaction('readwrite')
         .exec([q1, q2])
+        .then(() => {
+          assert.equal(expected, db.sqls.join(';'));
+        });
+  });
+
+  it('attach', () => {
+    let expected = 'begin transaction;' +
+                   'insert into foo(id,name) values(1,"2");' +
+                   'update foo set name="3";' +
+                   'commit';
+    let foo = conn.schema().table('foo');
+    let tx = conn.createTransaction('readwrite');
+    let q1 = conn.insert().into(foo).values({id: 1, name: '2'});
+    let q2 = conn.update(foo).set(foo['name'], '3');
+    return tx
+        .begin()
+        .then(() => tx.attach(q1))
+        .then(() => tx.attach(q2))
+        .then(() => tx.commit())
         .then(() => {
           assert.equal(expected, db.sqls.join(';'));
         });

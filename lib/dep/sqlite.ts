@@ -93,6 +93,8 @@ export class Sqlite3DB implements NativeDB {
 
   public exec(sql: string): Promise<void> {
     let resolver = new Resolver<void>();
+    // TODO(arthurhsu): investigate when multiple statements are exec()
+    // at the same time
     this.db.exec(sql, err => {
       if (err) {
         console.error('ERROR:', sql, err.message);

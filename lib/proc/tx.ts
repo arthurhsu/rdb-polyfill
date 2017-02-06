@@ -25,66 +25,103 @@ import {NativeDB} from './native_db';
 
 export class Tx implements ITransaction {
   private db: NativeDB;
-  private batchMode: boolean;
   private finalized: boolean;
+  private started: boolean;
   private results: TransactionResults;
+  private allowDDL: boolean;
 
   public constructor(db: NativeDB, readonly mode: TransactionMode) {
     this.db = db;
     this.finalized = false;
-    this.batchMode = null;
+    this.started = false;
+    this.allowDDL = this.db.supportTransactionalSchemaChange();
   }
 
   public begin(): Promise<void> {
-    // TODO(arthurhsu): find proper implementation
-    throw new Error('NotImplemented');
+    if (this.started || this.finalized) {
+      throw new Error('TransactionStateError');
+    }
+    this.started = true;
+    return this.db.exec('begin transaction');
+  }
+
+  private checkDDL(q: IExecutionContext): void {
+    if (!this.allowDDL &&
+        (q instanceof TableBuilderPolyfill ||
+         q instanceof TableChangerPolyfill)) {
+      throw new Error('UnsupportedError');
+    }
+  }
+
+  private getSql(q: IExecutionContext): string {
+    return (q as (TableBuilderPolyfill|TableChangerPolyfill|IQuery)).toSql();
   }
 
   public exec(queries: IExecutionContext[]): Promise<TransactionResults> {
-    if (this.batchMode !== null || this.finalized) {
+    if (this.started || this.finalized) {
       throw new Error('TransactionStateError');
     }
 
-    this.batchMode = true;
-    let allowDDL = this.db.supportTransactionalSchemaChange();
-    let sqls: string[] = ['begin transaction'];
+    this.started = true;
+    this.finalized = true;
+    let sqls: string[] = [];
     queries.forEach(q => {
       if (q instanceof Tx) {
         throw new Error('TransactionStateError');
       }
 
-      if (!allowDDL &&
-          (q instanceof TableBuilderPolyfill ||
-           q instanceof TableChangerPolyfill)) {
-        throw new Error('UnsupportedError');
-      }
+      this.checkDDL(q);
 
       // TODO(arthurhsu): readonly/readwrite check
-      sqls.push(
-          (q as (TableBuilderPolyfill|TableChangerPolyfill|IQuery)).toSql());
+      sqls.push(this.getSql(q));
     });
     sqls.push('commit');
-    return this.db.run(sqls);
+
+    // db#run() already offered transactional support.
+    return this.db.run(sqls).then(results => {
+      this.results = results;
+      return results;
+    });
   }
 
   public attach(query: IExecutionContext): Promise<TransactionResults> {
-    // TODO(arthurhsu): find proper implementation
-    throw new Error('NotImplemented');
+    this.checkDDL(query);
+
+    let sql = this.getSql(query);
+    if (sql.startsWith('select')) {
+      return this.db.get(sql).then(results => {
+        this.results = results;
+      });
+    }
+    return this.db.exec(sql);
   }
 
   public commit(): Promise<TransactionResults> {
     if (this.finalized) {
       return Promise.resolve(this.results);
     }
-    // TODO(arthurhsu): find proper implementation
-    throw new Error('NotImplemented');
+
+    this.finalized = true;
+    if (!this.started) {
+      return Promise.resolve(null);
+    }
+
+    return this.db.exec('commit').then(() => {
+      return this.results;
+    });
   }
 
   public rollback(): Promise<void> {
-    if (this.finalized || this.batchMode) {
+    if (this.finalized) {
       throw new Error('TransactionStateError');
     }
-    // TODO(arthurhsu): clean the object to its initial state
-    return Promise.resolve();
+
+    this.finalized = true;
+    this.results = undefined;
+    if (!this.started) {
+      return Promise.resolve(null);
+    }
+
+    return this.db.exec('rollback');
   }
 }
