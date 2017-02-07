@@ -15,30 +15,30 @@
  * limitations under the License.
  */
 
+import {ILogicalPredicate} from '../spec/predicate';
 import {BindableValueHolder} from './bindable_value_holder';
 import {LogicalPredicateBase} from './logical_predicate_base';
-import {PredicateHolder} from './predicate_holder';
 
-export class LogicalPredicate extends LogicalPredicateBase {
-  private lhs: PredicateHolder|LogicalPredicateBase;
+export class NotPredicate extends LogicalPredicateBase {
+  readonly predicate: LogicalPredicateBase;
 
-  constructor(lhs: PredicateHolder|LogicalPredicateBase) {
+  constructor(predicate: ILogicalPredicate) {
     super();
-    this.lhs = lhs;
+    this.predicate = predicate as LogicalPredicateBase;
   }
 
   public toSql(): string {
-    this.baseSql = this.lhs.toSql();
+    this.baseSql = `not (${this.predicate.toSql()})`;
     return super.toSql();
   }
 
   public createBinderMap(map: Map<number, BindableValueHolder>) {
-    this.lhs.createBinderMap(map);
+    this.predicate.createBinderMap(map);
     super.createBinderMap(map);
   }
 
-  public clone(): LogicalPredicate {
-    let that = new LogicalPredicate(this.lhs);
+  public clone(): NotPredicate {
+    let that = new NotPredicate(this.predicate.clone());
     that.cloneChain(this);
     return that;
   }

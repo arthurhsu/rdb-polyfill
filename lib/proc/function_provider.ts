@@ -17,12 +17,14 @@
 
 import {IColumn} from '../spec/column';
 import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
+import {NotPredicate} from '../schema/not_predicate';
 import {ILogicalPredicate} from '../spec/predicate';
+
+
 
 export class FunctionProvider implements IDatabaseFunctionProvider {
   public not(predicate: ILogicalPredicate): ILogicalPredicate {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return new NotPredicate(predicate);
   }
 
   public avg(col: IColumn): IColumn {
