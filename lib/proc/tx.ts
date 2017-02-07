@@ -46,15 +46,15 @@ export class Tx implements ITransaction {
   }
 
   private checkDDL(q: IExecutionContext): void {
-    if (!this.allowDDL &&
-        (q instanceof TableBuilderPolyfill ||
-         q instanceof TableChangerPolyfill)) {
+    if (!this.allowDDL && (q instanceof TableBuilderPolyfill ||
+                           q instanceof TableChangerPolyfill)) {
       throw new Error('UnsupportedError');
     }
   }
 
   private getSql(q: IExecutionContext): string {
-    return (q as (TableBuilderPolyfill|TableChangerPolyfill|IQuery)).toSql();
+    return (q as (TableBuilderPolyfill | TableChangerPolyfill | IQuery))
+        .toSql();
   }
 
   public exec(queries: IExecutionContext[]): Promise<TransactionResults> {

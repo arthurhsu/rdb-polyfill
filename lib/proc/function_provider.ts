@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 
+import {NotPredicate} from '../schema/not_predicate';
 import {IColumn} from '../spec/column';
 import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
-import {NotPredicate} from '../schema/not_predicate';
 import {ILogicalPredicate} from '../spec/predicate';
-
-
 
 export class FunctionProvider implements IDatabaseFunctionProvider {
   public not(predicate: ILogicalPredicate): ILogicalPredicate {
