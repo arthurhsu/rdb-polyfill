@@ -66,21 +66,8 @@ export class FunctionProvider implements IDatabaseFunctionProvider {
     return new AggregatedColumn('max', col.type, col);
   }
 
-  public stddev(col: IColumn): IColumn {
-    // TODO(arthurhsu): by default SQLite3 does not support stddev/stdev
-    this.ensureNumericColumn(col);
-    return new AggregatedColumn('stddev', 'number', col);
-  }
-
   public sum(col: IColumn): IColumn {
-    // TODO(arthurhsu): in SQLite3 this should be total(x) instead of sum(x)
     this.ensureNumericColumn(col);
     return new AggregatedColumn('sum', 'number', col);
-  }
-
-  public var(col: IColumn): IColumn {
-    // TODO(arthurhsu): by default SQLite3 does not support variance
-    this.ensureNumericColumn(col);
-    return new AggregatedColumn('variance', 'number', col);
   }
 }

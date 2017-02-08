@@ -23,7 +23,5 @@ export interface IAggregateFunction {
   distinct(...col: IColumn[]): IColumn;
   min(col: IColumn): IColumn;
   max(col: IColumn): IColumn;
-  stddev(col: IColumn): IColumn;
   sum(col: IColumn): IColumn;
-  var(col: IColumn): IColumn;
 }

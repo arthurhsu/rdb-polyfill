@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 
-import {IBindableValue} from '../spec/bindable_value';
-import {Column, IColumn} from '../spec/column';
-import {ColumnType, ComparableValueType} from '../spec/enums';
-import {ILogicalPredicate, OperandType} from '../spec/predicate';
+import {IColumn} from '../spec/column';
+import {ColumnType} from '../spec/enums';
 
-export class AggregatedColumn extends Column {
+export class AggregatedColumn implements IColumn {
   readonly name: string;
   readonly fullName: string;
   readonly nullable: boolean;
@@ -28,7 +26,6 @@ export class AggregatedColumn extends Column {
   constructor(readonly sql: string, readonly type: ColumnType,
               readonly column: IColumn|IColumn[],
               readonly alias: string = null) {
-    super();
     if (column === null) {
       this.fullName = `${sql}(*)`;
       this.name = this.fullName;
@@ -44,52 +41,5 @@ export class AggregatedColumn extends Column {
 
   public as(alias: string): IColumn {
     return new AggregatedColumn(this.sql, this.type, this.column, alias);
-  }
-
-  public eq(value: OperandType): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public neq(value: OperandType): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public lt(value: OperandType): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public lte(value: OperandType): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public gt(value: OperandType): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public gte(value: OperandType): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public match(value: IBindableValue|RegExp|string): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public between(lhs: ComparableValueType, rhs: ComparableValueType):
-      ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  // clang-format off
-  public in(values: ComparableValueType[] | IBindableValue): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-  // clang-format on
-
-  public isNull(): ILogicalPredicate {
-    throw new Error('SyntaxError');
-  }
-
-  public isNotNull(): ILogicalPredicate {
-    throw new Error('SyntaxError');
   }
 }
