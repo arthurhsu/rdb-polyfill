@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {LogicalPredicate} from '../schema/logical_predicate';
+import {LogicalPredicate} from '../pred/logical_predicate';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {IDeleteQuery} from '../spec/delete_query';

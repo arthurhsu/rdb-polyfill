@@ -16,10 +16,10 @@
  */
 
 import * as chai from 'chai';
+import {LogicalPredicate} from '../../lib/pred/logical_predicate';
+import {NotPredicate} from '../../lib/pred/not_predicate';
+import {BinaryPredicateHolder, UnaryPredicateHolder} from '../../lib/pred/predicate_holder';
 import {ColumnSchema} from '../../lib/schema/column_schema';
-import {LogicalPredicate} from '../../lib/schema/logical_predicate';
-import {NotPredicate} from '../../lib/schema/not_predicate';
-import {BinaryPredicateHolder, UnaryPredicateHolder} from '../../lib/schema/predicate_holder';
 
 const assert = chai.assert;
 

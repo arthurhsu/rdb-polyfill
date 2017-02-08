@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
+import {NotPredicate} from '../pred/not_predicate';
 import {AggregatedColumn} from '../schema/aggregated_column';
-import {NotPredicate} from '../schema/not_predicate';
 import {IColumn} from '../spec/column';
 import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
 import {ILogicalPredicate} from '../spec/predicate';

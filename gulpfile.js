@@ -46,7 +46,6 @@ const Dir = {
   TESTS: 'tests'
 };
 const TSCONFIG = 'tsconfig.json';
-const DIST_FILE = 'rdb.js';
 
 function releaseFilter(contents) {
   const START_TOKEN = '/// #if DEBUG';
@@ -94,16 +93,6 @@ function getFilter() {
 function build(srcs, defs, outs) {
   let filter = getFilter();
   doBuild(srcs, defs, outs, filter, {});
-}
-
-function buildDist(srcs, defs, outs) {
-  let filter = getFilter();
-  let override = {
-    'declaration': true,
-    'module': 'system',
-    'outFile': DIST_FILE
-  };
-  doBuild(srcs, defs, outs, filter, override);
 }
 
 function prettyPrint(patch) {
@@ -155,6 +144,7 @@ gulp.task('default', () => {
   log('gulp build: build all libraries and tests');
   log('gulp clean: remove all intermediate files');
   log('gulp debug: run mocha debug');
+  log('gulp dist: create dist package');
   log('gulp test: run mocha tests');
   log('gulp format_check: check files against clang-format')
   log('gulp lint: run tslint against code');
@@ -162,7 +152,6 @@ gulp.task('default', () => {
   log('Options:');
   log('  --grep <pattern>: Mocha grep, can be used with debug/dev_test/test');
   log('  --mode <debug|release>: Choose build mode');
-  log('  --dist: Build only lib as a dist file');
 });
 
 gulp.task('build_lib', () => {
@@ -183,10 +172,6 @@ gulp.task('build_tests', ['build_lib', 'build_testing'], () => {
       path.join(Dir.OUTPUT, Dir.TESTS));
 });
 
-gulp.task('build_dist', () => {
-  return buildDist(Files.LIB, Dir.DIST, Dir.DIST);
-});
-
 gulp.task('format_check', () => {
   gulp.src([Files.LIB, Files.TESTS])
       .pipe(format())
@@ -201,7 +186,21 @@ gulp.task('lint', () => {
       }));
 });
 
-gulp.task('build', ['build_tests', 'build_dist'], () => {
+gulp.task('build', ['build_tests'], () => {
+});
+
+gulp.task('dist', () => {
+  let cwd = process.cwd();
+  let targetLib = path.resolve(path.join(__dirname, Dir.OUTPUT, Dir.LIB));
+  let targetDef = path.resolve(path.join(__dirname, Dir.OUTPUT, Dir.DEF));
+  process.chdir(path.resolve(__dirname, Dir.DIST));
+  if (!fs.existsSync(Dir.LIB)) {
+    fs.symlinkSync(targetLib, Dir.LIB);
+  }
+  if (!fs.existsSync(Dir.DEF)) {
+    fs.symlinkSync(targetDef, Dir.DEF);
+  }
+  process.chdir(cwd);
 });
 
 function getGrepPattern() {
@@ -244,5 +243,4 @@ gulp.task('debug', () => {
 
 gulp.task('clean', () => {
   fs.removeSync(Dir.OUTPUT);
-  fs.removeSync(Dir.DIST);
 });

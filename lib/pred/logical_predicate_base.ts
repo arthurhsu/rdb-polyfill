@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
+import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ILogicalPredicate} from '../spec/predicate';
-import {BindableValueHolder} from './bindable_value_holder';
 
 export abstract class LogicalPredicateBase implements ILogicalPredicate {
   protected baseSql: string;

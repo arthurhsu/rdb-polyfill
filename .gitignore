@@ -1,4 +1,5 @@
-dist/
+dist/def
+dist/lib
 node_modules/
 out/
 settings.json

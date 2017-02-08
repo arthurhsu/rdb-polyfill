@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
+import {BindableValueHolder} from '../schema/bindable_value_holder';
+import {ColumnSchema} from '../schema/column_schema';
 import {OperandType} from '../spec/predicate';
-import {BindableValueHolder} from './bindable_value_holder';
-import {ColumnSchema} from './column_schema';
 
 export abstract class PredicateHolder {
   abstract toSql(): string;

@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
+import {LogicalPredicate} from '../pred/logical_predicate';
+import {BinaryPredicateHolder, UnaryPredicateHolder} from '../pred/predicate_holder';
 import {IBindableValue} from '../spec/bindable_value';
 import {Column, IColumn} from '../spec/column';
 import {ColumnType, ComparableValueType} from '../spec/enums';
 import {ILogicalPredicate, OperandType} from '../spec/predicate';
-import {LogicalPredicate} from './logical_predicate';
-import {BinaryPredicateHolder, UnaryPredicateHolder} from './predicate_holder';
 
 export class ColumnSchema extends Column {
   readonly fullName: string;
