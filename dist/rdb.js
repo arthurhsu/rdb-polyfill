@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-const SqlDatabase = require('lib/proc/sql_database');
+const SqlDatabase = require('./lib/proc/sql_database').SqlDatabase;
 
-if (typeof navigator === undefined) {
+if (typeof navigator === 'undefined') {
   exports.navigator = {};
   navigator = exports.navigator;
 }
