@@ -21,7 +21,6 @@ export interface IAggregateFunction {
   avg(col: IColumn): IColumn;
   count(col?: IColumn): IColumn;
   distinct(...col: IColumn[]): IColumn;
-  geomean(col: IColumn): IColumn;
   min(col: IColumn): IColumn;
   max(col: IColumn): IColumn;
   stddev(col: IColumn): IColumn;

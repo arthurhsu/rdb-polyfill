@@ -18,7 +18,7 @@
 import {NativeDB} from '../lib/proc/native_db';
 import {TransactionResults} from '../lib/spec/execution_context';
 
-export class MockDB implements NativeDB {
+export class MockNativeDB implements NativeDB {
   public mockResults: TransactionResults;
   public sqls: string[];
   public supportTransactionalDDL: boolean;

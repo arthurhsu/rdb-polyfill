@@ -16,6 +16,7 @@
  */
 
 import * as chai from 'chai';
+import {FunctionProvider} from '../../lib/proc/function_provider';
 import {SelectQueryBuilder} from '../../lib/proc/select_query_builder';
 import {SqlConnection} from '../../lib/proc/sql_connection';
 import {Table} from '../../lib/spec/table';
@@ -26,7 +27,9 @@ const assert = chai.assert;
 describe('SelectQueryBuilder', () => {
   let foo: Table;
   let conn: SqlConnection;
+  let fn: FunctionProvider;
   before(() => {
+    fn = new FunctionProvider();
     conn = getMockConnection();
     foo = conn.schema().table('foo');
   });
@@ -87,6 +90,31 @@ describe('SelectQueryBuilder', () => {
                             .where(foo['boolean'].eq(false))
                     )
             );
+    assert.equal(expected, selectBuilder.toSql());
+  });
+
+  it('toSql_avg', () => {
+    const expected = 'select avg(foo.id) from foo where foo.boolean = 1';
+    let selectBuilder =
+        conn.select(fn.avg(foo['id']))
+            .from(foo)
+            .where(foo['boolean'].eq(true));
+    assert.equal(expected, selectBuilder.toSql());
+  });
+
+  it('toSql_count', () => {
+    const expected =
+        'select count(foo.id), count(*) from foo where foo.boolean = 1';
+    let selectBuilder =
+        conn.select(fn.count(foo['id']), fn.count())
+            .from(foo)
+            .where(foo['boolean'].eq(true));
+    assert.equal(expected, selectBuilder.toSql());
+  });
+
+  it('toSql_distinct', () => {
+    const expected = 'select distinct foo.name from foo';
+    let selectBuilder = conn.select(fn.distinct(foo['name'])).from(foo);
     assert.equal(expected, selectBuilder.toSql());
   });
 });

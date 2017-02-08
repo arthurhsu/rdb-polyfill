@@ -18,16 +18,16 @@
 import * as chai from 'chai';
 import {SqlConnection} from '../../lib/proc/sql_connection';
 import {Schema} from '../../lib/schema/schema';
-import {MockDB} from '../../testing/mock_db';
+import {MockNativeDB} from '../../testing/mock_native_db';
 
 const assert = chai.assert;
 
 describe('Tx', () => {
-  let db: MockDB;
+  let db: MockNativeDB;
   let conn: SqlConnection;
 
   before(() => {
-    db = new MockDB();
+    db = new MockNativeDB();
     conn = new SqlConnection(db, new Schema('db', 1));
     return conn.createTable('foo')
         .column('id', 'number')

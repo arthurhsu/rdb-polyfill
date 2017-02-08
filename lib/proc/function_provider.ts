@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {AggregatedColumn} from '../schema/aggregated_column';
 import {NotPredicate} from '../schema/not_predicate';
 import {IColumn} from '../spec/column';
 import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
@@ -25,48 +26,61 @@ export class FunctionProvider implements IDatabaseFunctionProvider {
     return new NotPredicate(predicate);
   }
 
+  private ensureNumericColumn(col: IColumn): void {
+    if (col.type != 'number') {
+      throw new Error('SyntaxError');
+    }
+  }
+
+  private ensureComparableColumn(col: IColumn): void {
+    if (col.type != 'number' && col.type != 'date' && col.type != 'string') {
+      throw new Error('SyntaxError');
+    }
+  }
+
   public avg(col: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    this.ensureNumericColumn(col);
+    return new AggregatedColumn('avg', 'number', col);
   }
 
   public count(col?: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    if (col) {
+      this.ensureNumericColumn(col);
+    }
+    return new AggregatedColumn('count', 'number', col || null);
   }
 
   public distinct(...col: IColumn[]): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
-  }
-
-  public geomean(col: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    // TODO(arthurhsu): handle multi-column distinct
+    let type = (col.length == 1) ? col[0].type : 'object';
+    return new AggregatedColumn('distinct', type, col);
   }
 
   public min(col: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    this.ensureComparableColumn(col);
+    return new AggregatedColumn('min', col.type, col);
   }
 
   public max(col: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    this.ensureComparableColumn(col);
+    return new AggregatedColumn('max', col.type, col);
   }
 
   public stddev(col: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    // TODO(arthurhsu): by default SQLite3 does not support stddev/stdev
+    this.ensureNumericColumn(col);
+    return new AggregatedColumn('stddev', 'number', col);
   }
 
   public sum(col: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    // TODO(arthurhsu): in SQLite3 this should be total(x) instead of sum(x)
+    this.ensureNumericColumn(col);
+    return new AggregatedColumn('sum', 'number', col);
   }
 
   public var(col: IColumn): IColumn {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    // TODO(arthurhsu): by default SQLite3 does not support variance
+    this.ensureNumericColumn(col);
+    return new AggregatedColumn('variance', 'number', col);
   }
 }
