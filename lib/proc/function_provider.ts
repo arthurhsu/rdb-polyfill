@@ -28,13 +28,13 @@ export class FunctionProvider implements IDatabaseFunctionProvider {
 
   private ensureNumericColumn(col: IColumn): void {
     if (col.type != 'number') {
-      throw new Error('SyntaxError');
+      throw new Error('TypeError');
     }
   }
 
   private ensureComparableColumn(col: IColumn): void {
     if (col.type != 'number' && col.type != 'date' && col.type != 'string') {
-      throw new Error('SyntaxError');
+      throw new Error('TypeError');
     }
   }
 

@@ -23,9 +23,9 @@ export class AggregatedColumn implements IColumn {
   readonly fullName: string;
   readonly nullable: boolean;
 
-  constructor(readonly sql: string, readonly type: ColumnType,
-              readonly column: IColumn|IColumn[],
-              readonly alias: string = null) {
+  constructor(
+      readonly sql: string, readonly type: ColumnType,
+      readonly column: IColumn|IColumn[], readonly alias: string = null) {
     if (column === null) {
       this.fullName = `${sql}(*)`;
       this.name = this.fullName;
