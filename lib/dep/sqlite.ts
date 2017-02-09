@@ -34,7 +34,7 @@ export class Sqlite3DB implements NativeDB {
 
   constructor(path: string) {
     this.path = path;
-    this.db = new sqlite3.Database(path);
+    this.db = new sqlite3.Database(path || '.');
   }
 
   public close(): Promise<Error> {
