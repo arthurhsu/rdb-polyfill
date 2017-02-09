@@ -27,7 +27,6 @@ import {SqlConnection} from './sql_connection';
 
 export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
-  public currentInstance: NativeDB;
 
   static NUM_SPECIAL_TABLE: number = 3;
 
@@ -46,14 +45,14 @@ export class SqlDatabase implements IRelationalDatabase {
     // databases, however, node-sqlite3 does not support that. Therefore we'll
     // need to use this buggy implementation of put everything on the temporary
     // database for now.
-    let dbName = volatile ? '' : `${this.persistPath}/${name}`;
+    let dbName = volatile ? ':memory:' : `${this.persistPath}/${name}`;
 
     let resolver = new Resolver<SqlConnection>();
-    this.currentInstance = Implementation.createNativeDB(dbName);
-    this.constructSchema(this.currentInstance, name)
+    let db = Implementation.createNativeDB(dbName);
+    this.constructSchema(db, name)
         .then(
             (schema: Schema) => {
-              resolver.resolve(new SqlConnection(this.currentInstance, schema));
+              resolver.resolve(new SqlConnection(db, schema));
             },
             (e) => {
               resolver.reject(e);

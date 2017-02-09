@@ -28,4 +28,3 @@ export class Implementation {
     return Promise.resolve();
   }
 }
-

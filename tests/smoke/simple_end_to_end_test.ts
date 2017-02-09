@@ -28,38 +28,38 @@ describe('SimpleEndToEnd', () => {
     let payloads = [{'id': 1, 'name': 'what'}, {'id': 2, 'name': 'whom'}];
     let table: Table = null;
     return rdb.open('foo', {storageType: 'temporary'})
-      .then(conn => {
-        assert.isNotNull(conn);
-        db = conn;
-        return db.createTable('foo')
-                 .column('id', 'number')
-                 .column('name', 'string')
-                 .commit();
-      }).then(() => {
-        table = db.schema().table('foo');
-        return db.insert().into(table).values(payloads).commit();
-      }).then(() => {
-        return db.select().from(table).where(table['id'].eq(1)).commit();
-      }).then((rows: Object[]) => {
-        assert.equal(1, rows.length);
-        assert.deepEqual(payloads[0], rows[0]);
-        return db.update(table).set(table['name'], 'nono').commit();
-      }).then(() => {
-        return db.select(table['name']).from(table).commit();
-      }).then((rows: Object[]) => {
-        assert.equal(2, rows.length);
-        assert.deepEqual({'name': 'nono'}, rows[0]);
-        assert.deepEqual({'name': 'nono'}, rows[1]);
+        .then(conn => {
+          assert.isNotNull(conn);
+          db = conn;
+          return db.createTable('foo')
+                  .column('id', 'number')
+                  .column('name', 'string')
+                  .commit();
+        }).then(() => {
+          table = db.schema().table('foo');
+          return db.insert().into(table).values(payloads).commit();
+        }).then(() => {
+          return db.select().from(table).where(table['id'].eq(1)).commit();
+        }).then((rows: Object[]) => {
+          assert.equal(1, rows.length);
+          assert.deepEqual(payloads[0], rows[0]);
+          return db.update(table).set(table['name'], 'nono').commit();
+        }).then(() => {
+          return db.select(table['name']).from(table).commit();
+        }).then((rows: Object[]) => {
+          assert.equal(2, rows.length);
+          assert.deepEqual({'name': 'nono'}, rows[0]);
+          assert.deepEqual({'name': 'nono'}, rows[1]);
 
-        return db.delete().from(table).commit();
-      }).then(() => {
-        return db.select().from(table).commit();
-      }).then((rows: Object[]) => {
-        assert.equal(0, rows.length);
-        return db.close();
-      }, (e) => {
-        console.error(e);
-        throw e;
-      });
+          return db.delete().from(table).commit();
+        }).then(() => {
+          return db.select().from(table).commit();
+        }).then((rows: Object[]) => {
+          assert.equal(0, rows.length);
+          return db.close();
+        }, (e) => {
+          console.error(e);
+          throw e;
+        });
   });
 });
