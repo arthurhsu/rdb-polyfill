@@ -19,19 +19,73 @@ gulp
 
 Supported command line and options will be listed in the gulp command.
 
-## How to Use It? What's the Supported Browser?
+## What's the Supported Browser?
 
-Still evaluating two different options:
 * Node module that features SQLite3 native code
   * Very limited support for `ALTER TABLE`
   * Temporarily using node-sqlite3 underneath, no support of observers.
-* ~~Chrome WebSQL polyfill~~
+
+Other options considered:
+
+* ~~Chrome WebSQL polyfill~~ This is no-go.
   * WebSQL does not support `BEGIN`, `COMMIT` and `ROLLBACK`
   * WebSQL transaction callback is not chainable with other asynchronous calls:
     it will automatically commit.
+* Electron
+  * Eventually we'd like to build a proof-of-concept using Electron and show
+    the power of native C++ bindings.
 
 ## Is this Compatible with Lovefield?
 
-Mostly. Some APIs have changed since we are no longer constrainted by
+Sort of. Some APIs have changed since we are no longer constrainted by
 IndexedDB. Major change is in the syntax of search condition and database
-schema change.
+schema change. There are fewer aggregate functions supported due to
+underlying SQL engine support.
+
+Observers are greatly simplified because the original observer design in
+Lovefield provides detailed information than needed in most cases.
+
+## How to Use It?
+
+See `example/` for JavaScript (Node.js) usage.
+
+## How to Debug the Code?
+
+Debugging with TypeScript+Mocha+Node.js (especially Node.js 7.x) is very tricky.
+The easiest way to do this is to use VSCode as your editor, then add this
+launch config to your Debug settings:
+
+```json
+"configurations": [
+    {
+      "name": "Run Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-u", "tdd",
+        "--no-timeouts",
+        "--colors",
+        "${workspaceRoot}/out/**/*.js"
+      ],
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": null,
+      "runtimeArgs": [
+        "--nolazy"
+      ],
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceRoot}/out/lib/**/*.js",
+        "${workspaceRoot}/out/testing/**/*.js",
+        "${workspaceRoot}/out/tests/**/*.js"
+      ]
+    }
+  ]
+```
+
+To put a breakpoint, you MUST put them on `out/**/*.js` instead of TypeScript
+file. Once the breakpoint is hit, it's the TypeScript file that will be used
+for stepping and debugging.
