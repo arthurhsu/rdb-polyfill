@@ -16,7 +16,7 @@
  */
 
 import {Resolver} from '../base/resolver';
-import {createNativeDB} from '../dep/create_native_db';
+import {Implementation} from '../dep/implementation';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -27,9 +27,6 @@ import {SqlConnection} from './sql_connection';
 
 export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
-  private givenName: string;
-  private dbName: string;
-  private dbOptions: OpenDatabaseOptions;
 
   static NUM_SPECIAL_TABLE: number = 3;
 
@@ -37,40 +34,22 @@ export class SqlDatabase implements IRelationalDatabase {
     this.fn = new FunctionProvider();
   }
 
+  public drop(name: string): Promise<void> {
+    return Implementation.dropNativeDB(`${this.persistPath}/${name}`);
+  }
+
   public open(name: string, opt?: OpenDatabaseOptions):
       Promise<DatabaseConnection> {
-    this.dbOptions = opt;
-    this.givenName = name;
-    return this.reopen();
-  }
-
-  public drop(name: string): Promise<void> {
-    return Promise.reject('Not implemented');
-  }
-
-  public clone(): SqlDatabase {
-    let that = new SqlDatabase(this.persistPath);
-    that.dbOptions = this.dbOptions;
-    that.givenName = this.givenName;
-    return that;
-  }
-
-  public reopen(): Promise<SqlConnection> {
-    if (!this.givenName) {
-      throw new Error('Invalid reopen request');
-    }
-
-    let volatile =
-        (this.dbOptions && this.dbOptions.storageType == 'temporary');
+    let volatile = (opt && opt.storageType == 'temporary');
     // TODO(arthurhsu): we want to use URI-based in-memory database for volatile
     // databases, however, node-sqlite3 does not support that. Therefore we'll
     // need to use this buggy implementation of put everything on the temporary
     // database for now.
-    this.dbName = volatile ? '' : `${this.persistPath}/${this.givenName}`;
+    let dbName = volatile ? ':memory:' : `${this.persistPath}/${name}`;
 
     let resolver = new Resolver<SqlConnection>();
-    let db = createNativeDB(this.dbName);
-    this.constructSchema(db, this.givenName)
+    let db = Implementation.createNativeDB(dbName);
+    this.constructSchema(db, name)
         .then(
             (schema: Schema) => {
               resolver.resolve(new SqlConnection(db, schema));

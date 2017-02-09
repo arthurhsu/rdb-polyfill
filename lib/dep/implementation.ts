@@ -18,6 +18,13 @@
 import {NativeDB} from '../proc/native_db';
 import {Sqlite3DB} from './sqlite';
 
-export function createNativeDB(path?: string): NativeDB {
-  return new Sqlite3DB(path);
+export class Implementation {
+  static createNativeDB(path?: string): NativeDB {
+    return new Sqlite3DB(path);
+  }
+
+  static dropNativeDB(path?: string): Promise<void> {
+    // TODO(arthurhsu): implement
+    return Promise.resolve();
+  }
 }
