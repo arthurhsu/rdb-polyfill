@@ -42,6 +42,7 @@
     "gulp-util": "^3.0.7",
     "merge2": "^1.0.2",
     "mocha": "^3.1.2",
+    "node-inspector": "^0.12.8",
     "nopt": "^3.0.6",
     "source-map-support": "^0.4.6",
     "sqlite3": "^3.1.8",

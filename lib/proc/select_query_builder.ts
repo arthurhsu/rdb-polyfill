@@ -158,8 +158,22 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   public clone(): IQuery {
-    // TODO(arthurhsu): implement
-    throw new Error('Not implemented');
+    let that = new SelectQueryBuilder(this.connection, this.schema, this.columns);
+    this.tables.forEach((value, key) => {
+      that.tables.set(key, value);
+    });
+    if (this.searchCondition) {
+      that.searchCondition = this.searchCondition.clone();
+    }
+    that.limitCount = (this.limitCount instanceof BindableValueHolder) ?
+        this.limitCount.clone() : this.limitCount;
+    that.skipCount = (this.skipCount instanceof BindableValueHolder) ?
+        this.skipCount.clone() : this.skipCount;
+    that.ordering = this.ordering.concat([]);
+    that.grouping = this.grouping.concat([]);
+    that.subqueries = this.subqueries.concat([]);
+    that.joins = this.joins.concat([]);
+    return that;
   }
 
   private getTableName(table: ITable): string {

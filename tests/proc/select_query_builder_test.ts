@@ -48,6 +48,7 @@ describe('SelectQueryBuilder', () => {
             .orderBy(foo['name'], 'desc')
             .groupBy(foo['date']) as SelectQueryBuilder;
     assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
   });
 
   it('toSql_simpleBind', () => {
@@ -62,6 +63,10 @@ describe('SelectQueryBuilder', () => {
             .limit(bind[1]) as
         SelectQueryBuilder;
     assert.equal(expected, selectBuilder.bind(true, 2, 3).toSql());
+
+    const expected2 = 'select * from foo where foo.boolean = 0 limit 3 skip 2'
+    assert.equal(expected2, selectBuilder.bind(false, 3, 2).toSql());
+    assert.equal(expected, selectBuilder.clone().bind(true, 2, 3).toSql());
   });
 
   it('toSql_selfJoin', () => {
@@ -74,6 +79,7 @@ describe('SelectQueryBuilder', () => {
             .from(a, b)
             .where(a['id'].eq(b['id']).and(a['boolean'].eq(true)));
     assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
   });
 
   it('toSql_subquery', () => {
@@ -91,6 +97,7 @@ describe('SelectQueryBuilder', () => {
                     )
             );
     assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
   });
 
   it('toSql_avg', () => {
@@ -100,6 +107,7 @@ describe('SelectQueryBuilder', () => {
             .from(foo)
             .where(foo['boolean'].eq(true));
     assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
   });
 
   it('toSql_count', () => {
@@ -110,12 +118,14 @@ describe('SelectQueryBuilder', () => {
             .from(foo)
             .where(foo['boolean'].eq(true));
     assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
   });
 
   it('toSql_distinct', () => {
     const expected = 'select distinct foo.name from foo';
     let selectBuilder = conn.select(fn.distinct(foo['name'])).from(foo);
     assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
   });
 
   it('toSql_innerJoin', () => {
@@ -129,5 +139,6 @@ describe('SelectQueryBuilder', () => {
             .innerJoin(b, b['id'].eq(a['id']))
             .where(a['boolean'].eq(true));
     assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
   });
 });
