@@ -40,6 +40,7 @@ export abstract class QueryBase implements IQuery {
   }
 
   public explain(): Promise<string> {
+    // TODO(arthurhsu): implement
     return Promise.resolve('Explain not implemented');
   }
 
