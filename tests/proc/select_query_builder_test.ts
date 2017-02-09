@@ -117,4 +117,17 @@ describe('SelectQueryBuilder', () => {
     let selectBuilder = conn.select(fn.distinct(foo['name'])).from(foo);
     assert.equal(expected, selectBuilder.toSql());
   });
+
+  it('toSql_innerJoin', () => {
+    const expected = 'select a.id, a.name from foo a' +
+                     ' inner join foo b on b.id = a.id where a.boolean = 1';
+    let a = foo.as('a');
+    let b = foo.as('b');
+    let selectBuilder =
+        conn.select(a['id'], a['name'])
+            .from(a)
+            .innerJoin(b, b['id'].eq(a['id']))
+            .where(a['boolean'].eq(true));
+    assert.equal(expected, selectBuilder.toSql());
+  });
 });

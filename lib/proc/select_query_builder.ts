@@ -35,6 +35,12 @@ type SubQueryType = {
   query: ISelectQuery
 };
 
+type JoinType = {
+  op: string,
+  table: ITable,
+  on: ILogicalPredicate
+};
+
 export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private tables: Map<string, TableSchema>;
   private columns: ColumnSchema[];
@@ -45,6 +51,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private ordering: string[];
   private grouping: string[];
   private subqueries: SubQueryType[];
+  private joins: JoinType[];
 
   constructor(connection: SqlConnection, schema: Schema, columns: IColumn[]) {
     super(connection);
@@ -54,6 +61,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     this.ordering = [];
     this.grouping = [];
     this.subqueries = [];
+    this.joins = [];
     columns.forEach(col => this.columns.push(col as ColumnSchema));
   }
 
@@ -73,14 +81,22 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
 
   public innerJoin(table: ITable, joinCondition: ILogicalPredicate):
       ISelectQuery {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    this.joins.push({
+      op: 'inner join',
+      table: table,
+      on: joinCondition
+    });
+    return this;
   }
 
   public leftOuterJoin(table: ITable, joinCondition: ILogicalPredicate):
       ISelectQuery {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    this.joins.push({
+      op: 'left join',
+      table: table,
+      on: joinCondition
+    });
+    return this;
   }
 
   public limit(numberOfRows: number|IBindableValue): ISelectQuery {
@@ -146,18 +162,29 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     throw new Error('Not implemented');
   }
 
+  private getTableName(table: ITable): string {
+    return table.getAlias() ?
+        `${table.getName()} ${table.getAlias()}` :
+        table.getName();
+  }
+
   public toSql(): string {
     let projection = this.columns.length ?
         this.columns.map(col => col.fullName).join(', ') :
         '*';
     let tableList = Array.from(this.tables.values())
-                        .map(table => {
-                          return table.getAlias() ?
-                              `${table.getName()} ${table.getAlias()}` :
-                              table.getName();
-                        })
+                        .map(table => this.getTableName(table))
                         .join(', ');
     let sql = `select ${projection} from ${tableList}`;
+
+    if (this.joins.length) {
+      let joinSql = this.joins.map(j => {
+        let condition = (j.on as LogicalPredicate).toSql();
+        return `${j.op} ${this.getTableName(j.table)} on ${condition}`;
+      }).join(' ');
+      sql += ' ' + joinSql;
+    }
+
     if (this.searchCondition) {
       sql += ` where ${this.searchCondition.toSql()}`;
     }
@@ -177,8 +204,6 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     if (this.skipCount) {
       sql += ` skip ${this.toValueString(this.skipCount, 'number')}`;
     }
-
-    // TODO(arthurhsu): inner join, left outer join
 
     if (this.subqueries.length) {
       let subquerySqls = this.subqueries.map(q => {
