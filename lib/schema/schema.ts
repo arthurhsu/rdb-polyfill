@@ -43,19 +43,4 @@ export class Schema implements IDatabaseSchema {
       }
     });
   }
-
-  public isEqual(schema: Schema): boolean {
-    if (schema.name != this.name || schema.version != this.version) {
-      return false;
-    }
-
-    let tables = Array.from(this.tables.values());
-    for (let i = 0; i < tables.length; i++) {
-      let table = tables[i];
-      let table2 = schema.tables.get(table.getName());
-      if (!table.isEqual(table2)) return false;
-    }
-
-    return true;
-  }
 }

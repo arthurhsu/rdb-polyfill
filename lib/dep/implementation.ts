@@ -24,7 +24,8 @@ export class Implementation {
   }
 
   static dropNativeDB(path?: string): Promise<void> {
-    // TODO(arthurhsu): implement
+    let fs = require('fs-extra');
+    fs.removeSync(path);
     return Promise.resolve();
   }
 }

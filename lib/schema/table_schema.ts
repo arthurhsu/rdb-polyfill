@@ -79,12 +79,4 @@ export class TableSchema implements ITable {
     that._notNull = this._notNull;
     return that;
   }
-
-  public isEqual(schema: TableSchema): boolean {
-    if (this._name == schema._name) {
-      // TODO(arthurhsu): implement
-      return true;
-    }
-    return false;
-  }
 }
