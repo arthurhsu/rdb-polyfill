@@ -17,18 +17,17 @@
 
 import * as chai from 'chai';
 import {DeleteQueryBuilder} from '../../lib/proc/delete_query_builder';
-import {SqlConnection} from '../../lib/proc/sql_connection';
 import {Table} from '../../lib/spec/table';
-import {getMockConnection} from '../../testing/mock_connection';
+import {MockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('DeleteQueryBuilder', () => {
   let foo: Table;
-  let conn: SqlConnection;
+  let conn: MockConnection;
   before(() => {
-    conn = getMockConnection();
-    foo = conn.schema().table('foo');
+    conn = new MockConnection();
+    return conn.createFoo().then(() => foo = conn.schema().table('foo'));
   });
 
   it('toSql_simple', () => {

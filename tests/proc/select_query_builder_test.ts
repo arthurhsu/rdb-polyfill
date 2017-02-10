@@ -18,20 +18,19 @@
 import * as chai from 'chai';
 import {FunctionProvider} from '../../lib/proc/function_provider';
 import {SelectQueryBuilder} from '../../lib/proc/select_query_builder';
-import {SqlConnection} from '../../lib/proc/sql_connection';
 import {Table} from '../../lib/spec/table';
-import {getMockConnection} from '../../testing/mock_connection';
+import {MockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('SelectQueryBuilder', () => {
   let foo: Table;
-  let conn: SqlConnection;
+  let conn: MockConnection;
   let fn: FunctionProvider;
   before(() => {
     fn = new FunctionProvider();
-    conn = getMockConnection();
-    foo = conn.schema().table('foo');
+    conn = new MockConnection();
+    return conn.createFoo().then(() => foo = conn.schema().table('foo'));
   });
 
   it('toSql_simple', () => {

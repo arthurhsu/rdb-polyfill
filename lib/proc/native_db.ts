@@ -23,4 +23,6 @@ export interface NativeDB {
   run(originalSqls: string[]): Promise<TransactionResults>;
   exec(sql: string): Promise<void>;
   supportTransactionalSchemaChange(): boolean;
+  getAutoIncrementKeyword(): string;
+  toggleForeignKeyCheckSql(mode: boolean): string;
 }

@@ -65,4 +65,12 @@ export class MockNativeDB implements NativeDB {
   public supportTransactionalSchemaChange(): boolean {
     return this.supportTransactionalDDL;
   }
+
+  public getAutoIncrementKeyword(): string {
+    return 'autoincrement';
+  }
+
+  public toggleForeignKeyCheckSql(mode: boolean): string {
+    return 'pragma foreign_key=' + (mode ? '1' : '0');
+  }
 }

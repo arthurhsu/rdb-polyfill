@@ -32,6 +32,9 @@ export class Sqlite3DB implements NativeDB {
   private db: Database;
   private path: string;
 
+  static readonly autoIncrementKeyword = 'autoincrement';
+  static readonly toggleForeignKeyCheckSql = 'pragma foreign_keys=';
+
   constructor(path: string) {
     this.path = path;
     this.db = new sqlite3.Database(path || '.');
@@ -108,5 +111,13 @@ export class Sqlite3DB implements NativeDB {
 
   public supportTransactionalSchemaChange(): boolean {
     return true;
+  }
+
+  public getAutoIncrementKeyword(): string {
+    return Sqlite3DB.autoIncrementKeyword;
+  }
+
+  public toggleForeignKeyCheckSql(mode: boolean): string {
+    return Sqlite3DB.toggleForeignKeyCheckSql + (mode ? '1' : '0');
   }
 }

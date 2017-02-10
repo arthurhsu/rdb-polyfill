@@ -84,7 +84,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   public primaryKey(primaryKey: PrimaryKeyDefinition): ITableBuilder {
     this.checkPKColumnType(primaryKey);
 
-    let sql = CommonBase.primaryKeyToSql(primaryKey);
+    let sql = CommonBase.primaryKeyToSql(this.connection, primaryKey);
     if (!sql.startsWith('primary key')) {
       // Must alter the corresponding column for auto increment.
       if (this.columnType.get(primaryKey['name']) != 'number') {

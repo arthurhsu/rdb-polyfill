@@ -66,6 +66,10 @@ export class SqlConnection extends DatabaseConnection {
     return this.db.supportTransactionalSchemaChange();
   }
 
+  public get autoIncrementKeyword(): string {
+    return this.db.getAutoIncrementKeyword();
+  }
+
   public createTransaction(mode = 'readonly' as TransactionMode): ITransaction {
     return new Tx(this.db, mode);
   }
@@ -99,13 +103,15 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public setVersion(version: number): IExecutionContext {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return new SingleQuery(
+        this,
+        `update $rdb_version set value ${version} where name=${this.name}`,
+        true);
   }
 
   public setForeignKeyCheck(value: boolean): IExecutionContext {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return new SingleQuery(
+        this, this.db.toggleForeignKeyCheckSql(value), true);
   }
 
   public schema(): IDatabaseSchema {

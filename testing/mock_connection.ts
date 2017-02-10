@@ -17,21 +17,20 @@
 
 import {SqlConnection} from '../lib/proc/sql_connection';
 import {Schema} from '../lib/schema/schema';
-import {TableSchema} from '../lib/schema/table_schema';
-import {TableBuilderPolyfill} from '../lib/schema/table_builder_polyfill';
+import {MockNativeDB} from './mock_native_db';
 
-// Returns a mock connection for schema/builder testing.
-export function getMockConnection(): SqlConnection {
-  let connection = new SqlConnection(null, new Schema('db', 1));
-  let schema: Schema = connection.schema() as Schema;
-  let builder = new TableBuilderPolyfill(null, 'foo', 'db');
-  builder.column('id', 'number')
-      .column('name', 'string')
-      .column('date', 'date')
-      .column('boolean', 'boolean')
-      .column('object', 'object');
-  let change = new Map<string, TableSchema>();
-  change.set('foo', builder.getSchema());
-  schema.reportChange(change);
-  return connection;
+export class MockConnection extends SqlConnection {
+  constructor() {
+    super(new MockNativeDB(), new Schema('db', 1));
+  }
+
+  public createFoo(): Promise<void> {
+    return this.createTable('foo')
+        .column('id', 'number')
+        .column('name', 'string')
+        .column('date', 'date')
+        .column('boolean', 'boolean')
+        .column('object', 'object')
+        .commit();
+  }
 }

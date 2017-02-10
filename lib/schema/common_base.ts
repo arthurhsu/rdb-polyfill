@@ -16,6 +16,7 @@
  */
 
 import {ColumnType} from '../spec/enums';
+import {SqlConnection} from '../proc/sql_connection';
 import {AutoIncrementPrimaryKey, IndexedColumnSpec, PrimaryKeyDefinition} from '../spec/table_builder';
 
 // Common base methods for TableBuilder and TableChanger.
@@ -48,7 +49,8 @@ export class CommonBase {
     return `${name} ${sqlType}${postfix}`;
   }
 
-  static primaryKeyToSql(primaryKey: PrimaryKeyDefinition): string {
+  static primaryKeyToSql(
+      cnn: SqlConnection, primaryKey: PrimaryKeyDefinition): string {
     if (typeof primaryKey == 'string') {
       return `primary key (${primaryKey})`;
     }
@@ -71,7 +73,7 @@ export class CommonBase {
       if (primaryKey['autoIncrement'] !== undefined) {
         let pk: AutoIncrementPrimaryKey = primaryKey as AutoIncrementPrimaryKey;
         return pk.autoIncrement ?
-            `${pk.name} integer primary key autoincrement` :
+            `${pk.name} integer primary key ${cnn.autoIncrementKeyword}` :
             `primary key (${pk.name})`;
       } else {  // IndexedColumnSpec
         let pk: IndexedColumnSpec = primaryKey as IndexedColumnSpec;

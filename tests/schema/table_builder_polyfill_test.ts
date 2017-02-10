@@ -17,10 +17,14 @@
 
 import * as chai from 'chai';
 import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
+import {MockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('TableBuilderPolyfill', () => {
+  let conn: MockConnection;
+  before(() => conn = new MockConnection);
+
   it('toSql_Simple', () => {
     const expected = 'create table foo (' +
                      'number real, ' +
@@ -30,7 +34,7 @@ describe('TableBuilderPolyfill', () => {
                      'object text not null, ' +
                      'blob blob' +
                      ')';
-    let builder = new TableBuilderPolyfill(null, 'foo', 'db');
+    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
     builder.column('number', 'number')
         .column('string', 'string')
         .column('boolean', 'boolean')
@@ -46,7 +50,7 @@ describe('TableBuilderPolyfill', () => {
                      'name text, ' +
                      'primary key (id)' +
                      ')';
-    let builder = new TableBuilderPolyfill(null, 'foo', 'db');
+    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
         .primaryKey('id');
@@ -58,7 +62,7 @@ describe('TableBuilderPolyfill', () => {
                      'id integer primary key autoincrement, ' +
                      'name text' +
                      ')';
-    let builder = new TableBuilderPolyfill(null, 'foo', 'db');
+    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
         .primaryKey({'name': 'id', 'autoIncrement': true});
