@@ -20,7 +20,7 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {ForeignKeySpec, IndexSpec, IndexedColumnSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {TableSchema} from './table_schema';
 
@@ -54,13 +54,51 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     return this;
   }
 
-  public primaryKey(primaryKey: PrimaryKeyDefinition): ITableBuilder {
-    let type = this.columnType.get(primaryKey as string);
+  private throwForWrongPKType(type: ColumnType): void {
     if (type == 'blob' || type == 'object') {
       throw new Error('InvalidSchemaError');
     }
+  }
 
-    this.constraintSql.push(CommonBase.primaryKeyToSql(primaryKey));
+  private checkPKColumnType(primaryKey: PrimaryKeyDefinition): void {
+    if (typeof primaryKey == 'string') {
+      this.throwForWrongPKType(this.columnType.get(primaryKey));
+      return;
+    }
+
+    if (Array.isArray(primaryKey)) {
+      if (typeof primaryKey[0] == 'string') {
+        (primaryKey as string[]).forEach(k => {
+          this.throwForWrongPKType(this.columnType.get(k));
+        });
+      } else {
+        (primaryKey as IndexedColumnSpec[]).forEach(k => {
+          this.throwForWrongPKType(this.columnType.get(k.name));
+        });
+      }
+    } else {
+      this.throwForWrongPKType(this.columnType.get(primaryKey['name']));
+    }
+  }
+
+  public primaryKey(primaryKey: PrimaryKeyDefinition): ITableBuilder {
+    this.checkPKColumnType(primaryKey);
+
+    let sql = CommonBase.primaryKeyToSql(primaryKey);
+    if (!sql.startsWith('primary key')) {
+      // Must alter the corresponding column for auto increment.
+      if (this.columnType.get(primaryKey['name']) != 'number') {
+        throw new Error('InvalidSchemaError');
+      }
+      let name = sql.split(' ')[0] + ' ';
+      for (let i = 0; i < this.columnSql.length; ++i) {
+        if (this.columnSql[i].startsWith(name)) {
+          this.columnSql[i] = sql;
+          return this;
+        }
+      }
+    }
+    this.constraintSql.push(sql);
     return this;
   }
 
@@ -110,7 +148,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   public clone(): IQuery {
-    throw new Error('Unsupported');
+    throw new Error('UnsupportedError');
   }
 
   public createBinderMap(): void {

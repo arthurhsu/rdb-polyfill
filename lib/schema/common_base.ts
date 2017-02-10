@@ -16,7 +16,7 @@
  */
 
 import {ColumnType} from '../spec/enums';
-import {PrimaryKeyDefinition} from '../spec/table_builder';
+import {AutoIncrementPrimaryKey, IndexedColumnSpec, PrimaryKeyDefinition} from '../spec/table_builder';
 
 // Common base methods for TableBuilder and TableChanger.
 export class CommonBase {
@@ -49,10 +49,34 @@ export class CommonBase {
   }
 
   static primaryKeyToSql(primaryKey: PrimaryKeyDefinition): string {
-    if (typeof primaryKey != 'string') {
-      // TODO(arthurhsu): implement
-      throw new Error('NotImplemented');
+    if (typeof primaryKey == 'string') {
+      return `primary key (${primaryKey})`;
     }
-    return `primary key (${primaryKey})`;
+
+    if (Array.isArray(primaryKey)) {
+      if (primaryKey.length == 0) {
+        throw new Error('SyntaxError');
+      }
+
+      if (typeof primaryKey[0] == 'string') {
+        return `primary key (${primaryKey.join(' ')})`;
+      }
+
+      // IndexedColumnSpec[]
+      let spec = (primaryKey as IndexedColumnSpec[]).map(k => {
+        return `${k.name} ${k.order}`;
+      }).join(',');
+      return `primary key (${spec})`;
+    } else {
+      if (primaryKey['autoIncrement'] !== undefined) {
+        let pk: AutoIncrementPrimaryKey = primaryKey as AutoIncrementPrimaryKey;
+        return pk.autoIncrement ?
+            `${pk.name} integer primary key autoincrement` :
+            `primary key (${pk.name})`;
+      } else {  // IndexedColumnSpec
+        let pk: IndexedColumnSpec = primaryKey as IndexedColumnSpec;
+        return `primary key (${pk.name} ${pk.order})`;
+      }
+    }
   }
 }

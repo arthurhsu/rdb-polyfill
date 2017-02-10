@@ -40,7 +40,7 @@ describe('TableBuilderPolyfill', () => {
     assert.equal(expected, builder.toSql());
   });
 
-  it('toSql_SinglePK', () => {
+  it('toSql_singlePK', () => {
     const expected = 'create table foo (' +
                      'id real, ' +
                      'name text, ' +
@@ -50,6 +50,18 @@ describe('TableBuilderPolyfill', () => {
     builder.column('id', 'number')
         .column('name', 'string')
         .primaryKey('id');
+    assert.equal(expected, builder.toSql());
+  });
+
+  it('toSql_autoIncPK', () => {
+    const expected = 'create table foo (' +
+                     'id integer primary key autoincrement, ' +
+                     'name text' +
+                     ')';
+    let builder = new TableBuilderPolyfill(null, 'foo', 'db');
+    builder.column('id', 'number')
+        .column('name', 'string')
+        .primaryKey({'name': 'id', 'autoIncrement': true});
     assert.equal(expected, builder.toSql());
   });
 });

@@ -30,11 +30,11 @@ export class SingleQuery extends QueryBase {
   }
 
   public bind(...values: any[]): IQuery {
-    throw new Error('Unsupported');
+    throw new Error('UnsupportedError');
   }
 
   public clone(): IQuery {
-    throw new Error('Unsupported');
+    throw new Error('UnsupportedError');
   }
 
   public toSql(): string {
@@ -46,7 +46,7 @@ export class SingleQuery extends QueryBase {
   }
 
   public rollback(): Promise<void> {
-    if (!this.canRollback) throw new Error('Unsupported');
+    if (!this.canRollback) throw new Error('UnsupportedError');
     return super.rollback();
   }
 }

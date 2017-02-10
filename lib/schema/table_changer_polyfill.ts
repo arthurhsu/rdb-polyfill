@@ -97,7 +97,7 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
   }
 
   public clone(): IQuery {
-    throw new Error('Unsupported');
+    throw new Error('UnsupportedError');
   }
 
   public createBinderMap(): void {
