@@ -69,7 +69,7 @@ export abstract class QueryBase implements IQuery {
     });
   }
 
-  private ensureContext(): void {
+  protected ensureContext(): void {
     if (this.context === null) {
       this.context = this.connection.createContext();
     }

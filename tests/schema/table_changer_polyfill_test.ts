@@ -16,24 +16,20 @@
  */
 
 import * as chai from 'chai';
-import {SqlExecutionContext} from '../../lib/proc/sql_execution_context';
 import {TableChangerPolyfill} from '../../lib/schema/table_changer_polyfill';
 
 const assert = chai.assert;
 
 describe('TableChangerPolyfill', () => {
-  let context: SqlExecutionContext;
-  beforeEach(() => context = new SqlExecutionContext(null, false));
-
   it('rename', () => {
-    let changer = new TableChangerPolyfill(context, 'foo', 'db');
+    let changer = new TableChangerPolyfill(null, 'foo', 'db');
     const expected = 'alter table foo rename to bar';
     changer.rename('bar');
     assert.equal(expected, changer.toSql());
   });
 
   it('addColumn', () => {
-    let changer = new TableChangerPolyfill(context, 'foo', 'db');
+    let changer = new TableChangerPolyfill(null, 'foo', 'db');
     const expected = 'alter table foo add column bar text not null';
     changer.addColumn('bar', 'string', true);
     assert.equal(expected, changer.toSql());

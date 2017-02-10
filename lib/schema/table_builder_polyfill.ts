@@ -15,24 +15,25 @@
  * limitations under the License.
  */
 
-import {SqlExecutionContext} from '../proc/sql_execution_context';
+import {QueryBase} from '../proc/query_base';
+import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
+import {IQuery} from '../spec/query';
 import {ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {TableSchema} from './table_schema';
 
-export class TableBuilderPolyfill implements ITableBuilder {
-  private context: SqlExecutionContext;
+export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   private columnSql: string[];
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
   private schema: TableSchema;
   private dbName: string;
 
-  constructor(
-      context: SqlExecutionContext, readonly name: string, dbName: string) {
-    this.context = context;
+  constructor(connection: SqlConnection, readonly name: string,
+       dbName: string) {
+    super(connection);
     this.columnSql = [];
     this.constraintSql = [];
     this.columnType = new Map<string, ColumnType>();
@@ -91,6 +92,7 @@ export class TableBuilderPolyfill implements ITableBuilder {
   }
 
   public commit(): Promise<TransactionResults> {
+    this.ensureContext();
     this.context.prepare(this.toSql());
     this.context.prepare(
         `insert into "$rdb_table" values ("${this.name}", "${this.dbName}")`);
@@ -103,11 +105,15 @@ export class TableBuilderPolyfill implements ITableBuilder {
     return this.context.commit();
   }
 
-  public rollback(): Promise<void> {
-    return this.context.rollback();
-  }
-
   public getSchema(): TableSchema {
     return this.schema;
+  }
+
+  public clone(): IQuery {
+    throw new Error('Unsupported');
+  }
+
+  public createBinderMap(): void {
+    // Do nothing.
   }
 }

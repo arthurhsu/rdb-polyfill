@@ -15,25 +15,28 @@
  * limitations under the License.
  */
 
-import {SqlExecutionContext} from '../proc/sql_execution_context';
+import {QueryBase} from '../proc/query_base';
+import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType, ValueType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
+import {IQuery} from '../spec/query';
 import {ForeignKeySpec, IndexSpec, PrimaryKeyDefinition} from '../spec/table_builder';
 import {IColumnChanger, ITableChanger} from '../spec/table_changer';
 import {CommonBase} from './common_base';
 
-export class TableChangerPolyfill implements ITableChanger {
-  private context: SqlExecutionContext;
+export class TableChangerPolyfill extends QueryBase implements ITableChanger {
   private dbName: string;
+  private sqls: string[];
 
   constructor(
-      context: SqlExecutionContext, readonly name: string, dbName: string) {
-    this.context = context;
+      connection: SqlConnection, readonly name: string, dbName: string) {
+    super(connection);
     this.dbName = dbName;
+    this.sqls = [];
   }
 
   public rename(newTableName: string): ITableChanger {
-    this.context.prepare(`alter table ${this.name} rename to ${newTableName}`);
+    this.sqls.push(`alter table ${this.name} rename to ${newTableName}`);
     return this;
   }
 
@@ -41,7 +44,7 @@ export class TableChangerPolyfill implements ITableChanger {
       name: string, type: ColumnType, notNull?: boolean,
       defaultValue?: ValueType): ITableChanger {
     let columnDef = CommonBase.columnDefToSql(name, type, notNull);
-    this.context.prepare(`alter table ${this.name} add column ${columnDef}`);
+    this.sqls.push(`alter table ${this.name} add column ${columnDef}`);
     if (defaultValue !== undefined) {
       // TODO(arthurhsu): implement
       throw new Error('NotImplemented');
@@ -86,14 +89,18 @@ export class TableChangerPolyfill implements ITableChanger {
 
   public commit(): Promise<TransactionResults> {
     // TODO(arthurhsu): update existing cached schema
-    return this.context.commit();
-  }
-
-  public rollback(): Promise<void> {
-    return this.context.rollback();
+    return super.commit();
   }
 
   public toSql(): string {
-    return this.context.inspect().join('; ');
+    return this.sqls.join('; ');
+  }
+
+  public clone(): IQuery {
+    throw new Error('Unsupported');
+  }
+
+  public createBinderMap(): void {
+    // Do nothing.
   }
 }

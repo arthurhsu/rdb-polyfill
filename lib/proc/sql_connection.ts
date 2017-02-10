@@ -39,6 +39,7 @@ import {DeleteQueryBuilder} from './delete_query_builder';
 import {InsertQueryBuilder} from './insert_query_builder';
 import {NativeDB} from './native_db';
 import {SelectQueryBuilder} from './select_query_builder';
+import {SingleQuery} from './single_query';
 import {SqlExecutionContext} from './sql_execution_context';
 import {Tx} from './tx';
 import {UpdateQueryBuilder} from './update_query_builder';
@@ -112,20 +113,15 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public createTable(name: string): ITableBuilder {
-    return new TableBuilderPolyfill(
-        this.createContext(), name, this.dbSchema.name);
+    return new TableBuilderPolyfill(this, name, this.dbSchema.name);
   }
 
   public alterTable(name: string): ITableChanger {
-    return new TableChangerPolyfill(
-        this.createContext(), name, this.dbSchema.name);
+    return new TableChangerPolyfill(this, name, this.dbSchema.name);
   }
 
   public dropTable(name: string): IExecutionContext {
-    // TODO(arthurhsu): this should be a QueryBase class to be in tx.
-    let context = this.createContext();
-    context.prepare(`drop table ${name}`);
-    return context;
+    return new SingleQuery(this, `drop table ${name}`, true);
   }
 
   public observe(query: ISelectQuery, callbackFn: ObserverCallback): string {
