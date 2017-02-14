@@ -15,45 +15,64 @@
  * limitations under the License.
  */
 
-import {TableSchema} from '../schema/table_schema';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
 import {NativeDB} from './native_db';
+import {QueryBase} from './query_base';
 import {SqlConnection} from './sql_connection';
 
 export class SqlExecutionContext implements IExecutionContext {
   private connection: SqlConnection;
   private db: NativeDB;
   private sqls: string[];
-  private schemaChange: Map<string, TableSchema>;
+  private finalized: boolean;
+  private toNotify: QueryBase[];
 
   constructor(connection: SqlConnection, implicit = true) {
     this.connection = connection;
     this.db = implicit ? connection.getImplicitContext() : null;
     this.sqls = [];
-    this.schemaChange = new Map<string, TableSchema>();
+    this.finalized = false;
+    this.toNotify = [];
+  }
+
+  public get active(): boolean {
+    return !this.finalized;
+  }
+
+  private checkState(): void {
+    if (this.finalized) {
+      throw new Error('TransactionState');
+    }
   }
 
   public prepare(sql: string): void {
+    this.checkState();
     this.sqls.push(sql);
   }
 
-  // Set table to null to report a dropped table.
-  public reportSchemaChange(name: string, table: TableSchema): void {
-    this.schemaChange.set(name, table);
-  }
-
   public commit(): Promise<TransactionResults> {
+    this.checkState();
+    this.finalized = true;
     return this.db.run(this.sqls).then((ret: TransactionResults) => {
-      this.connection.reportSchemaChange(this.schemaChange);
+      this.toNotify.forEach(q => q.onCommit(this.connection));
       return ret;
     });
   }
 
   public rollback(): Promise<void> {
+    this.checkState();
+    this.finalized = true;
     return this.db.exec('rollback');
   }
 
   public inspect(): string[] {
     return this.sqls;
+  }
+
+  public associate(query: QueryBase): SqlExecutionContext {
+    if (query.postCommitCallback) {
+      this.toNotify.push(query);
+    }
+    return this;
   }
 }

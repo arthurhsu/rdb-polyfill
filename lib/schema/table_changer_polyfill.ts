@@ -30,7 +30,7 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
 
   constructor(
       connection: SqlConnection, readonly name: string, dbName: string) {
-    super(connection);
+    super(connection, true);
     this.dbName = dbName;
     this.sqls = [];
   }

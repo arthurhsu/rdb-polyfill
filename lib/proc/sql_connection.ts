@@ -19,7 +19,6 @@ import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
 import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
 import {TableChangerPolyfill} from '../schema/table_changer_polyfill';
-import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {DatabaseConnection} from '../spec/database_connection';
@@ -39,7 +38,7 @@ import {DeleteQueryBuilder} from './delete_query_builder';
 import {InsertQueryBuilder} from './insert_query_builder';
 import {NativeDB} from './native_db';
 import {SelectQueryBuilder} from './select_query_builder';
-import {SingleQuery} from './single_query';
+import {SingleQuery, SingleQueryType} from './single_query';
 import {SqlExecutionContext} from './sql_execution_context';
 import {Tx} from './tx';
 import {UpdateQueryBuilder} from './update_query_builder';
@@ -106,12 +105,16 @@ export class SqlConnection extends DatabaseConnection {
     return new SingleQuery(
         this,
         `update $rdb_version set value ${version} where name=${this.name}`,
-        true);
+        true,
+        SingleQueryType.SetVersion);
   }
 
   public setForeignKeyCheck(value: boolean): IExecutionContext {
     return new SingleQuery(
-        this, this.db.toggleForeignKeyCheckSql(value), true);
+        this,
+        this.db.toggleForeignKeyCheckSql(value),
+        true,
+        SingleQueryType.Normal);
   }
 
   public schema(): IDatabaseSchema {
@@ -127,7 +130,8 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public dropTable(name: string): IExecutionContext {
-    return new SingleQuery(this, `drop table ${name}`, true);
+    return new SingleQuery(
+        this, `drop table ${name}`, true, SingleQueryType.DropTable);
   }
 
   public observe(query: ISelectQuery, callbackFn: ObserverCallback): string {
@@ -142,10 +146,6 @@ export class SqlConnection extends DatabaseConnection {
 
   public getImplicitContext(): NativeDB {
     return this.db;
-  }
-
-  public reportSchemaChange(change: Map<string, TableSchema>): void {
-    this.dbSchema.reportChange(change);
   }
 
   public createContext(): SqlExecutionContext {

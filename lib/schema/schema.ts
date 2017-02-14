@@ -21,17 +21,30 @@ import {TableSchema} from './table_schema';
 
 export class Schema implements IDatabaseSchema {
   readonly name: string;
-  readonly version: number;
+  public currentVersion: number;
   private tables: Map<string, TableSchema>;
 
   constructor(name: string, version: number) {
     this.name = name;
-    this.version = version;
+    this.currentVersion = version;
     this.tables = new Map<string, TableSchema>();
+  }
+
+  public get version(): number {
+    return this.currentVersion;
   }
 
   public table(name: string): Table {
     return this.tables.get(name) as ITable as Table;
+  }
+
+  // Set table to null to report a dropped table.
+  public reportTableChange(name: string, schema: TableSchema): void {
+    if (schema === null) {
+      this.tables.delete(name);
+    } else {
+      this.tables.set(name, schema);
+    }
   }
 
   public reportChange(change: Map<string, TableSchema>): void {

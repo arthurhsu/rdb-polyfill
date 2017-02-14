@@ -19,10 +19,17 @@ import {IQuery} from '../spec/query';
 import {QueryBase} from './query_base';
 import {SqlConnection} from './sql_connection';
 
+export enum SingleQueryType {
+  DropTable,
+  Normal,
+  SetVersion
+}
+
 export class SingleQuery extends QueryBase {
-  constructor(connection: SqlConnection,
-      readonly sql: string, readonly canRollback: boolean) {
-    super(connection);
+
+  constructor(connection: SqlConnection, readonly sql: string,
+       readonly canRollback: boolean, readonly type: SingleQueryType) {
+    super(connection, type !== SingleQueryType.Normal);
   }
 
   public explain(): Promise<string> {

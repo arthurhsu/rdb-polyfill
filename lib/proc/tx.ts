@@ -23,6 +23,7 @@ import {IQuery} from '../spec/query';
 import {ITransaction} from '../spec/transaction';
 import {NativeDB} from './native_db';
 
+// TODO(arthurhsu): consider rewrite to extend SqlExecutionContext
 export class Tx implements ITransaction {
   private db: NativeDB;
   private finalized: boolean;

@@ -22,6 +22,7 @@ import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
 import {ForeignKeySpec, IndexSpec, IndexedColumnSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {CommonBase} from './common_base';
+import {Schema} from './schema';
 import {TableSchema} from './table_schema';
 
 export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
@@ -33,12 +34,11 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
 
   constructor(connection: SqlConnection, readonly name: string,
        dbName: string) {
-    super(connection);
+    super(connection, true);
     this.columnSql = [];
     this.constraintSql = [];
     this.columnType = new Map<string, ColumnType>();
     this.dbName = dbName;
-
     this.schema = new TableSchema(name);
   }
 
@@ -129,6 +129,11 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     return `create table ${this.name} (${desc})`;
   }
 
+  public onCommit(conn: SqlConnection): void {
+    let schema = conn.schema() as Schema;
+    schema.reportTableChange(this.schema.getName(), this.schema);
+  }
+
   public commit(): Promise<TransactionResults> {
     this.ensureContext();
     this.context.prepare(this.toSql());
@@ -139,7 +144,6 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
           'insert into "$rdb_column" values ' +
           `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
     });
-    this.context.reportSchemaChange(this.schema.getName(), this.schema);
     return this.context.commit();
   }
 
