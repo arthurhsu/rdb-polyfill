@@ -20,7 +20,7 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {ForeignKeySpec, IndexSpec, IndexedColumnSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {ForeignKeySpec, IndexedColumnSpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {Schema} from './schema';
 import {TableSchema} from './table_schema';
@@ -32,8 +32,8 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   private schema: TableSchema;
   private dbName: string;
 
-  constructor(connection: SqlConnection, readonly name: string,
-       dbName: string) {
+  constructor(
+      connection: SqlConnection, readonly name: string, dbName: string) {
     super(connection, true);
     this.columnSql = [];
     this.constraintSql = [];

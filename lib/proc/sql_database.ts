@@ -49,14 +49,13 @@ export class SqlDatabase implements IRelationalDatabase {
 
     let resolver = new Resolver<SqlConnection>();
     let db = Implementation.createNativeDB(dbName);
-    this.constructSchema(db, name)
-        .then(
-            (schema: Schema) => {
-              resolver.resolve(new SqlConnection(db, schema));
-            },
-            (e) => {
-              resolver.reject(e);
-            });
+    this.constructSchema(db, name).then(
+        (schema: Schema) => {
+          resolver.resolve(new SqlConnection(db, schema));
+        },
+        (e) => {
+          resolver.reject(e);
+        });
     return resolver.promise;
   }
 

@@ -63,7 +63,7 @@ describe('SelectQueryBuilder', () => {
         SelectQueryBuilder;
     assert.equal(expected, selectBuilder.bind(true, 2, 3).toSql());
 
-    const expected2 = 'select * from foo where foo.boolean = 0 limit 3 skip 2'
+    const expected2 = 'select * from foo where foo.boolean = 0 limit 3 skip 2';
     assert.equal(expected2, selectBuilder.bind(false, 3, 2).toSql());
     assert.equal(expected, selectBuilder.clone().bind(true, 2, 3).toSql());
   });

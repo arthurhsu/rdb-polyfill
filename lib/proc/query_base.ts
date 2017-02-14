@@ -28,8 +28,7 @@ export abstract class QueryBase implements IQuery {
   protected boundValues: Map<number, BindableValueHolder>;
   protected finalized: boolean;
 
-  constructor(
-      connection: SqlConnection, readonly postCommitCallback = false) {
+  constructor(connection: SqlConnection, readonly postCommitCallback = false) {
     this.connection = connection;
     this.context = null;
     this.finalized = false;

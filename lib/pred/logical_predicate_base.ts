@@ -27,18 +27,12 @@ export abstract class LogicalPredicateBase implements ILogicalPredicate {
   }
 
   public and(...values: ILogicalPredicate[]): ILogicalPredicate {
-    this.chain.push({
-      sql: 'and',
-      operands: values as LogicalPredicateBase[]
-    });
+    this.chain.push({sql: 'and', operands: values as LogicalPredicateBase[]});
     return this;
   }
 
   public or(...values: ILogicalPredicate[]): ILogicalPredicate {
-    this.chain.push({
-      sql: 'or',
-      operands: values as LogicalPredicateBase[]
-    });
+    this.chain.push({sql: 'or', operands: values as LogicalPredicateBase[]});
     return this;
   }
 
@@ -58,8 +52,8 @@ export abstract class LogicalPredicateBase implements ILogicalPredicate {
     for (let i = 0; i < this.chain.length; ++i) {
       let target = this.chain[i];
       let rhs = target.operands
-          .map(val => `(${(val as LogicalPredicateBase).toSql()})`)
-          .join(` ${target.sql} `);
+                    .map(val => `(${(val as LogicalPredicateBase).toSql()})`)
+                    .join(` ${target.sql} `);
       lhs = `(${lhs}) ${target.sql} ${rhs}`;
     }
     return lhs;

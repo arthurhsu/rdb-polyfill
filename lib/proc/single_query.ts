@@ -26,9 +26,9 @@ export enum SingleQueryType {
 }
 
 export class SingleQuery extends QueryBase {
-
-  constructor(connection: SqlConnection, readonly sql: string,
-       readonly canRollback: boolean, readonly type: SingleQueryType) {
+  constructor(
+      connection: SqlConnection, readonly sql: string,
+      readonly canRollback: boolean, readonly type: SingleQueryType) {
     super(connection, type !== SingleQueryType.Normal);
   }
 

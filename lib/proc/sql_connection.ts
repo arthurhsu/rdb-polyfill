@@ -105,16 +105,13 @@ export class SqlConnection extends DatabaseConnection {
     return new SingleQuery(
         this,
         `update $rdb_version set value ${version} where name=${this.name}`,
-        true,
-        SingleQueryType.SetVersion);
+        true, SingleQueryType.SetVersion);
   }
 
   public setForeignKeyCheck(value: boolean): IExecutionContext {
     return new SingleQuery(
-        this,
-        this.db.toggleForeignKeyCheckSql(value),
-        true,
-        SingleQueryType.Normal);
+        this, this.db.toggleForeignKeyCheckSql(value),
+        true, SingleQueryType.Normal);
   }
 
   public schema(): IDatabaseSchema {
