@@ -45,7 +45,7 @@ import {UpdateQueryBuilder} from './update_query_builder';
 
 export class SqlConnection extends DatabaseConnection {
   private dbSchema: Schema;
-  private db: NativeDB;
+  readonly db: NativeDB;
 
   constructor(db: NativeDB, schema: Schema) {
     super();
@@ -70,7 +70,7 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public createTransaction(mode = 'readonly' as TransactionMode): ITransaction {
-    return new Tx(this.db, mode);
+    return new Tx(this, mode);
   }
 
   public close(): Promise<Error> {
@@ -110,8 +110,8 @@ export class SqlConnection extends DatabaseConnection {
 
   public setForeignKeyCheck(value: boolean): IExecutionContext {
     return new SingleQuery(
-        this, this.db.toggleForeignKeyCheckSql(value),
-        true, SingleQueryType.Normal);
+        this, this.db.toggleForeignKeyCheckSql(value), true,
+        SingleQueryType.Normal);
   }
 
   public schema(): IDatabaseSchema {

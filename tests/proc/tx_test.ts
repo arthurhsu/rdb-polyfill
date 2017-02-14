@@ -26,7 +26,7 @@ describe('Tx', () => {
   let db: MockNativeDB;
   let conn: SqlConnection;
 
-  before(() => {
+  beforeEach(() => {
     db = new MockNativeDB();
     conn = new SqlConnection(db, new Schema('db', 1));
     return conn.createTable('foo')
@@ -42,7 +42,7 @@ describe('Tx', () => {
     db.clear();
   });
 
-  it('exec', () => {
+  it('exec_SimpleDML', () => {
     let expected = 'begin transaction;' +
                    'insert into foo(id,name) values(1,"2");' +
                    'update foo set name="3";' +
@@ -58,7 +58,22 @@ describe('Tx', () => {
         });
   });
 
-  it('attach', () => {
+  it('exec_SimpleDDL', () => {
+    let bar = conn.createTable('bar')
+                  .column('id', 'number')
+                  .column('name', 'string');
+    let fuz = conn.createTable('fuz')
+                  .column('id', 'number')
+                  .column('name', 'string');
+    return conn.createTransaction('readwrite')
+               .exec([bar, fuz])
+               .then(() => {
+                 assert.equal('bar', conn.schema().table('bar').getName());
+                 assert.equal('fuz', conn.schema().table('fuz').getName());
+               });
+  });
+
+  it('attach_SimpleDML', () => {
     let expected = 'begin transaction;' +
                    'insert into foo(id,name) values(1,"2");' +
                    'update foo set name="3";' +
@@ -74,6 +89,25 @@ describe('Tx', () => {
         .then(() => tx.commit())
         .then(() => {
           assert.equal(expected, db.sqls.join(';'));
+        });
+  });
+
+  it('attach_SimpleDDL', () => {
+    let bar = conn.createTable('bar')
+                  .column('id', 'number')
+                  .column('name', 'string');
+    let fuz = conn.createTable('fuz')
+                  .column('id', 'number')
+                  .column('name', 'string');
+    let tx = conn.createTransaction('readwrite');
+    return tx
+        .begin()
+        .then(() => tx.attach(bar))
+        .then(() => tx.attach(fuz))
+        .then(() => tx.commit())
+        .then(() => {
+          assert.equal('bar', conn.schema().table('bar').getName());
+          assert.equal('fuz', conn.schema().table('fuz').getName());
         });
   });
 });

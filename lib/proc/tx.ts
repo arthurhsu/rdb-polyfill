@@ -22,20 +22,26 @@ import {IExecutionContext, TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
 import {ITransaction} from '../spec/transaction';
 import {NativeDB} from './native_db';
+import {QueryBase} from './query_base';
+import {SqlConnection} from './sql_connection';
 
-// TODO(arthurhsu): consider rewrite to extend SqlExecutionContext
 export class Tx implements ITransaction {
+  private connection: SqlConnection;
   private db: NativeDB;
   private finalized: boolean;
   private started: boolean;
   private results: TransactionResults;
   private allowDDL: boolean;
+  private toNotify: QueryBase[];
 
-  public constructor(db: NativeDB, readonly mode: TransactionMode) {
-    this.db = db;
+  public constructor(
+      connection: SqlConnection, readonly mode: TransactionMode) {
+    this.connection = connection;
+    this.db = this.connection.db;
     this.finalized = false;
     this.started = false;
     this.allowDDL = this.db.supportTransactionalSchemaChange();
+    this.toNotify = [];
   }
 
   public begin(): Promise<void> {
@@ -80,12 +86,24 @@ export class Tx implements ITransaction {
     // db#run() already offered transactional support.
     return this.db.run(sqls).then(results => {
       this.results = results;
+      queries.forEach(q => {
+        if (q instanceof QueryBase && q.postCommitCallback) {
+          q.onCommit(this.connection);
+        }
+      });
       return results;
     });
   }
 
   public attach(query: IExecutionContext): Promise<TransactionResults> {
+    if (!this.started) {
+      throw new Error('TransactionStateError');
+    }
+
     this.checkDDL(query);
+    if (query instanceof QueryBase && query.postCommitCallback) {
+      this.toNotify.push(query);
+    }
 
     let sql = this.getSql(query);
     if (sql.startsWith('select')) {
@@ -107,6 +125,7 @@ export class Tx implements ITransaction {
     }
 
     return this.db.exec('commit').then(() => {
+      this.toNotify.forEach(q => q.onCommit(this.connection));
       return this.results;
     });
   }
