@@ -24,7 +24,9 @@ export class Implementation {
   }
 
   static dropNativeDB(path?: string): Promise<void> {
+    /* tslint:disable */
     let fs = require('fs-extra');
+    /* tslint:enable */
     fs.removeSync(path);
     return Promise.resolve();
   }

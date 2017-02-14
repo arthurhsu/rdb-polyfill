@@ -23,7 +23,7 @@ import {Schema} from '../../lib/schema/schema';
 const assert = chai.assert;
 
 describe('SqlDatabase', () => {
-  function checkSchema(dbName:string, s: Schema): void {
+  function checkSchema(dbName: string, s: Schema): void {
     assert.equal(dbName, s.name);
     assert.equal(0, s.version);
     let table = s.table('foo');

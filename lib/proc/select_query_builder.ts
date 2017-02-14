@@ -81,21 +81,13 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
 
   public innerJoin(table: ITable, joinCondition: ILogicalPredicate):
       ISelectQuery {
-    this.joins.push({
-      op: 'inner join',
-      table: table,
-      on: joinCondition
-    });
+    this.joins.push({op: 'inner join', table: table, on: joinCondition});
     return this;
   }
 
   public leftOuterJoin(table: ITable, joinCondition: ILogicalPredicate):
       ISelectQuery {
-    this.joins.push({
-      op: 'left join',
-      table: table,
-      on: joinCondition
-    });
+    this.joins.push({op: 'left join', table: table, on: joinCondition});
     return this;
   }
 
@@ -158,7 +150,8 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   public clone(): IQuery {
-    let that = new SelectQueryBuilder(this.connection, this.schema, this.columns);
+    let that =
+        new SelectQueryBuilder(this.connection, this.schema, this.columns);
     this.tables.forEach((value, key) => {
       that.tables.set(key, value);
     });
@@ -166,9 +159,11 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
       that.searchCondition = this.searchCondition.clone();
     }
     that.limitCount = (this.limitCount instanceof BindableValueHolder) ?
-        this.limitCount.clone() : this.limitCount;
+        this.limitCount.clone() :
+        this.limitCount;
     that.skipCount = (this.skipCount instanceof BindableValueHolder) ?
-        this.skipCount.clone() : this.skipCount;
+        this.skipCount.clone() :
+        this.skipCount;
     that.ordering = this.ordering.concat([]);
     that.grouping = this.grouping.concat([]);
     that.subqueries = this.subqueries.concat([]);
@@ -177,9 +172,8 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   private getTableName(table: ITable): string {
-    return table.getAlias() ?
-        `${table.getName()} ${table.getAlias()}` :
-        table.getName();
+    return table.getAlias() ? `${table.getName()} ${table.getAlias()}` :
+                              table.getName();
   }
 
   public toSql(): string {
@@ -192,10 +186,13 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     let sql = `select ${projection} from ${tableList}`;
 
     if (this.joins.length) {
-      let joinSql = this.joins.map(j => {
-        let condition = (j.on as LogicalPredicate).toSql();
-        return `${j.op} ${this.getTableName(j.table)} on ${condition}`;
-      }).join(' ');
+      let joinSql =
+          this.joins
+              .map(j => {
+                let condition = (j.on as LogicalPredicate).toSql();
+                return `${j.op} ${this.getTableName(j.table)} on ${condition}`;
+              })
+              .join(' ');
       sql += ' ' + joinSql;
     }
 

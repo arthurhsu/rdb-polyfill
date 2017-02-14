@@ -28,7 +28,7 @@ export abstract class QueryBase implements IQuery {
   protected boundValues: Map<number, BindableValueHolder>;
   protected finalized: boolean;
 
-  constructor(connection: SqlConnection) {
+  constructor(connection: SqlConnection, readonly postCommitCallback = false) {
     this.connection = connection;
     this.context = null;
     this.finalized = false;
@@ -36,7 +36,7 @@ export abstract class QueryBase implements IQuery {
   }
 
   public attach(context: SqlExecutionContext): void {
-    this.context = context;
+    this.context = context.associate(this);
   }
 
   public explain(): Promise<string> {
@@ -63,6 +63,10 @@ export abstract class QueryBase implements IQuery {
   abstract clone(): IQuery;
   abstract toSql(): string;
 
+  public onCommit(connection: SqlConnection): void {
+    throw new Error('UnknownError');
+  }
+
   protected cloneBoundValues(source: QueryBase): void {
     source.boundValues.forEach((val, key) => {
       this.boundValues.set(key, val.clone());
@@ -71,7 +75,7 @@ export abstract class QueryBase implements IQuery {
 
   protected ensureContext(): void {
     if (this.context === null) {
-      this.context = this.connection.createContext();
+      this.attach(this.connection.createContext());
     }
   }
 

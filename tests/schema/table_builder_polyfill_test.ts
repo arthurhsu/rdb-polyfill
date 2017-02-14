@@ -23,7 +23,7 @@ const assert = chai.assert;
 
 describe('TableBuilderPolyfill', () => {
   let conn: MockConnection;
-  before(() => conn = new MockConnection);
+  before(() => conn = new MockConnection());
 
   it('toSql_Simple', () => {
     const expected = 'create table foo (' +
