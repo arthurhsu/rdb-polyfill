@@ -75,7 +75,6 @@ export class Tx implements ITransaction {
       // TODO(arthurhsu): readonly/readwrite check
       sqls.push(this.getSql(q));
     });
-    sqls.push('commit');
 
     // db#run() already offered transactional support.
     return this.db.run(sqls).then(results => {

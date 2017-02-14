@@ -53,7 +53,7 @@ export class MockNativeDB implements NativeDB {
 
   public run(sqls: string[]): Promise<TransactionResults> {
     this.sqls = ['begin transaction'].concat(sqls);
-    sqls.push('commit');
+    this.sqls.push('commit');
     return this.resolve<TransactionResults>(Promise.resolve(this.mockResults));
   }
 
