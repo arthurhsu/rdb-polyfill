@@ -102,10 +102,12 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public setVersion(version: number): IExecutionContext {
-    return new SingleQuery(
+    let q = new SingleQuery(
         this,
-        `update $rdb_version set value ${version} where name=${this.name}`,
+        `update "$rdb_version" set version=${version} where name=${this.name}`,
         true, SingleQueryType.SetVersion);
+    q.newVersion = version;
+    return q;
   }
 
   public setForeignKeyCheck(value: boolean): IExecutionContext {
@@ -127,8 +129,11 @@ export class SqlConnection extends DatabaseConnection {
   }
 
   public dropTable(name: string): IExecutionContext {
-    return new SingleQuery(
-        this, `drop table ${name}`, true, SingleQueryType.DropTable);
+    let sql = `drop table ${name}; delete from "$rdb_table"` +
+              ` where name="${name}" and db="${this.name}"`;
+    let q = new SingleQuery(this, sql, true, SingleQueryType.DropTable);
+    q.targetTable = name;
+    return q;
   }
 
   public observe(query: ISelectQuery, callbackFn: ObserverCallback): string {

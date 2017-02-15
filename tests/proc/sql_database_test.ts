@@ -58,11 +58,57 @@ describe('SqlDatabase', () => {
       return inst2.open(dbName);
     }).then(db2 => {
       checkSchema(dbName, db2.schema() as Schema);
-      return db2.close();
-    }).then(() => {
-      return db.close();
+      return Promise.all([db2.close(), db.close()]);
     }).then(() => {
       inst.drop(dbName);  // Ignore the results.
+    });
+  });
+
+  it('setVersion_persisting', () => {
+    let dbName = new Date().getTime().toString();
+    let inst = new SqlDatabase('out');
+    let inst2 = new SqlDatabase('out');
+    let db: SqlConnection;
+    return inst.open(dbName).then(conn => {
+      db = conn as SqlConnection;
+      return db.setVersion(1).commit();
+    }).then(() => {
+      assert.equal(1, db.schema().version);
+      return inst2.open(dbName);
+    }).then(db2 => {
+      assert.equal(1, db2.schema().version);
+      return Promise.all([db2.close(), db.close()]);
+    }).then(() => {
+      inst.drop(dbName);
+    });
+  });
+
+  it('dropTable_persisting', () => {
+    let dbName = new Date().getTime().toString();
+    let inst = new SqlDatabase('out');
+    let inst2 = new SqlDatabase('out');
+    let db: SqlConnection;
+    return inst.open(dbName).then(conn => {
+      db = conn as SqlConnection;
+      return db.createTable('foo')
+          .column('blob', 'blob')
+          .column('boolean', 'boolean')
+          .column('date', 'date')
+          .column('number', 'number')
+          .column('string', 'string')
+          .column('object', 'object')
+          .commit();
+    }).then(() => {
+      checkSchema(dbName, db.schema() as Schema);
+      return db.dropTable('foo').commit();
+    }).then(() => {
+      assert.isUndefined(db.schema().table('foo'));
+      return inst2.open(dbName);
+    }).then(db2 => {
+      assert.isUndefined(db2.schema().table('foo'));
+      return Promise.all([db.close(), db2.close()]);
+    }).then(() => {
+      inst.drop(dbName);  // Ignore the results
     });
   });
 });

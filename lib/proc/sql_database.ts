@@ -87,7 +87,7 @@ export class SqlDatabase implements IRelationalDatabase {
   private getVersion(db: NativeDB, name: string): Promise<number> {
     return db.get(`select version from "$rdb_version" where name="${name}"`)
         .then(results => {
-          return results['version'] || 0;
+          return results[0]['version'] || 0;
         });
   }
 
@@ -113,34 +113,37 @@ export class SqlDatabase implements IRelationalDatabase {
 
   private scanSchema(db: NativeDB, schema: Schema): Promise<Schema> {
     let resolver = new Resolver<Schema>();
-    let change = new Map<string, TableSchema>();
 
     db.get(`select name from "$rdb_table" where db="${schema.name}"`)
         .then((rows: Object[]) => {
-          let tableNames = rows.map(row => row['name']);
-          let promises = new Array<Promise<void>>(tableNames.length);
-          tableNames.forEach(tableName => {
-            let promise =
-                db.get(
-                      'select name, type from "$rdb_column"' +
-                      ` where tbl="${tableName}" and db="${schema.name}"`)
-                    .then(
-                        (rows: Object[]) => {
-                          let tableSchema = new TableSchema(tableName);
-                          rows.forEach(
-                              row =>
-                                  tableSchema.column(row['name'], row['type']));
-                          change.set(tableName, tableSchema);
-                        },
-                        (e) => {
-                          resolver.reject(e);
-                        });
-            promises.push(promise);
-          });
-          Promise.all(promises).then(() => {
-            schema.reportChange(change);
+          if (rows === undefined || rows === null || rows.length == 0) {
+            // The schema is empty
             resolver.resolve(schema);
-          });
+          } else {
+            let tableNames = rows.map(row => row['name']);
+            let promises = new Array<Promise<void>>(tableNames.length);
+            tableNames.forEach(tableName => {
+              let promise =
+                  db.get(
+                        'select name, type from "$rdb_column"' +
+                        ` where tbl="${tableName}" and db="${schema.name}"`)
+                      .then(
+                          (rows: Object[]) => {
+                            let tableSchema = new TableSchema(tableName);
+                            rows.forEach(
+                                row =>
+                                    tableSchema.column(row['name'], row['type']));
+                            schema.reportTableChange(tableName, tableSchema);
+                          },
+                          (e) => {
+                            resolver.reject(e);
+                          });
+              promises.push(promise);
+            });
+            Promise.all(promises).then(() => {
+              resolver.resolve(schema);
+            });
+          }
         });
     return resolver.promise;
   }

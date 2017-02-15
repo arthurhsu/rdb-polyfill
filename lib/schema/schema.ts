@@ -46,14 +46,4 @@ export class Schema implements IDatabaseSchema {
       this.tables.set(name, schema);
     }
   }
-
-  public reportChange(change: Map<string, TableSchema>): void {
-    change.forEach((value, key) => {
-      if (value === null) {
-        this.tables.delete(key);
-      } else {
-        this.tables.set(key, value);
-      }
-    });
-  }
 }

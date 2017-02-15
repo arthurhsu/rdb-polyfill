@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {Schema} from '../schema/schema';
 import {IQuery} from '../spec/query';
 import {QueryBase} from './query_base';
 import {SqlConnection} from './sql_connection';
@@ -26,6 +27,9 @@ export enum SingleQueryType {
 }
 
 export class SingleQuery extends QueryBase {
+  public newVersion: number;
+  public targetTable: string;
+
   constructor(
       connection: SqlConnection, readonly sql: string,
       readonly canRollback: boolean, readonly type: SingleQueryType) {
@@ -55,5 +59,26 @@ export class SingleQuery extends QueryBase {
   public rollback(): Promise<void> {
     if (!this.canRollback) throw new Error('UnsupportedError');
     return super.rollback();
+  }
+
+  public onCommit(connection: SqlConnection): void {
+    switch (this.type) {
+      case SingleQueryType.DropTable:
+        if (this.targetTable) {
+          (connection.schema() as Schema).reportTableChange(
+              this.targetTable, null);
+        }
+        break;
+
+      case SingleQueryType.SetVersion:
+        if (this.newVersion !== undefined) {
+          (connection.schema() as Schema).currentVersion = this.newVersion;
+        }
+        break;
+
+      default:
+        super.onCommit(connection);
+        break;
+    }
   }
 }
