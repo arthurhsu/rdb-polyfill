@@ -20,12 +20,14 @@ import {ColumnType} from '../spec/enums';
 
 export class AggregatedColumn implements IColumn {
   readonly name: string;
+  readonly table: string;
   readonly fullName: string;
   readonly nullable: boolean;
 
   constructor(
       readonly sql: string, readonly type: ColumnType,
       readonly column: IColumn|IColumn[], readonly alias: string = null) {
+    this.table = null;  // Aggregated column does not belong to a table.
     if (column === null) {
       this.fullName = `${sql}(*)`;
       this.name = this.fullName;

@@ -20,22 +20,26 @@ import {BinaryPredicateHolder, UnaryPredicateHolder} from '../pred/predicate_hol
 import {IBindableValue} from '../spec/bindable_value';
 import {Column, IColumn} from '../spec/column';
 import {ColumnType, ComparableValueType} from '../spec/enums';
+import {ITable} from '../spec/table';
 import {ILogicalPredicate, OperandType} from '../spec/predicate';
 
 export class ColumnSchema extends Column {
+  readonly table: string;
   readonly fullName: string;
 
   constructor(
-      readonly tableName: string, readonly name: string,
+      readonly tableSchema: ITable, readonly name: string,
       readonly type: ColumnType, readonly nullable: boolean,
       readonly alias: string = null) {
     super();
+    this.table = tableSchema.getName();
+    let tableName = tableSchema.getAlias() || this.table;
     this.fullName = `${tableName}.${name}`;
   }
 
   public as(alias: string): IColumn {
     return new ColumnSchema(
-        this.tableName, this.name, this.type, this.nullable, alias);
+        this.tableSchema, this.name, this.type, this.nullable, alias);
   }
 
   public eq(value: OperandType): ILogicalPredicate {

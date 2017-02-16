@@ -20,14 +20,17 @@ import {LogicalPredicate} from '../../lib/pred/logical_predicate';
 import {NotPredicate} from '../../lib/pred/not_predicate';
 import {BinaryPredicateHolder, UnaryPredicateHolder} from '../../lib/pred/predicate_holder';
 import {ColumnSchema} from '../../lib/schema/column_schema';
+import {TableSchema} from '../../lib/schema/table_schema';
 
 const assert = chai.assert;
 
 describe('LogicalPredicate', () => {
+  let foo = new TableSchema('foo');
+
   it('toSql_twoAnds', () => {
-    let col1 = new ColumnSchema('foo', 'id', 'string', false);
-    let col2 = new ColumnSchema('foo', 'ts', 'date', false);
-    let col3 = new ColumnSchema('foo', 'pic', 'blob', true);
+    let col1 = new ColumnSchema(foo, 'id', 'string', false);
+    let col2 = new ColumnSchema(foo, 'ts', 'date', false);
+    let col3 = new ColumnSchema(foo, 'pic', 'blob', true);
     let binaryOp1 = new BinaryPredicateHolder(col1, '=', 1);
     let binaryOp2 = new BinaryPredicateHolder(col2, '>', 300);
     let unaryOp = new UnaryPredicateHolder(col3, 'is not null');
@@ -39,9 +42,9 @@ describe('LogicalPredicate', () => {
   });
 
   it('toSql_notAndOr', () => {
-    let col1 = new ColumnSchema('foo', 'id', 'string', false);
-    let col2 = new ColumnSchema('foo', 'ts', 'date', false);
-    let col3 = new ColumnSchema('foo', 'pic', 'blob', true);
+    let col1 = new ColumnSchema(foo, 'id', 'string', false);
+    let col2 = new ColumnSchema(foo, 'ts', 'date', false);
+    let col3 = new ColumnSchema(foo, 'pic', 'blob', true);
     let binaryOp1 = new BinaryPredicateHolder(col1, '=', 1);
     let binaryOp2 = new BinaryPredicateHolder(col2, '>', 300);
     let unaryOp = new UnaryPredicateHolder(col3, 'is not null');

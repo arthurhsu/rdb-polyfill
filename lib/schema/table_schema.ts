@@ -48,7 +48,7 @@ export class TableSchema implements ITable {
   }
 
   public column(name: string, type: ColumnType, notNull = false) {
-    let col = new ColumnSchema(this._alias || this._name, name, type, !notNull);
+    let col = new ColumnSchema(this, name, type, !notNull);
     this._columns.set(name, col);
     if (notNull) {
       this._notNull.add(name);
@@ -63,7 +63,7 @@ export class TableSchema implements ITable {
     that._columns = new Map<string, ColumnSchema>();
     this._columns.forEach(col => {
       let col2 = new ColumnSchema(
-          alias, col.name, col.type, this._notNull.has(col.name));
+          that, col.name, col.type, this._notNull.has(col.name));
       that._columns.set(col.name, col2);
       Object.defineProperty(that, col.name, {
         configurable: false,

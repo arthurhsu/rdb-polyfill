@@ -65,8 +65,8 @@ export class SingleQuery extends QueryBase {
     switch (this.type) {
       case SingleQueryType.DropTable:
         if (this.targetTable) {
-          (connection.schema() as Schema).reportTableChange(
-              this.targetTable, null);
+          (connection.schema() as Schema)
+              .reportTableChange(this.targetTable, null);
         }
         break;
 
