@@ -24,8 +24,7 @@ export interface AutoIncrementPrimaryKey {
 }
 
 export type PrimaryKeyDefinition =
-    string | string[] | AutoIncrementPrimaryKey | IndexedColumnSpec |
-    IndexedColumnSpec[];
+    IndexedColumnDefinition | AutoIncrementPrimaryKey;
 
 export interface ForeignKeySpec {
   name: string;
@@ -39,7 +38,8 @@ export interface IndexedColumnSpec {
   name: string;
   order: Order;
 }
-export type IndexedColumnDefinition = string | string[] | IndexedColumnSpec[];
+export type IndexedColumnDefinition =
+    string | string[] | IndexedColumnSpec | IndexedColumnSpec[];
 
 export interface IndexSpec {
   name: string;

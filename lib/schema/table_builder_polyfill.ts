@@ -26,11 +26,13 @@ import {Schema} from './schema';
 import {TableSchema} from './table_schema';
 
 export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
+  // TODO(arthurhsu): implement name checker
   private columnSql: string[];
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
   private schema: TableSchema;
   private dbName: string;
+  private indices: Map<string, IndexSpec>;
 
   constructor(
       connection: SqlConnection, readonly name: string, dbName: string) {
@@ -40,6 +42,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.columnType = new Map<string, ColumnType>();
     this.dbName = dbName;
     this.schema = new TableSchema(name);
+    this.indices = new Map<string, IndexSpec>();
   }
 
   public column(name: string, type: ColumnType, notNull = false):
@@ -82,6 +85,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   public primaryKey(primaryKey: PrimaryKeyDefinition): ITableBuilder {
+    // TODO(arthurhsu): refactor verification and SQL generation
     this.checkPKColumnType(primaryKey);
 
     let sql = CommonBase.primaryKeyToSql(this.connection, primaryKey);
@@ -108,13 +112,22 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   public index(index: IndexSpec): ITableBuilder {
+    if (this.indices.has(index.name)) {
+      // TODO(arthurhsu): remove this check once name checker is in
+      throw new Error('SyntaxError');
+    }
+
+    if (index.unique && index.type == 'fulltext') {
+      throw new Error('SyntaxError');
+    }
+
     // TODO(arthurhsu): implement
     return this;
   }
 
   private getIndexSql(): string {
     // TODO(arthurhsu): implement
-    return '';
+    return null;
   }
 
   private getColumnSql(): string {
@@ -134,7 +147,8 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     let constraint = this.getConstraintSql();
     let desc = constraint ? `${column}, ${constraint}` : column;
     let indexSql = this.getIndexSql();
-    return `create table ${this.name} (${desc}); ${indexSql}`;
+    let mainSql = `create table ${this.name} (${desc})`;
+    return indexSql ? `${mainSql}; ${indexSql}`: mainSql;
   }
 
   public onCommit(conn: SqlConnection): void {
