@@ -103,11 +103,18 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   public foreignKey(foreignKey: ForeignKeySpec): ITableBuilder {
+    // TODO(arthurhsu): implement
     return this;
   }
 
   public index(index: IndexSpec): ITableBuilder {
+    // TODO(arthurhsu): implement
     return this;
+  }
+
+  private getIndexSql(): string {
+    // TODO(arthurhsu): implement
+    return '';
   }
 
   private getColumnSql(): string {
@@ -126,7 +133,8 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     }
     let constraint = this.getConstraintSql();
     let desc = constraint ? `${column}, ${constraint}` : column;
-    return `create table ${this.name} (${desc})`;
+    let indexSql = this.getIndexSql();
+    return `create table ${this.name} (${desc}); ${indexSql}`;
   }
 
   public onCommit(conn: SqlConnection): void {
@@ -152,6 +160,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   public clone(): IQuery {
+    // Does not support for this query.
     throw new Error('UnsupportedError');
   }
 

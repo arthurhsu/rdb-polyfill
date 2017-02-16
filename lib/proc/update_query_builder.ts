@@ -49,7 +49,7 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
     if (column.table != this.table.getName()) {
       throw new Error('SyntaxError');
     }
-    
+
     this.columns.push(column as ColumnSchema);
     this.values.push(value);
     return this;
