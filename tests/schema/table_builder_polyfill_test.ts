@@ -76,4 +76,18 @@ describe('TableBuilderPolyfill', () => {
         .primaryKey({'name': 'id', 'autoIncrement': true});
     assert.equal(expected, builder.toSql());
   });
+
+  it('toSql_complexPK', () => {
+    const expected = 'create table foo (' +
+                     'id real, ' +
+                     'name text, ' +
+                     'primary key (id, name desc)' +
+                     ')';
+    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+    builder.column('id', 'number')
+        .column('name', 'string')
+        .primaryKey(
+            [{name: 'id', order: 'asc'}, {name: 'name', order: 'desc'}]);
+    assert.equal(expected, builder.toSql());
+  });
 });

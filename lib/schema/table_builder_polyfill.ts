@@ -21,7 +21,7 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {ForeignKeySpec, IndexedColumnSpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {Schema} from './schema';
 import {TableSchema} from './table_schema';
@@ -63,52 +63,27 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     return this;
   }
 
-  private throwForWrongPKType(type: ColumnType): void {
-    if (type == 'blob' || type == 'object') {
-      throw new Error('InvalidSchemaError');
-    }
-  }
-
-  private checkPKColumnType(primaryKey: PrimaryKeyDefinition): void {
-    if (typeof primaryKey == 'string') {
-      this.throwForWrongPKType(this.columnType.get(primaryKey));
-      return;
-    }
-
-    if (Array.isArray(primaryKey)) {
-      if (typeof primaryKey[0] == 'string') {
-        (primaryKey as string[]).forEach(k => {
-          this.throwForWrongPKType(this.columnType.get(k));
-        });
-      } else {
-        (primaryKey as IndexedColumnSpec[]).forEach(k => {
-          this.throwForWrongPKType(this.columnType.get(k.name));
-        });
-      }
-    } else {
-      this.throwForWrongPKType(this.columnType.get(primaryKey['name']));
-    }
-  }
-
-  public primaryKey(primaryKey: PrimaryKeyDefinition): ITableBuilder {
-    // TODO(arthurhsu): refactor verification and SQL generation
-    this.checkPKColumnType(primaryKey);
-
-    let sql = CommonBase.primaryKeyToSql(this.connection, primaryKey);
-    if (!sql.startsWith('primary key')) {
-      // Must alter the corresponding column for auto increment.
-      if (this.columnType.get(primaryKey['name']) != 'number') {
+  public primaryKey(pk: PrimaryKeyDefinition): ITableBuilder {
+    if (typeof pk == 'object' && pk['autoIncrement'] !== undefined) {
+      // AutoIncrement PK, need special care.
+      let key = pk as AutoIncrementPrimaryKey;
+      if (this.columnType.get(key.name) != 'number') {
         throw new Error('InvalidSchemaError');
       }
-      let name = sql.split(' ')[0] + ' ';
+      let name = key.name + ' ';
       for (let i = 0; i < this.columnSql.length; ++i) {
         if (this.columnSql[i].startsWith(name)) {
-          this.columnSql[i] = sql;
-          return this;
+          this.columnSql[i] =
+             `${key.name} integer primary key ` +
+             this.connection.autoIncrementKeyword;
+          break;
         }
       }
+      return this;
     }
-    this.constraintSql.push(sql);
+
+    let index = CommonBase.normalizeIndex(pk, this.columnType);
+    this.constraintSql.push(CommonBase.indexToSql('primary key', index));
     return this;
   }
 

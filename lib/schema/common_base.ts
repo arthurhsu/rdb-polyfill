@@ -16,8 +16,7 @@
  */
 
 import {ColumnType} from '../spec/enums';
-import {SqlConnection} from '../proc/sql_connection';
-import {AutoIncrementPrimaryKey, IndexedColumnSpec, PrimaryKeyDefinition} from '../spec/table_builder';
+import {IndexedColumnDefinition, IndexedColumnSpec, PrimaryKeyDefinition} from '../spec/table_builder';
 
 // Common base methods for TableBuilder and TableChanger.
 export class CommonBase {
@@ -49,36 +48,55 @@ export class CommonBase {
     return `${name} ${sqlType}${postfix}`;
   }
 
-  static primaryKeyToSql(
-      cnn: SqlConnection, primaryKey: PrimaryKeyDefinition): string {
-    if (typeof primaryKey == 'string') {
-      return `primary key (${primaryKey})`;
+  static verifyColumnIsIndexable(
+      name: string, columnType: Map<string, ColumnType>): void {
+    let type = columnType.get(name);
+    if (type == 'blob' || type == 'object' || type === undefined) {
+      throw new Error('InvalidSchemaError');
+    }
+  }
+
+  static normalizeIndex(
+      index: PrimaryKeyDefinition|IndexedColumnDefinition,
+      columnType: Map<string, ColumnType>): IndexedColumnSpec[] {
+    let results: IndexedColumnSpec[] = [];
+    if (typeof index == 'string') {
+      CommonBase.verifyColumnIsIndexable(index, columnType);
+      results.push({name: index, order: 'asc'});
+    } else if (Array.isArray(index)) {
+      if (typeof index[0] == 'string') {
+        (index as string[]).forEach(k => {
+          CommonBase.verifyColumnIsIndexable(k, columnType);
+          results.push({'name': k, order: 'asc'});
+        });
+      } else {
+        (index as IndexedColumnSpec[]).forEach(k => {
+          CommonBase.verifyColumnIsIndexable(k.name, columnType);
+          results.push(k);
+        });
+      }
+    } else if (typeof index == 'object') {
+      // This must be tested after Array.isArray(index), because type of Array
+      // is 'object'.
+      let i = index as IndexedColumnSpec;
+      CommonBase.verifyColumnIsIndexable(i.name, columnType);
+      results.push(i);
+    } else {  // invalid type
+      throw new Error('SyntaxError');
     }
 
-    if (Array.isArray(primaryKey)) {
-      if (primaryKey.length == 0) {
-        throw new Error('SyntaxError');
-      }
-
-      if (typeof primaryKey[0] == 'string') {
-        return `primary key (${primaryKey.join(' ')})`;
-      }
-
-      // IndexedColumnSpec[]
-      let spec = (primaryKey as IndexedColumnSpec[]).map(k => {
-        return `${k.name} ${k.order}`;
-      }).join(',');
-      return `primary key (${spec})`;
-    } else {
-      if (primaryKey['autoIncrement'] !== undefined) {
-        let pk: AutoIncrementPrimaryKey = primaryKey as AutoIncrementPrimaryKey;
-        return pk.autoIncrement ?
-            `${pk.name} integer primary key ${cnn.autoIncrementKeyword}` :
-            `primary key (${pk.name})`;
-      } else {  // IndexedColumnSpec
-        let pk: IndexedColumnSpec = primaryKey as IndexedColumnSpec;
-        return `primary key (${pk.name} ${pk.order})`;
-      }
+    if (results.length == 0) {
+      throw new Error('SyntaxError');
     }
+    return results;
+  }
+
+  static indexToSql(prefix: string, index: IndexedColumnSpec[]): string {
+    let columnSql = index
+        .map(k => {
+          return (k.order == 'asc') ? k.name : `${k.name} ${k.order}`;
+        })
+        .join(', ');
+    return `${prefix} (${columnSql})`;
   }
 }
