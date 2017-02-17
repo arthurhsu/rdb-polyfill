@@ -25,6 +25,14 @@ describe('TableBuilderPolyfill', () => {
   let conn: MockConnection;
   before(() => conn = new MockConnection());
 
+  it('throws_DuplicateColumn', () => {
+    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+    assert.throws(() => {
+      builder.column('number', 'number')
+             .column('number', 'number');
+    });
+  });
+
   it('toSql_Simple', () => {
     const expected = 'create table foo (' +
                      'number real, ' +

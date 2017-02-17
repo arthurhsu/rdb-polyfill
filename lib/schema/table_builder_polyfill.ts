@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {validateName} from '../base/assert';
 import {QueryBase} from '../proc/query_base';
 import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
@@ -26,12 +27,12 @@ import {Schema} from './schema';
 import {TableSchema} from './table_schema';
 
 export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
-  // TODO(arthurhsu): implement name checker
   private columnSql: string[];
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
   private schema: TableSchema;
   private dbName: string;
+  private nameUsed: Set<string>;
   private indices: Map<string, IndexSpec>;
 
   constructor(
@@ -43,14 +44,19 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.dbName = dbName;
     this.schema = new TableSchema(name);
     this.indices = new Map<string, IndexSpec>();
+    this.nameUsed = new Set<string>();
+  }
+
+  private checkName(name: string): void {
+    if (this.nameUsed.has(name) || !validateName(name)) {
+      throw new Error('SyntaxError');
+    }
+    this.nameUsed.add(name);
   }
 
   public column(name: string, type: ColumnType, notNull = false):
       ITableBuilder {
-    if (this.columnType.has(name)) {
-      throw new Error('SyntaxError');
-    }
-
+    this.checkName(name);
     this.columnType.set(name, type);
     this.columnSql.push(CommonBase.columnDefToSql(name, type, notNull));
     this.schema.column(name, type, notNull);
@@ -112,10 +118,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   public index(index: IndexSpec): ITableBuilder {
-    if (this.indices.has(index.name)) {
-      // TODO(arthurhsu): remove this check once name checker is in
-      throw new Error('SyntaxError');
-    }
+    this.checkName(index.name);
 
     if (index.unique && index.type == 'fulltext') {
       throw new Error('SyntaxError');
@@ -148,7 +151,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     let desc = constraint ? `${column}, ${constraint}` : column;
     let indexSql = this.getIndexSql();
     let mainSql = `create table ${this.name} (${desc})`;
-    return indexSql ? `${mainSql}; ${indexSql}`: mainSql;
+    return indexSql ? `${mainSql}; ${indexSql}` : mainSql;
   }
 
   public onCommit(conn: SqlConnection): void {
