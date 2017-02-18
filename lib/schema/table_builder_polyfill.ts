@@ -116,8 +116,9 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
 
   private getIndexSql(): string {
     return this.indices.map(index => {
+      let unique = index.unique ? 'unique ' : '';
       return CommonBase.indexToSql(
-          `create index ${index.name} on ${this.name}`,
+          `create ${unique}index ${index.name} on ${this.name}`,
           index.column as IndexedColumnSpec[]);
     }).join('; ');
   }

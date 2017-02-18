@@ -100,4 +100,14 @@ describe('TableBuilderPolyfill', () => {
         .index({name: 'idx', column: 'id'});
     assert.equal(expected, builder.toSql());
   });
+
+  it('toSql_uniqueIndex', () => {
+    const expected = 'create table foo (id real, name text); ' +
+                     'create unique index idx on foo (id)';
+    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+    builder.column('id', 'number')
+        .column('name', 'string')
+        .index({name: 'idx', column: 'id', unique: true});
+    assert.equal(expected, builder.toSql());
+  });
 });
