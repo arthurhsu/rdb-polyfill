@@ -21,7 +21,7 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexedColumnSpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {Schema} from './schema';
 import {TableSchema} from './table_schema';
@@ -33,7 +33,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   private schema: TableSchema;
   private dbName: string;
   private nameUsed: Set<string>;
-  private indices: Map<string, IndexSpec>;
+  private indices: IndexSpec[];
 
   constructor(
       connection: SqlConnection, readonly name: string, dbName: string) {
@@ -43,7 +43,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.columnType = new Map<string, ColumnType>();
     this.dbName = dbName;
     this.schema = new TableSchema(name);
-    this.indices = new Map<string, IndexSpec>();
+    this.indices = [];
     this.nameUsed = new Set<string>();
   }
 
@@ -99,13 +99,27 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
       throw new Error('SyntaxError');
     }
 
-    // TODO(arthurhsu): implement
+    if (index.type == 'fulltext') {
+      // TODO(arthurhsu): consider how to implement this, or withdraw from spec.
+      throw new Error('UnsupportedError');
+    }
+
+    this.indices.push({
+      name: index.name,
+      column: CommonBase.normalizeIndex(index.column, this.columnType),
+      type: index.type,
+      unique: index.unique || false
+    });
+
     return this;
   }
 
   private getIndexSql(): string {
-    // TODO(arthurhsu): implement
-    return null;
+    return this.indices.map(index => {
+      return CommonBase.indexToSql(
+          `create index ${index.name} on ${this.name}`,
+          index.column as IndexedColumnSpec[]);
+    }).join('; ');
   }
 
   private getColumnSql(): string {

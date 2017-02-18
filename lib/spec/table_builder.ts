@@ -41,6 +41,7 @@ export interface IndexedColumnSpec {
 export type IndexedColumnDefinition =
     string | string[] | IndexedColumnSpec | IndexedColumnSpec[];
 
+// TODO(arthurhsu): make type and unique optional
 export interface IndexSpec {
   name: string;
   column: IndexedColumnDefinition;

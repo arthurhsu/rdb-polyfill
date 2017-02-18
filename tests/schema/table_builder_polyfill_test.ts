@@ -90,4 +90,14 @@ describe('TableBuilderPolyfill', () => {
             [{name: 'id', order: 'asc'}, {name: 'name', order: 'desc'}]);
     assert.equal(expected, builder.toSql());
   });
+
+  it('toSql_simpleIndex', () => {
+    const expected = 'create table foo (id real, name text); ' +
+                     'create index idx on foo (id)';
+    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+    builder.column('id', 'number')
+        .column('name', 'string')
+        .index({name: 'idx', column: 'id', type: 'btree', unique: false});
+    assert.equal(expected, builder.toSql());
+  });
 });
