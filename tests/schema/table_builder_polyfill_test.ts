@@ -97,7 +97,7 @@ describe('TableBuilderPolyfill', () => {
     let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
-        .index({name: 'idx', column: 'id', type: 'btree', unique: false});
+        .index({name: 'idx', column: 'id'});
     assert.equal(expected, builder.toSql());
   });
 });

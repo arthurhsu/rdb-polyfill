@@ -107,7 +107,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.indices.push({
       name: index.name,
       column: CommonBase.normalizeIndex(index.column, this.columnType),
-      type: index.type,
+      type: index.type || 'btree',
       unique: index.unique || false
     });
 
