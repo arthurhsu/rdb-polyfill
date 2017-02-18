@@ -55,7 +55,7 @@ export class BindableValueHolder implements IBindableValue {
     return s;
   }
 
-  public static format(value: any): string {
+  public static format(value: any, prefix = '', postfix = ''): string {
     if (value instanceof Date) {
       return (value as Date).getTime().toString();
     }
@@ -75,7 +75,7 @@ export class BindableValueHolder implements IBindableValue {
 
     if (typeof(value) == 'string') {
       // TODO(arthurhsu): escape value.
-      return `"${value}"`;
+      return `"${prefix}${value}${postfix}"`;
     }
     return value.toString();
   }

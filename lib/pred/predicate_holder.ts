@@ -23,7 +23,7 @@ export abstract class PredicateHolder {
   abstract toSql(): string;
   abstract createBinderMap(map: Map<number, BindableValueHolder>): void;
 
-  static eval(value: OperandType): string {
+  static eval(value: OperandType, prefix = '', postfix = ''): string {
     if (value instanceof ColumnSchema) {
       return (value as ColumnSchema).fullName;
     }
@@ -32,7 +32,7 @@ export abstract class PredicateHolder {
       return value.toString();
     }
 
-    return BindableValueHolder.format(value);
+    return BindableValueHolder.format(value, prefix, postfix);
   };
 }
 
@@ -53,13 +53,14 @@ export class UnaryPredicateHolder extends PredicateHolder {
 export class BinaryPredicateHolder extends PredicateHolder {
   constructor(
       readonly column: ColumnSchema, readonly sql: string,
-      readonly value: OperandType) {
+      readonly value: OperandType, readonly prefix = '',
+      readonly postfix = '') {
     super();
   }
 
   public toSql(): string {
     return `${this.column.fullName} ${this.sql} ` +
-        `${PredicateHolder.eval(this.value)}`;
+        `${PredicateHolder.eval(this.value, this.prefix, this.postfix)}`;
   }
 
   public createBinderMap(map: Map<number, BindableValueHolder>) {

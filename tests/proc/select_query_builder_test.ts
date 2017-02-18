@@ -140,4 +140,20 @@ describe('SelectQueryBuilder', () => {
     assert.equal(expected, selectBuilder.toSql());
     assert.equal(expected, selectBuilder.clone().toSql());
   });
+
+  it('toSql_startsWith', () => {
+    const expected = 'select * from foo where foo.name like "bar%"';
+    let selectBuilder =
+        conn.select().from(foo).where(foo['name'].startsWith('bar'));
+    assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
+  });
+
+  it('toSql_endsWith', () => {
+    const expected = 'select * from foo where foo.name like "%bar"';
+    let selectBuilder =
+        conn.select().from(foo).where(foo['name'].endsWith('bar'));
+    assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
+  });
 });

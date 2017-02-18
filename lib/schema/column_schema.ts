@@ -79,13 +79,13 @@ export class ColumnSchema extends Column {
   }
 
   public startsWith(value: IBindableValue|string): ILogicalPredicate {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return new LogicalPredicate(
+        new BinaryPredicateHolder(this, 'like', value, '', '%'));
   }
 
   public endsWith(value: IBindableValue|string): ILogicalPredicate {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return new LogicalPredicate(
+        new BinaryPredicateHolder(this, 'like', value, '%'));
   }
 
   // clang-format off
