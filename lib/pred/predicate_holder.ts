@@ -69,3 +69,26 @@ export class BinaryPredicateHolder extends PredicateHolder {
     }
   }
 }
+
+export class TernaryPredicateHolder extends PredicateHolder {
+  constructor(
+      readonly column: ColumnSchema, readonly sql: string,
+      readonly prep: string, readonly lhs: OperandType,
+      readonly rhs: OperandType) {
+    super();
+  }
+
+  public toSql(): string {
+    return `${this.column.fullName} ${this.sql} ` +
+        `${PredicateHolder.eval(this.lhs)} ${this.prep} ` +
+        `${PredicateHolder.eval(this.rhs)}`;
+  }
+
+  public createBinderMap(map: Map<number, BindableValueHolder>) {
+    [this.lhs, this.rhs].forEach(value => {
+      if (value instanceof BindableValueHolder) {
+        map.set(value.index, value);
+      }
+    });
+  }
+}

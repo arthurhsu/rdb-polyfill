@@ -156,4 +156,15 @@ describe('SelectQueryBuilder', () => {
     assert.equal(expected, selectBuilder.toSql());
     assert.equal(expected, selectBuilder.clone().toSql());
   });
+
+  it('toSql_betweenBinder', () => {
+    const expected1 = 'select * from foo where foo.id between 1 and 10';
+    const expected2 = 'select * from foo where foo.id between 2 and 12';
+    let selectBuilder =
+        conn.select()
+            .from(foo)
+            .where(foo['id'].between(conn.bind(0), conn.bind(1)));
+    assert.equal(expected1, selectBuilder.bind(1, 10).toSql());
+    assert.equal(expected2, selectBuilder.clone().bind(2, 12).toSql());
+  });
 });
