@@ -20,8 +20,9 @@ import {BinaryPredicateHolder, UnaryPredicateHolder} from '../pred/predicate_hol
 import {IBindableValue} from '../spec/bindable_value';
 import {Column, IColumn} from '../spec/column';
 import {ColumnType, ComparableValueType} from '../spec/enums';
-import {ITable} from '../spec/table';
 import {ILogicalPredicate, OperandType} from '../spec/predicate';
+import {ISelectQuery} from '../spec/select_query';
+import {ITable} from '../spec/table';
 
 export class ColumnSchema extends Column {
   readonly table: string;
@@ -66,7 +67,7 @@ export class ColumnSchema extends Column {
     return new LogicalPredicate(new BinaryPredicateHolder(this, '>=', value));
   }
 
-  public match(value: IBindableValue|RegExp|string): ILogicalPredicate {
+  public match(value: IBindableValue|string): ILogicalPredicate {
     // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
@@ -77,8 +78,19 @@ export class ColumnSchema extends Column {
     throw new Error('NotImplemented');
   }
 
+  public startsWith(value: IBindableValue|string): ILogicalPredicate {
+    // TODO(arthurhsu): implement
+    throw new Error('NotImplemented');
+  }
+
+  public endsWith(value: IBindableValue|string): ILogicalPredicate {
+    // TODO(arthurhsu): implement
+    throw new Error('NotImplemented');
+  }
+
   // clang-format off
-  public in(values: ComparableValueType[] | IBindableValue): ILogicalPredicate {
+  public in(values: ComparableValueType[]|IBindableValue|ISelectQuery):
+      ILogicalPredicate {
     // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }

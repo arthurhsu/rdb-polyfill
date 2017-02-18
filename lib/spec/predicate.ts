@@ -18,6 +18,7 @@
 import {IBindableValue} from './bindable_value';
 import {IColumn} from './column';
 import {ComparableValueType} from './enums';
+import {ISelectQuery} from './select_query';
 
 export type OperandType = ComparableValueType | IColumn;
 
@@ -31,10 +32,12 @@ export interface IComparisonPredicate {
 }
 
 export interface ITruthPredicate {
-  match(value: IBindableValue|RegExp|string): ILogicalPredicate;
+  match(value: IBindableValue|string): ILogicalPredicate;
   between(lhs: ComparableValueType, rhs: ComparableValueType):
       ILogicalPredicate;
-  in(values: ComparableValueType[]|IBindableValue): ILogicalPredicate;
+  startsWith(value: IBindableValue|string): ILogicalPredicate;
+  endsWith(value: IBindableValue|string): ILogicalPredicate;
+  in(values: ComparableValueType[]|IBindableValue|ISelectQuery): ILogicalPredicate;
   isNull(): ILogicalPredicate;
   isNotNull(): ILogicalPredicate;
 }

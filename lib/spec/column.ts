@@ -18,6 +18,7 @@
 import {IBindableValue} from './bindable_value';
 import {ColumnType, ComparableValueType} from './enums';
 import {IComparisonPredicate, ILogicalPredicate, ITruthPredicate, OperandType} from './predicate';
+import {ISelectQuery} from './select_query';
 
 export interface IColumn {
   readonly name: string;
@@ -44,12 +45,14 @@ export abstract class Column implements IColumn, IComparisonPredicate,
   public abstract gt(value: OperandType): ILogicalPredicate;
   public abstract gte(value: OperandType): ILogicalPredicate;
 
-  public abstract match(value: IBindableValue|RegExp|string): ILogicalPredicate;
+  public abstract match(value: IBindableValue|string): ILogicalPredicate;
   public abstract between(lhs: ComparableValueType, rhs: ComparableValueType):
       ILogicalPredicate;
+  public abstract startsWith(value: IBindableValue|string): ILogicalPredicate;
+  public abstract endsWith(value: IBindableValue|string): ILogicalPredicate;
   // clang-format off
-  public abstract in(
-      values: ComparableValueType[] | IBindableValue): ILogicalPredicate;
+  public abstract in(values: ComparableValueType[]|IBindableValue|ISelectQuery):
+      ILogicalPredicate;
   // clang-format on
   public abstract isNull(): ILogicalPredicate;
   public abstract isNotNull(): ILogicalPredicate;
