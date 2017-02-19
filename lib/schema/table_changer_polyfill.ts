@@ -20,7 +20,7 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType, ValueType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {ForeignKeySpec, IndexedColumnDefinition, PrimaryKeyDefinition} from '../spec/table_builder';
+import {ForeignKeySpec, IndexedColumnDefinition} from '../spec/table_builder';
 import {IColumnChanger, ITableChanger} from '../spec/table_changer';
 import {CommonBase} from './common_base';
 
@@ -57,13 +57,14 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
-  public addPrimaryKey(primaryKey: PrimaryKeyDefinition): ITableChanger {
+  public addPrimaryKey(columns: string|string[]): ITableChanger {
     // TODO(arthurhsu): implement, heavy lifting is possible
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
   public dropPrimaryKey(): ITableChanger {
     // TODO(arthurhsu): implement, heavy lifting is possible
+    // Note: SQLite does not support dropping primary key.
     throw new Error('NotSupported: SQLite does not have native support');
   }
 

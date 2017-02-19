@@ -21,7 +21,7 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {ForeignKeySpec, IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {Schema} from './schema';
 import {IndexSpec, TableSchema} from './table_schema';
@@ -63,18 +63,21 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     return this;
   }
 
-  public primaryKey(pk: PrimaryKeyDefinition): ITableBuilder {
-    if (typeof pk == 'object' && pk['autoIncrement'] !== undefined) {
-      // AutoIncrement PK, need special care.
-      let key = pk as AutoIncrementPrimaryKey;
-      if (this.columnType.get(key.name) != 'number') {
+  public primaryKey(columns: string|string[], autoIncrement = false):
+      ITableBuilder {
+    if (autoIncrement) {
+      if (Array.isArray(columns)) {
+        throw new Error('SyntaxError');
+      }
+
+      if (this.columnType.get(columns) != 'number') {
         throw new Error('InvalidSchemaError');
       }
-      let name = key.name + ' ';
+      let name = columns + ' ';
       for (let i = 0; i < this.columnSql.length; ++i) {
         if (this.columnSql[i].startsWith(name)) {
           this.columnSql[i] =
-             `${key.name} integer primary key ` +
+             `${name}integer primary key ` +
              this.connection.autoIncrementKeyword;
           break;
         }
@@ -82,7 +85,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
       return this;
     }
 
-    let index = CommonBase.normalizeIndex(pk, this.columnType);
+    let index = CommonBase.normalizeIndex(columns, this.columnType);
     this.constraintSql.push(CommonBase.indexToSql('primary key', index));
     return this;
   }

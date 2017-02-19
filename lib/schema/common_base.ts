@@ -16,7 +16,7 @@
  */
 
 import {ColumnType} from '../spec/enums';
-import {IndexedColumnDefinition, IndexedColumnSpec, PrimaryKeyDefinition} from '../spec/table_builder';
+import {IndexedColumnDefinition, IndexedColumnSpec} from '../spec/table_builder';
 
 // Common base methods for TableBuilder and TableChanger.
 export class CommonBase {
@@ -56,8 +56,7 @@ export class CommonBase {
     }
   }
 
-  static normalizeIndex(
-      index: PrimaryKeyDefinition|IndexedColumnDefinition,
+  static normalizeIndex(index: IndexedColumnDefinition,
       columnType: Map<string, ColumnType>): IndexedColumnSpec[] {
     let results: IndexedColumnSpec[] = [];
     if (typeof index == 'string') {

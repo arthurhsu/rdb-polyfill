@@ -17,7 +17,7 @@
 
 import {ColumnType} from '../spec/enums';
 import {ITable} from '../spec/table';
-import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexedColumnDefinition} from '../spec/table_builder';
+import {ForeignKeySpec, IndexedColumnDefinition} from '../spec/table_builder';
 import {ColumnSchema} from './column_schema';
 
 export interface IndexSpec {
@@ -30,7 +30,8 @@ export class TableSchema implements ITable {
   private _name: string;
   private _alias: string;
   public _columns: Map<string, ColumnSchema>;
-  public _primaryKey: AutoIncrementPrimaryKey|IndexSpec;
+  public _primaryKey: string[];
+  public _autoIncrement: boolean;
   public _foreignKey: ForeignKeySpec[];
   public _indices: IndexSpec[];
   public _notNull: Set<string>;
@@ -39,6 +40,7 @@ export class TableSchema implements ITable {
     this._name = name;
     this._columns = new Map<string, ColumnSchema>();
     this._primaryKey = null;
+    this._autoIncrement = false;
     this._foreignKey = [];
     this._indices = [];
     this._notNull = new Set<string>();
@@ -79,7 +81,8 @@ export class TableSchema implements ITable {
       });
     });
 
-    that._primaryKey = this._primaryKey;
+    that._primaryKey = [].concat(this._primaryKey);
+    that._autoIncrement = this._autoIncrement;
     that._foreignKey = this._foreignKey;
     that._indices = this._indices;
     that._notNull = this._notNull;

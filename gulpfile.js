@@ -34,6 +34,7 @@ const thru = require('through2');
 
 const Files = {
   LIB: 'lib/**/*.ts',
+  SPEC: 'example/spec/*.ts',
   TESTING: 'testing/**/*.ts',
   TESTS: 'tests/**/*.ts'
 };
@@ -42,6 +43,7 @@ const Dir = {
   DIST: 'dist',
   LIB: 'lib',
   OUTPUT: 'out',
+  SPEC: 'example/spec',
   TESTING: 'testing',
   TESTS: 'tests'
 };
@@ -139,12 +141,13 @@ function checkFormat() {
 }
 
 gulp.task('default', () => {
-  var log = console.log;
+  let log = console.log;
   log('Usage:');
   log('gulp build: build all libraries and tests');
   log('gulp clean: remove all intermediate files');
   log('gulp debug: run mocha debug');
   log('gulp dist: create dist package');
+  log('gulp gen: generate and validate spec examples');
   log('gulp test: run mocha tests');
   log('gulp format_check: check files against clang-format')
   log('gulp lint: run tslint against code');
@@ -155,31 +158,42 @@ gulp.task('default', () => {
 });
 
 gulp.task('build_lib', () => {
-  return build(Files.LIB,
+  build(Files.LIB,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.LIB));
 });
 
 gulp.task('build_testing', () => {
-  return build(Files.TESTING,
+  build(Files.TESTING,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTING));
 });
 
 gulp.task('build_tests', ['build_lib', 'build_testing'], () => {
-  return build(Files.TESTS,
+  build(Files.TESTS,
       path.join(Dir.OUTPUT, Dir.DEF),
       path.join(Dir.OUTPUT, Dir.TESTS));
 });
 
 gulp.task('format_check', () => {
-  gulp.src([Files.LIB, Files.TESTS])
+  gulp.src([Files.LIB, Files.TESTS, Files.SPEC])
       .pipe(format())
       .pipe(checkFormat());
 });
 
+gulp.task('gen', () => {
+  doBuild(Files.SPEC,
+      path.join(Dir.OUTPUT, Dir.SPEC),
+      path.join(Dir.OUTPUT, Dir.SPEC),
+      getFilter(),
+      {
+        "declaration": false,
+        "removeComments": false
+      });
+});
+
 gulp.task('lint', () => {
-  gulp.src([Files.LIB, Files.TESTS])
+  gulp.src([Files.LIB, Files.TESTS, Files.SPEC])
       .pipe(tslint({formatter: 'stylish'}))
       .pipe(tslint.report({
         summarizeFailureOutput: true

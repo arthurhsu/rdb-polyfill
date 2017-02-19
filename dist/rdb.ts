@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-const SqlDatabase = require('./lib/proc/sql_database').SqlDatabase;
+import {SqlDatabase} from '../lib/proc/sql_database';
 
-if (typeof navigator === 'undefined') {
-  exports.navigator = {};
-  navigator = exports.navigator;
+export function createPolyfill(path: string = null) {
+  if (typeof navigator === 'undefined') {
+    exports.navigator = {};
+    navigator = exports.navigator;
+  }
+
+  navigator['db'] = new SqlDatabase(path);
 }
-
-navigator.db = new SqlDatabase(process.env['DATABASE_FILE_PATH']);

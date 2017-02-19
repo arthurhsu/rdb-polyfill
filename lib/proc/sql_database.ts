@@ -35,12 +35,19 @@ export class SqlDatabase implements IRelationalDatabase {
   }
 
   public drop(name: string): Promise<void> {
-    return Implementation.dropNativeDB(`${this.persistPath}/${name}`);
+    if (this.persistPath) {
+      return Implementation.dropNativeDB(`${this.persistPath}/${name}`);
+    }
+    return Promise.resolve();
   }
 
   public open(name: string, opt?: OpenDatabaseOptions):
       Promise<DatabaseConnection> {
     let volatile = (opt && opt.storageType == 'temporary');
+    if (this.persistPath === null || this.persistPath === undefined) {
+      volatile = true;
+    }
+
     // TODO(arthurhsu): we want to use URI-based in-memory database for volatile
     // databases, however, node-sqlite3 does not support that. Therefore we'll
     // need to use this buggy implementation of put everything on the temporary
