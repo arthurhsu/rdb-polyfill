@@ -32,7 +32,6 @@ export interface IComparisonPredicate {
 }
 
 export interface ITruthPredicate {
-  match(value: IBindableValue|string): ILogicalPredicate;
   between(lhs: ComparableValueType, rhs: ComparableValueType):
       ILogicalPredicate;
   startsWith(value: IBindableValue|string): ILogicalPredicate;

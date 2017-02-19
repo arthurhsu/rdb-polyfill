@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {ColumnType, ForeignKeyAction, ForeignKeyTiming, IndexType, Order} from './enums';
+import {ColumnType, ForeignKeyAction, ForeignKeyTiming, Order} from './enums';
 import {IExecutionContext} from './execution_context';
 
 export interface AutoIncrementPrimaryKey {
@@ -41,16 +41,9 @@ export interface IndexedColumnSpec {
 export type IndexedColumnDefinition =
     string | string[] | IndexedColumnSpec | IndexedColumnSpec[];
 
-export interface IndexSpec {
-  name: string;
-  column: IndexedColumnDefinition;
-  type?: IndexType;
-  unique?: boolean;
-}
-
 export interface ITableBuilder extends IExecutionContext {
   column(name: string, type: ColumnType, notNull?: boolean): ITableBuilder;
   primaryKey(primaryKey: PrimaryKeyDefinition): ITableBuilder;
   foreignKey(foreignKey: ForeignKeySpec): ITableBuilder;
-  index(index: IndexSpec): ITableBuilder;
+  index(name: string, columns: IndexedColumnDefinition, unique?: boolean): ITableBuilder;
 }

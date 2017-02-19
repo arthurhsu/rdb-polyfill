@@ -67,11 +67,6 @@ export class ColumnSchema extends Column {
     return new LogicalPredicate(new BinaryPredicateHolder(this, '>=', value));
   }
 
-  public match(value: IBindableValue|string): ILogicalPredicate {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
-  }
-
   public between(lhs: ComparableValueType, rhs: ComparableValueType):
       ILogicalPredicate {
     return new LogicalPredicate(

@@ -17,7 +17,7 @@
 
 import {ColumnType, ValueType} from './enums';
 import {IExecutionContext} from './execution_context';
-import {ForeignKeySpec, IndexSpec, PrimaryKeyDefinition} from './table_builder';
+import {ForeignKeySpec, IndexedColumnDefinition, PrimaryKeyDefinition} from './table_builder';
 
 export interface ITableChanger extends IExecutionContext {
   rename(newTableName: string): ITableChanger;
@@ -28,7 +28,8 @@ export interface ITableChanger extends IExecutionContext {
   addPrimaryKey(primaryKey: PrimaryKeyDefinition): ITableChanger;
   dropPrimaryKey(): ITableChanger;
   addForeignKey(foreignKey: ForeignKeySpec): ITableChanger;
-  addIndex(index: IndexSpec): ITableChanger;
+  addIndex(name: string, index: IndexedColumnDefinition, unique?: boolean):
+      ITableChanger;
   dropConstraintOrIndex(name: string): ITableChanger;
   setColumn(name: string): IColumnChanger;
 }

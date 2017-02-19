@@ -21,10 +21,10 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexedColumnSpec, IndexSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
+import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder, PrimaryKeyDefinition} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {Schema} from './schema';
-import {TableSchema} from './table_schema';
+import {IndexSpec, TableSchema} from './table_schema';
 
 export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   private columnSql: string[];
@@ -92,23 +92,13 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     return this;
   }
 
-  public index(index: IndexSpec): ITableBuilder {
-    this.checkName(index.name);
-
-    if (index.unique && index.type == 'fulltext') {
-      throw new Error('SyntaxError');
-    }
-
-    if (index.type == 'fulltext') {
-      // TODO(arthurhsu): consider how to implement this, or withdraw from spec.
-      throw new Error('UnsupportedError');
-    }
-
+  public index(name: string, columns: IndexedColumnDefinition, unique = false):
+      ITableBuilder {
+    this.checkName(name);
     this.indices.push({
-      name: index.name,
-      column: CommonBase.normalizeIndex(index.column, this.columnType),
-      type: index.type || 'btree',
-      unique: index.unique || false
+      name: name,
+      column: CommonBase.normalizeIndex(columns, this.columnType),
+      unique: unique
     });
 
     return this;
@@ -152,6 +142,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   public commit(): Promise<TransactionResults> {
     this.ensureContext();
     this.context.prepare(this.toSql());
+    // TODO(arthurhsu): bookkeep indices and primary keys
     this.context.prepare(
         `insert into "$rdb_table" values ("${this.name}", "${this.dbName}")`);
     this.columnType.forEach((type, name) => {

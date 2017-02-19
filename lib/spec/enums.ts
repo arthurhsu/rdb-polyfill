@@ -32,6 +32,4 @@ export type ForeignKeyAction = 'restrict' | 'cascade';
 
 export type ForeignKeyTiming = 'deferrable' | 'immediate';
 
-export type IndexType = 'btree' | 'hash' | 'fulltext';
-
 export type TransactionMode = 'readonly' | 'readwrite';

@@ -45,7 +45,6 @@ export abstract class Column implements IColumn, IComparisonPredicate,
   public abstract gt(value: OperandType): ILogicalPredicate;
   public abstract gte(value: OperandType): ILogicalPredicate;
 
-  public abstract match(value: IBindableValue|string): ILogicalPredicate;
   public abstract between(lhs: ComparableValueType, rhs: ComparableValueType):
       ILogicalPredicate;
   public abstract startsWith(value: IBindableValue|string): ILogicalPredicate;

@@ -97,7 +97,7 @@ describe('TableBuilderPolyfill', () => {
     let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
-        .index({name: 'idx', column: 'id'});
+        .index('idx', 'id');
     assert.equal(expected, builder.toSql());
   });
 
@@ -107,7 +107,7 @@ describe('TableBuilderPolyfill', () => {
     let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
-        .index({name: 'idx', column: 'id', unique: true});
+        .index('idx', 'id', true);
     assert.equal(expected, builder.toSql());
   });
 });

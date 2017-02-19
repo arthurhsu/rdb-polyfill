@@ -17,8 +17,14 @@
 
 import {ColumnType} from '../spec/enums';
 import {ITable} from '../spec/table';
-import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexSpec} from '../spec/table_builder';
+import {AutoIncrementPrimaryKey, ForeignKeySpec, IndexedColumnDefinition} from '../spec/table_builder';
 import {ColumnSchema} from './column_schema';
+
+export interface IndexSpec {
+  name: string;
+  column: IndexedColumnDefinition;
+  unique: boolean;
+}
 
 export class TableSchema implements ITable {
   private _name: string;

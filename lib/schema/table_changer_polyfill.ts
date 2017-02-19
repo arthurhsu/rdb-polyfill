@@ -20,7 +20,7 @@ import {SqlConnection} from '../proc/sql_connection';
 import {ColumnType, ValueType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {ForeignKeySpec, IndexSpec, PrimaryKeyDefinition} from '../spec/table_builder';
+import {ForeignKeySpec, IndexedColumnDefinition, PrimaryKeyDefinition} from '../spec/table_builder';
 import {IColumnChanger, ITableChanger} from '../spec/table_changer';
 import {CommonBase} from './common_base';
 
@@ -72,7 +72,8 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
     throw new Error('NotImplemented');
   }
 
-  public addIndex(index: IndexSpec): ITableChanger {
+  public addIndex(name: string, columns: IndexedColumnDefinition,
+      unique = false): ITableChanger {
     // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
