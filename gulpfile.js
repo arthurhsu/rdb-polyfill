@@ -20,6 +20,7 @@ const spawn = require('child_process').spawn;
 const diff = require('diff');
 const fs = require('fs-extra');
 const gulp = require('gulp');
+const change = require('gulp-change');
 const format = require('gulp-clang-format').format;
 const debug = require('gulp-debug');
 const mocha = require('gulp-mocha');
@@ -181,15 +182,46 @@ gulp.task('format_check', () => {
       .pipe(checkFormat());
 });
 
+function handleIntermediate(content) {
+  const START_TOKEN = '///// @@start';
+  const END_TOKEN = '///// @@end';
+  const SKIP_TOKEN = 'exports.';
+  let lines = content.split('\n');
+  let started = false;
+  let ended = false;
+  let results = lines.filter(line => {
+    if (ended) return false;
+    if (!started) {
+      if (line.startsWith(START_TOKEN)) {
+        started = true;
+      }
+      return false;
+    }
+    if (line.startsWith(END_TOKEN)) {
+      ended = true;
+      return false;
+    }
+    return true;
+  });
+  return results
+      .map(line => {
+        return line.startsWith(SKIP_TOKEN) ? '' : line.replace('    ', '  ');
+      })
+      .join('\n');
+}
+
 gulp.task('gen', () => {
-  doBuild(Files.SPEC,
-      path.join(Dir.OUTPUT, Dir.SPEC),
-      path.join(Dir.OUTPUT, Dir.SPEC),
-      getFilter(),
-      {
-        "declaration": false,
-        "removeComments": false
-      });
+  let tsProject = tsc.createProject(TSCONFIG, {
+    "declaration": false,
+    "removeComments": false
+  });
+  gulp.src(Files.SPEC)
+      .pipe(debug())
+      .pipe(tsProject(tsc.reporter.defaultReporter()))
+      .on('error', (err) => { process.exit(1); })
+      .js
+      .pipe(change(handleIntermediate))
+      .pipe(gulp.dest(path.join(Dir.OUTPUT, Dir.SPEC)));
 });
 
 gulp.task('lint', () => {

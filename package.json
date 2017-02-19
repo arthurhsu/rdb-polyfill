@@ -32,6 +32,7 @@
     "diff": "^3.0.1",
     "fs-extra": "^0.30.0",
     "gulp": "^3.9.1",
+    "gulp-change": "^1.0.0",
     "gulp-clang-format": "^1.0.23",
     "gulp-debug": "^2.1.2",
     "gulp-mocha": "^3.0.1",
