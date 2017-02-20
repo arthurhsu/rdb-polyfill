@@ -19,6 +19,9 @@ import {DatabaseConnection} from '../../lib/spec/database_connection';
 import {IRelationalDatabase} from '../../lib/spec/relational_database';
 
 ///// @@start
+// Open database named 'hr'.
+// If the named instance does not exist, create an empty database instance.
+// Otherwise, open the existing database named 'hr'.
 let dbConnection: DatabaseConnection;
 
 export function connect(): Promise<DatabaseConnection> {

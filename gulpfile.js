@@ -205,7 +205,7 @@ function handleIntermediate(content) {
   });
   return results
       .map(line => {
-        return line.startsWith(SKIP_TOKEN) ? '' : line.replace('    ', '  ');
+        return line.startsWith(SKIP_TOKEN) ? '' : line;
       })
       .join('\n');
 }
