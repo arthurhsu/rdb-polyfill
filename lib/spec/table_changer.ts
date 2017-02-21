@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import {ColumnType, ValueType} from './enums';
+import {ColumnType, ForeignKeyAction, ForeignKeyTiming, ValueType} from './enums';
 import {IExecutionContext} from './execution_context';
-import {ForeignKeySpec, IndexedColumnDefinition} from './table_builder';
+import {IndexedColumnDefinition} from './table_builder';
 
 export interface ITableChanger extends IExecutionContext {
   rename(newTableName: string): ITableChanger;
@@ -27,7 +27,8 @@ export interface ITableChanger extends IExecutionContext {
   dropColumn(name: string): ITableChanger;
   addPrimaryKey(columns: string|string[]): ITableChanger;
   dropPrimaryKey(): ITableChanger;
-  addForeignKey(foreignKey: ForeignKeySpec): ITableChanger;
+  addForeignKey(name: string, column: string|string[], foreign: string|string[],
+      action?: ForeignKeyAction, timing?: ForeignKeyTiming): ITableChanger;
   addIndex(name: string, index: IndexedColumnDefinition, unique?: boolean):
       ITableChanger;
   dropConstraintOrIndex(name: string): ITableChanger;

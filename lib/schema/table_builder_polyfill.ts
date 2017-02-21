@@ -18,10 +18,10 @@
 import {validateName} from '../base/assert';
 import {QueryBase} from '../proc/query_base';
 import {SqlConnection} from '../proc/sql_connection';
-import {ColumnType} from '../spec/enums';
+import {ColumnType, ForeignKeyAction, ForeignKeyTiming} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {ForeignKeySpec, IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder} from '../spec/table_builder';
+import {IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {Schema} from './schema';
 import {IndexSpec, TableSchema} from './table_schema';
@@ -90,7 +90,9 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     return this;
   }
 
-  public foreignKey(foreignKey: ForeignKeySpec): ITableBuilder {
+  public foreignKey(name: string, column: string|string[],
+      foreign: string|string[], action: ForeignKeyAction = 'restrict',
+      timing: ForeignKeyTiming = 'immediate'): ITableBuilder {
     // TODO(arthurhsu): implement
     return this;
   }

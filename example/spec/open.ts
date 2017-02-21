@@ -59,13 +59,7 @@ export function createDB(): Promise<DatabaseConnection> {
       .primaryKey('id')
       .index('idx_name', 'name', /* unique */ true)
       .index('idx_desc', {name: 'desc', order: 'desc'})
-      .foreignKey({
-        'name': 'fk_DeptId',
-        'local': 'deptId',
-        'remote': 'Dept.id',
-        'action': 'restrict',
-        'timing': 'immediate'
-      });
+      .foreignKey('fk_DeptId', 'deptId', 'Dept.id');
   let q3 = dbConnection.setVersion(2);
   return tx.exec([q1, q2, q3]).then(() => { return dbConnection; });
 }

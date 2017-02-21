@@ -18,24 +18,18 @@
 import {ColumnType, ForeignKeyAction, ForeignKeyTiming, Order} from './enums';
 import {IExecutionContext} from './execution_context';
 
-export interface ForeignKeySpec {
-  name: string;
-  local: string;
-  remote: string;
-  action: ForeignKeyAction;
-  timing: ForeignKeyTiming;
-}
-
 export interface IndexedColumnSpec {
   name: string;
   order: Order;
 }
+
 export type IndexedColumnDefinition =
     string | string[] | IndexedColumnSpec | IndexedColumnSpec[];
 
 export interface ITableBuilder extends IExecutionContext {
   column(name: string, type: ColumnType, notNull?: boolean): ITableBuilder;
   primaryKey(columns: string|string[], autoIncrement?: boolean): ITableBuilder;
-  foreignKey(foreignKey: ForeignKeySpec): ITableBuilder;
+  foreignKey(name: string, column: string|string[], foreign: string|string[],
+      action?: ForeignKeyAction, timing?: ForeignKeyTiming): ITableBuilder;
   index(name: string, columns: IndexedColumnDefinition, unique?: boolean): ITableBuilder;
 }

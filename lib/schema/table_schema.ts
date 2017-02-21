@@ -15,15 +15,23 @@
  * limitations under the License.
  */
 
-import {ColumnType} from '../spec/enums';
+import {ColumnType, ForeignKeyAction, ForeignKeyTiming} from '../spec/enums';
 import {ITable} from '../spec/table';
-import {ForeignKeySpec, IndexedColumnDefinition} from '../spec/table_builder';
+import {IndexedColumnDefinition} from '../spec/table_builder';
 import {ColumnSchema} from './column_schema';
 
 export interface IndexSpec {
   name: string;
   column: IndexedColumnDefinition;
   unique: boolean;
+}
+
+export interface ForeignKeySpec {
+  name: string;
+  local: string;
+  remote: string;
+  action: ForeignKeyAction;
+  timing: ForeignKeyTiming;
 }
 
 export class TableSchema implements ITable {

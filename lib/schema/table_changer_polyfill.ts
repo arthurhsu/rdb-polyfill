@@ -17,10 +17,10 @@
 
 import {QueryBase} from '../proc/query_base';
 import {SqlConnection} from '../proc/sql_connection';
-import {ColumnType, ValueType} from '../spec/enums';
+import {ColumnType, ForeignKeyAction, ForeignKeyTiming, ValueType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {ForeignKeySpec, IndexedColumnDefinition} from '../spec/table_builder';
+import {IndexedColumnDefinition} from '../spec/table_builder';
 import {IColumnChanger, ITableChanger} from '../spec/table_changer';
 import {CommonBase} from './common_base';
 
@@ -68,7 +68,9 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
-  public addForeignKey(foreignKey: ForeignKeySpec): ITableChanger {
+  public addForeignKey(name: string, column: string|string[],
+      foreign: string|string[], action: ForeignKeyAction = 'restrict',
+      timing: ForeignKeyTiming = 'immediate'): ITableChanger {
     // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
