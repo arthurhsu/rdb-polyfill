@@ -154,9 +154,15 @@ export class SqlDatabase implements IRelationalDatabase {
                     break;
 
                   case 'fk':
-                  case 'index':
-                  case 'unique':
                     // TODO(arthurhsu): implement
+                    break;
+
+                  case 'index':
+                    tableSchema._indices.push({
+                      name: row['name'],
+                      column: JSON.parse(row['columns'].replace(/\'/g, '"')),
+                      unique: row['attr'] == 'unique'
+                    });
                     break;
 
                   default:

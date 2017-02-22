@@ -163,10 +163,17 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     });
     if (this.schema._primaryKey && this.schema._primaryKey.length) {
       this.context.prepare(
-        `insert into "$rdb_relation" values("pk", "${this.dbName}", ` +
-        `"${this.name}", "pk", "${this.schema._primaryKey.join(',')}", "", ` +
-        `"${this.schema._autoIncrement ? 'autoInc' : ''}")`);
+          `insert into "$rdb_relation" values("pk", "${this.dbName}", ` +
+          `"${this.name}", "pk", "${this.schema._primaryKey.join(',')}", "", ` +
+          `"${this.schema._autoIncrement ? 'autoInc' : ''}")`);
     }
+    this.indices.forEach(index => {
+      this.context.prepare(
+          `insert into "$rdb_relation" values("${index.name}", ` +
+          `"${this.dbName}", "${this.name}", "index",
+          "${JSON.stringify(index.column).replace(/\"/g, '\'')}", "", ` +
+          `"${index.unique ? 'unique' : ''}")`);
+    });
     return this.context.commit();
   }
 

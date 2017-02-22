@@ -16,9 +16,11 @@
  */
 
 import * as chai from 'chai';
+import {Order} from '../../lib/spec/enums';
 import {SqlConnection} from '../../lib/proc/sql_connection';
 import {SqlDatabase} from '../../lib/proc/sql_database';
 import {Schema} from '../../lib/schema/schema';
+import {TableSchema} from '../../lib/schema/table_schema';
 
 const assert = chai.assert;
 
@@ -127,7 +129,7 @@ describe('SqlDatabase', () => {
     }).then(() => {
       return inst2.open(dbName);
     }).then(db2 => {
-      let tableSchema = db2.schema().table('foo');
+      let tableSchema = db2.schema().table('foo') as any as TableSchema;
       assert.isTrue(tableSchema._autoIncrement);
       assert.deepEqual(['number'], tableSchema._primaryKey);
       return Promise.all([db.close(), db2.close()]);
@@ -151,9 +153,45 @@ describe('SqlDatabase', () => {
     }).then(() => {
       return inst2.open(dbName);
     }).then(db2 => {
-      let tableSchema = db2.schema().table('foo');
+      let tableSchema = db2.schema().table('foo') as any as TableSchema;
       assert.isFalse(tableSchema._autoIncrement);
       assert.deepEqual(['number', 'string'], tableSchema._primaryKey);
+      return Promise.all([db.close(), db2.close()]);
+    }).then(() => {
+      inst.drop(dbName);  // Ignore the results
+    });
+  });
+
+  it('index_persisting', () => {
+    let dbName = new Date().getTime().toString();
+    let inst = new SqlDatabase('out');
+    let inst2 = new SqlDatabase('out');
+    let db: SqlConnection;
+    let desc: Order = 'desc';
+    let asc: Order = 'asc';
+    let colSpec = [{name: 'n2', order: desc}, {name: 'n3', order: asc}];
+    return inst.open(dbName).then(conn => {
+      db = conn as SqlConnection;
+      return db.createTable('foo')
+          .column('n1', 'number')
+          .column('n2', 'number')
+          .column('n3', 'number')
+          .index('idx_n1', 'n1', true)
+          .index('idx_n2n3', colSpec)
+          .commit();
+    }).then(() => {
+      return inst2.open(dbName);
+    }).then(db2 => {
+      let tableSchema = db2.schema().table('foo') as any as TableSchema;
+      assert.equal(2, tableSchema._indices.length);
+      let n1 = tableSchema._indices.filter(
+          index => (index.name == 'idx_n1'))[0];
+      assert.isTrue(n1.unique);
+      assert.equal('n1', n1.column[0].name);
+      let n2n3 = tableSchema._indices.filter(
+          index => (index.name == 'idx_n2n3'))[0];
+      assert.isFalse(n2n3.unique);
+      assert.deepEqual(colSpec, n2n3.column);
       return Promise.all([db.close(), db2.close()]);
     }).then(() => {
       inst.drop(dbName);  // Ignore the results
