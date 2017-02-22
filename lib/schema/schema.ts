@@ -38,6 +38,10 @@ export class Schema implements IDatabaseSchema {
     return this.tables.get(name) as ITable as Table;
   }
 
+  public listTables(): string[] {
+    return Array.from(this.tables.keys());
+  }
+
   // Set table to null to report a dropped table.
   public reportTableChange(name: string, schema: TableSchema): void {
     if (schema === null) {

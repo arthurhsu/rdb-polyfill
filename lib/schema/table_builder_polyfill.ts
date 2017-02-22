@@ -65,6 +65,12 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
 
   public primaryKey(columns: string|string[], autoIncrement = false):
       ITableBuilder {
+    if (this.schema._primaryKey !== null) {
+      throw new Error('SyntaxError');
+    }
+
+    this.schema._primaryKey = [].concat(columns);
+    this.schema._autoIncrement = autoIncrement;
     if (autoIncrement) {
       if (Array.isArray(columns)) {
         throw new Error('SyntaxError');
@@ -147,14 +153,20 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   public commit(): Promise<TransactionResults> {
     this.ensureContext();
     this.context.prepare(this.toSql());
-    // TODO(arthurhsu): bookkeep indices and primary keys
+    // TODO(arthurhsu): bookkeep indices
     this.context.prepare(
-        `insert into "$rdb_table" values ("${this.name}", "${this.dbName}")`);
+        `insert into "$rdb_table" values("${this.name}", "${this.dbName}")`);
     this.columnType.forEach((type, name) => {
       this.context.prepare(
           'insert into "$rdb_column" values ' +
           `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
     });
+    if (this.schema._primaryKey && this.schema._primaryKey.length) {
+      this.context.prepare(
+        `insert into "$rdb_relation" values("pk", "${this.dbName}", ` +
+        `"${this.name}", "pk", "${this.schema._primaryKey.join(',')}", "", ` +
+        `"${this.schema._autoIncrement ? 'autoInc' : ''}")`);
+    }
     return this.context.commit();
   }
 

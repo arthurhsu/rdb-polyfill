@@ -28,7 +28,7 @@ import {SqlConnection} from './sql_connection';
 export class SqlDatabase implements IRelationalDatabase {
   readonly fn: FunctionProvider;
 
-  static NUM_SPECIAL_TABLE: number = 3;
+  static NUM_SPECIAL_TABLE: number = 4;
 
   constructor(readonly persistPath: string) {
     this.fn = new FunctionProvider();
@@ -106,6 +106,9 @@ export class SqlDatabase implements IRelationalDatabase {
         `insert into "$rdb_version" values ("${schema.name}", 0)`,
         'create table "$rdb_table" (name text, db text, primary key(name, db))',
         'create table "$rdb_column" (name text, db text, tbl text, type text,' +
+            ' primary key(name, tbl, db))',
+        'create table "$rdb_relation" (name text, db text, tbl text,' +
+            ' type text, columns text, ref text, attr text,' +
             ' primary key(name, tbl, db))'
       ])
         .then(
@@ -118,6 +121,57 @@ export class SqlDatabase implements IRelationalDatabase {
     return resolver.promise;
   }
 
+  private constructTable(db: NativeDB, dbName: string, tableName: string):
+       Promise<TableSchema> {
+    let tableSchema = new TableSchema(tableName);
+    return db.get('select name, type from "$rdb_column" where ' +
+        `tbl="${tableName}" and db="${dbName}"`)
+        .then((rows: Object[]) => {
+          rows.forEach(row => tableSchema.column(row['name'], row['type']));
+          return tableSchema;
+        },
+        (e) => {
+          return Promise.reject(e);
+        });
+  }
+
+  private constructRelations(db: NativeDB, schema: Schema): Promise<Schema> {
+    let promises: Promise<void>[] = [];
+    schema.listTables().forEach(tableName => {
+      let promise = db
+          .get('select * from "$rdb_relation" where' +
+              ` tbl="${tableName}" and db=${schema.name}`)
+          .then((rows: Object[]) => {
+            if (rows) {
+              let tableSchema = schema.table(tableName) as any as TableSchema;
+              rows.forEach(row => {
+                switch (row['type']) {
+                  case 'pk':
+                    tableSchema._primaryKey = row['columns'].split(',');
+                    if (row['attr'] == 'autoInc') {
+                      tableSchema._autoIncrement = true;
+                    }
+                    break;
+
+                  case 'fk':
+                  case 'index':
+                  case 'unique':
+                    // TODO(arthurhsu): implement
+                    break;
+
+                  default:
+                    throw new Error('UnknownError');
+                }
+              });
+            }
+          });
+      promises.push(promise);
+    });
+    return Promise.all(promises).then(() => {
+      return schema;
+    });
+  }
+
   private scanSchema(db: NativeDB, schema: Schema): Promise<Schema> {
     let resolver = new Resolver<Schema>();
 
@@ -128,26 +182,18 @@ export class SqlDatabase implements IRelationalDatabase {
             resolver.resolve(schema);
           } else {
             let tableNames = rows.map(row => row['name']);
-            let promises = new Array<Promise<void>>(tableNames.length);
+            let promises = new Array<Promise<TableSchema>>(tableNames.length);
+            // Must construct all tables and columns before adding relations.
             tableNames.forEach(tableName => {
-              let promise =
-                  db.get(
-                        'select name, type from "$rdb_column"' +
-                        ` where tbl="${tableName}" and db="${schema.name}"`)
-                      .then(
-                          (rows: Object[]) => {
-                            let tableSchema = new TableSchema(tableName);
-                            rows.forEach(
-                                row =>
-                                    tableSchema.column(row['name'], row['type']));
-                            schema.reportTableChange(tableName, tableSchema);
-                          },
-                          (e) => {
-                            resolver.reject(e);
-                          });
+              let promise = this.constructTable(db, schema.name, tableName);
+              promise.then(tableSchema => {
+                schema.reportTableChange(tableName, tableSchema);
+              });
               promises.push(promise);
             });
             Promise.all(promises).then(() => {
+              return this.constructRelations(db, schema);
+            }).then(() => {
               resolver.resolve(schema);
             });
           }

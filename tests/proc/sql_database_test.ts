@@ -111,4 +111,52 @@ describe('SqlDatabase', () => {
       inst.drop(dbName);  // Ignore the results
     });
   });
+
+  it('autoPK_persisting', () => {
+    let dbName = new Date().getTime().toString();
+    let inst = new SqlDatabase('out');
+    let inst2 = new SqlDatabase('out');
+    let db: SqlConnection;
+    return inst.open(dbName).then(conn => {
+      db = conn as SqlConnection;
+      return db.createTable('foo')
+          .column('number', 'number')
+          .column('string', 'string')
+          .primaryKey('number', true)
+          .commit();
+    }).then(() => {
+      return inst2.open(dbName);
+    }).then(db2 => {
+      let tableSchema = db2.schema().table('foo');
+      assert.isTrue(tableSchema._autoIncrement);
+      assert.deepEqual(['number'], tableSchema._primaryKey);
+      return Promise.all([db.close(), db2.close()]);
+    }).then(() => {
+      inst.drop(dbName);  // Ignore the results
+    });
+  });
+
+  it('crossColumnPK_persisting', () => {
+    let dbName = new Date().getTime().toString();
+    let inst = new SqlDatabase('out');
+    let inst2 = new SqlDatabase('out');
+    let db: SqlConnection;
+    return inst.open(dbName).then(conn => {
+      db = conn as SqlConnection;
+      return db.createTable('foo')
+          .column('number', 'number')
+          .column('string', 'string')
+          .primaryKey(['number', 'string'])
+          .commit();
+    }).then(() => {
+      return inst2.open(dbName);
+    }).then(db2 => {
+      let tableSchema = db2.schema().table('foo');
+      assert.isFalse(tableSchema._autoIncrement);
+      assert.deepEqual(['number', 'string'], tableSchema._primaryKey);
+      return Promise.all([db.close(), db2.close()]);
+    }).then(() => {
+      inst.drop(dbName);  // Ignore the results
+    });
+  });
 });
