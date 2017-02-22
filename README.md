@@ -7,17 +7,16 @@ This repo provides a polyfill of
 
 The authors need a fast tool to develop polyfill, and thus TypeScript is
 chosen. The end product is still in ES6, located under `dist/` directory
-(You need to call `gulp build` to generate the `dist/` directory).
+(You need to call `npm run gulp build` to generate the `dist/` directory).
 
 ## How to Build It?
 
 ```bash
-npm install -g gulp
 npm install
-gulp
+npm run gulp build
 ```
 
-Supported command line and options will be listed in the gulp command.
+Supported command line and options can be listed using `npm run gulp`.
 
 ## What's the Supported Browser?
 
