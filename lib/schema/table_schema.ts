@@ -28,8 +28,8 @@ export interface IndexSpec {
 
 export interface ForeignKeySpec {
   name: string;
-  local: string;
-  remote: string;
+  local: string[];
+  remote: string[];
   action: ForeignKeyAction;
   timing: ForeignKeyTiming;
 }

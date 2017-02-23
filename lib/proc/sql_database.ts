@@ -56,14 +56,20 @@ export class SqlDatabase implements IRelationalDatabase {
 
     let resolver = new Resolver<SqlConnection>();
     let db = Implementation.createNativeDB(dbName);
-    this.constructSchema(db, name).then(
-        (schema: Schema) => {
-          resolver.resolve(new SqlConnection(db, schema));
-        },
-        (e) => {
-          resolver.reject(e);
-        });
+    this.turnOnFKCheck(db).then(() => {
+      this.constructSchema(db, name).then(
+          (schema: Schema) => {
+            resolver.resolve(new SqlConnection(db, schema));
+          },
+          (e) => {
+            resolver.reject(e);
+          });
+    });
     return resolver.promise;
+  }
+
+  private turnOnFKCheck(db: NativeDB): Promise<void> {
+    return db.exec(db.toggleForeignKeyCheckSql(true));
   }
 
   private constructSchema(db: NativeDB, name: string): Promise<Schema> {
@@ -122,55 +128,60 @@ export class SqlDatabase implements IRelationalDatabase {
   }
 
   private constructTable(db: NativeDB, dbName: string, tableName: string):
-       Promise<TableSchema> {
+      Promise<TableSchema> {
     let tableSchema = new TableSchema(tableName);
-    return db.get('select name, type from "$rdb_column" where ' +
-        `tbl="${tableName}" and db="${dbName}"`)
-        .then((rows: Object[]) => {
-          rows.forEach(row => tableSchema.column(row['name'], row['type']));
-          return tableSchema;
-        },
-        (e) => {
-          return Promise.reject(e);
-        });
+    return db
+        .get(
+            'select name, type from "$rdb_column" where ' +
+            `tbl="${tableName}" and db="${dbName}"`)
+        .then(
+            (rows: Object[]) => {
+              rows.forEach(row => tableSchema.column(row['name'], row['type']));
+              return tableSchema;
+            },
+            (e) => {
+              return Promise.reject(e);
+            });
   }
 
   private constructRelations(db: NativeDB, schema: Schema): Promise<Schema> {
     let promises: Promise<void>[] = [];
     schema.listTables().forEach(tableName => {
-      let promise = db
-          .get('select * from "$rdb_relation" where' +
-              ` tbl="${tableName}" and db=${schema.name}`)
-          .then((rows: Object[]) => {
-            if (rows) {
-              let tableSchema = schema.table(tableName) as any as TableSchema;
-              rows.forEach(row => {
-                switch (row['type']) {
-                  case 'pk':
-                    tableSchema._primaryKey = row['columns'].split(',');
-                    if (row['attr'] == 'autoInc') {
-                      tableSchema._autoIncrement = true;
+      let promise =
+          db.get(
+                'select * from "$rdb_relation" where' +
+                ` tbl="${tableName}" and db=${schema.name}`)
+            .then((rows: Object[]) => {
+                if (rows) {
+                  let tableSchema =
+                      schema.table(tableName) as any as TableSchema;
+                  rows.forEach(row => {
+                    switch (row['type']) {
+                      case 'pk':
+                        tableSchema._primaryKey = row['columns'].split(',');
+                        if (row['attr'] == 'autoInc') {
+                          tableSchema._autoIncrement = true;
+                        }
+                        break;
+
+                      case 'fk':
+                        // TODO(arthurhsu): implement
+                        break;
+
+                      case 'index':
+                        tableSchema._indices.push({
+                          name: row['name'],
+                          column: JSON.parse(row['columns'].replace(/\'/g, '"')),
+                          unique: row['attr'] == 'unique'
+                        });
+                        break;
+
+                      default:
+                        throw new Error('UnknownError');
                     }
-                    break;
-
-                  case 'fk':
-                    // TODO(arthurhsu): implement
-                    break;
-
-                  case 'index':
-                    tableSchema._indices.push({
-                      name: row['name'],
-                      column: JSON.parse(row['columns'].replace(/\'/g, '"')),
-                      unique: row['attr'] == 'unique'
-                    });
-                    break;
-
-                  default:
-                    throw new Error('UnknownError');
+                  });
                 }
               });
-            }
-          });
       promises.push(promise);
     });
     return Promise.all(promises).then(() => {
@@ -197,11 +208,13 @@ export class SqlDatabase implements IRelationalDatabase {
               });
               promises.push(promise);
             });
-            Promise.all(promises).then(() => {
-              return this.constructRelations(db, schema);
-            }).then(() => {
-              resolver.resolve(schema);
-            });
+            Promise.all(promises)
+                .then(() => {
+                  return this.constructRelations(db, schema);
+                })
+                .then(() => {
+                  resolver.resolve(schema);
+                });
           }
         });
     return resolver.promise;

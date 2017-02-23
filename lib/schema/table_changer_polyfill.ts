@@ -68,14 +68,16 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
     throw new Error('NotSupported: SQLite does not have native support');
   }
 
-  public addForeignKey(name: string, column: string|string[],
-      foreign: string|string[], action: ForeignKeyAction = 'restrict',
+  public addForeignKey(
+      name: string, column: string|string[], foreign: string|string[],
+      action: ForeignKeyAction = 'restrict',
       timing: ForeignKeyTiming = 'immediate'): ITableChanger {
     // TODO(arthurhsu): implement
     throw new Error('NotImplemented');
   }
 
-  public addIndex(name: string, columns: IndexedColumnDefinition,
+  public addIndex(
+      name: string, columns: IndexedColumnDefinition,
       unique = false): ITableChanger {
     // TODO(arthurhsu): implement
     throw new Error('NotImplemented');

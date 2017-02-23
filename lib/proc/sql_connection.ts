@@ -130,7 +130,7 @@ export class SqlConnection extends DatabaseConnection {
 
   public dropTable(name: string): IExecutionContext {
     let sql = `drop table ${name}; delete from "$rdb_table"` +
-              ` where name="${name}" and db="${this.name}"`;
+        ` where name="${name}" and db="${this.name}"`;
     let q = new SingleQuery(this, sql, true, SingleQueryType.DropTable);
     q.targetTable = name;
     return q;
