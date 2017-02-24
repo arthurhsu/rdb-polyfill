@@ -63,6 +63,10 @@ export abstract class QueryBase implements IQuery {
   abstract clone(): IQuery;
   abstract toSql(): string;
 
+  public preCommitSqls(): string[] {
+    return null;
+  }
+
   public onCommit(connection: SqlConnection): void {
     throw new Error('UnknownError');
   }

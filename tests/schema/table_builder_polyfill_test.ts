@@ -111,9 +111,9 @@ describe('TableBuilderPolyfill', () => {
   });
 
   it('toSql_singleFK', () => {
-    const expected = 'create table foo (id real, name text) ' +
+    const expected = 'create table foo (id real, name text, ' +
                      'constraint fk_id foreign key (id) references bar(id) ' +
-                     'on update cascade on delete cascade deferrable';
+                     'on update cascade on delete cascade deferrable)';
     let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
@@ -123,11 +123,11 @@ describe('TableBuilderPolyfill', () => {
 
   it('toSql_multiFK', () => {
     const expected =
-        'create table playlist (sid text, aid text, author text, title text) ' +
+        'create table playlist (sid text, aid text, author text, title text, ' +
         'constraint fk_album foreign key (aid, author) ' +
-        'references album(id, author) ' +
+        'references album(id, author), ' +
         'constraint fk_song foreign key (sid, title) ' +
-        'references song(id, title)';
+        'references song(id, title))';
     let builder = new TableBuilderPolyfill(conn, 'playlist', 'db');
     builder.column('sid', 'string')
         .column('aid', 'string')

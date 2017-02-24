@@ -197,4 +197,40 @@ describe('SqlDatabase', () => {
       inst.drop(dbName);  // Ignore the results
     });
   });
+
+  it('foreignKey_persisting', () => {
+    let dbName = new Date().getTime().toString();
+    let inst = new SqlDatabase('out');
+    let inst2 = new SqlDatabase('out');
+    let db: SqlConnection;
+    return inst.open(dbName).then(conn => {
+      db = conn as SqlConnection;
+      let tx = db.createTransaction('readwrite');
+      let q1 = db.createTable('bar')
+          .column('id', 'string')
+          .column('desc', 'string')
+          .primaryKey('id');
+      let q2 = db.createTable('foo')
+          .column('bid', 'string')
+          .column('string', 'string')
+          .foreignKey('fk_bid', 'bid', 'bar.id');
+      let q3 = db.setVersion(1);
+      return tx.exec([q1, q2, q3]);
+    }).then(() => {
+      return inst2.open(dbName);
+    }).then(db2 => {
+      let tableSchema = db2.schema().table('foo') as any as TableSchema;
+      console.log(tableSchema);
+      assert.equal(1, tableSchema._foreignKey.length);
+      let fk = tableSchema._foreignKey[0];
+      assert.equal('fk_bid', fk.name);
+      assert.equal('bid', fk.local[0]);
+      assert.equal('bar.id', fk.remote[0]);
+      assert.equal('restrict', fk.action);
+      assert.equal('immediate', fk.timing);
+      return Promise.all([db.close(), db2.close()]);
+    }).then(() => {
+      inst.drop(dbName);  // Ignore the results
+    });
+  });
 });

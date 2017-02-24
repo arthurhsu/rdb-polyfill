@@ -81,6 +81,13 @@ export class Tx implements ITransaction {
 
       // TODO(arthurhsu): readonly/readwrite check
       sqls.push(this.getSql(q));
+
+      if (q instanceof QueryBase) {
+        let preCommitSqls = q.preCommitSqls();
+        if (preCommitSqls !== null) {
+          sqls = sqls.concat(preCommitSqls);
+        }
+      }
     });
 
     // db#run() already offered transactional support.
@@ -110,6 +117,13 @@ export class Tx implements ITransaction {
       return this.db.get(sql).then(results => {
         this.results = results;
       });
+    }
+
+    if (query instanceof QueryBase) {
+      let preCommitSqls = query.preCommitSqls();
+      if (preCommitSqls !== null) {
+        sql += `; ${preCommitSqls.join(';')}`;
+      }
     }
     return this.db.exec(sql);
   }

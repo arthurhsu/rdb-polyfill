@@ -165,13 +165,15 @@ export class SqlDatabase implements IRelationalDatabase {
                         break;
 
                       case 'fk':
-                        // TODO(arthurhsu): implement
+                        tableSchema._foreignKey.push(
+                            JSON.parse(row['columns'].replace(/\'/g, '"')));
                         break;
 
                       case 'index':
                         tableSchema._indices.push({
                           name: row['name'],
-                          column: JSON.parse(row['columns'].replace(/\'/g, '"')),
+                          column: JSON.parse(
+                              row['columns'].replace(/\'/g, '"')),
                           unique: row['attr'] == 'unique'
                         });
                         break;

@@ -24,7 +24,7 @@ import {IQuery} from '../spec/query';
 import {IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder} from '../spec/table_builder';
 import {CommonBase} from './common_base';
 import {Schema} from './schema';
-import {ForeignKeySpec, IndexSpec, TableSchema} from './table_schema';
+import {TableSchema} from './table_schema';
 
 export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   private columnSql: string[];
@@ -33,8 +33,6 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   private schema: TableSchema;
   private dbName: string;
   private nameUsed: Set<string>;
-  private indices: IndexSpec[];
-  private foreignKeys: ForeignKeySpec[];
 
   constructor(
       connection: SqlConnection, readonly name: string, dbName: string) {
@@ -44,9 +42,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.columnType = new Map<string, ColumnType>();
     this.dbName = dbName;
     this.schema = new TableSchema(name);
-    this.indices = [];
     this.nameUsed = new Set<string>();
-    this.foreignKeys = [];
   }
 
   private checkName(name: string, firstCheck = false): void {
@@ -130,7 +126,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
       }
     });
 
-    this.foreignKeys.push({
+    this.schema._foreignKey.push({
       name: name,
       local: localCols,
       remote: remoteCols,
@@ -141,12 +137,13 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   private getFKSql(): string {
-    return this.foreignKeys.map(fk => {
+    return this.schema._foreignKey.map(fk => {
       let refTable = fk.remote[0].split('.')[0];
       let refCols = fk.remote.map(ref => {
         return ref.split('.')[1];
       }).join(', ');
-      let sql = ` constraint ${fk.name} foreign key (${fk.local.join(', ')}) ` +
+      let sql =
+          `, constraint ${fk.name} foreign key (${fk.local.join(', ')}) ` +
           `references ${refTable}(${refCols})`;
       if (fk.action == 'cascade') {
         sql += ' on update cascade on delete cascade';
@@ -161,7 +158,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   public index(name: string, columns: IndexedColumnDefinition, unique = false):
       ITableBuilder {
     this.checkName(name, true);
-    this.indices.push({
+    this.schema._indices.push({
       name: name,
       column: CommonBase.normalizeIndex(columns, this.columnType),
       unique: unique
@@ -171,7 +168,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   private getIndexSql(): string {
-    return this.indices.map(index => {
+    return this.schema._indices.map(index => {
       let unique = index.unique ? 'unique ' : '';
       return CommonBase.indexToSql(
           `create ${unique}index ${index.name} on ${this.name}`,
@@ -197,9 +194,43 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     let desc = constraint ? `${column}, ${constraint}` : column;
     let fkSql = this.getFKSql() || '';
     let indexSql = this.getIndexSql();
-    let mainSql = `create table ${this.name} (${desc})${fkSql}`;
+    let mainSql = `create table ${this.name} (${desc}${fkSql})`;
     return indexSql ? `${mainSql}; ${indexSql}` : mainSql;
   }
+
+  public preCommitSqls(): string[] {
+    let sqls: string[] = [];
+
+    sqls.push(
+        `insert into "$rdb_table" values("${this.name}", "${this.dbName}")`);
+    this.columnType.forEach((type, name) => {
+      sqls.push(
+          'insert into "$rdb_column" values ' +
+          `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
+    });
+    if (this.schema._primaryKey && this.schema._primaryKey.length) {
+      sqls.push(
+          `insert into "$rdb_relation" values("pk", "${this.dbName}", ` +
+          `"${this.name}", "pk", "${this.schema._primaryKey.join(',')}", "", ` +
+          `"${this.schema._autoIncrement ? 'autoInc' : ''}")`);
+    }
+    this.schema._indices.forEach(index => {
+      sqls.push(
+          `insert into "$rdb_relation" values("${index.name}", ` +
+          `"${this.dbName}", "${this.name}", "index",
+          "${JSON.stringify(index.column).replace(/\"/g, '\'')}", "", ` +
+          `"${index.unique ? 'unique' : ''}")`);
+    });
+    this.schema._foreignKey.forEach(fk => {
+      sqls.push(
+          `insert into "$rdb_relation" values("${fk.name}", ` +
+          `"${this.dbName}", "${this.name}", "fk", `+
+          `"${JSON.stringify(fk).replace(/\"/g, '\'')}", "", "")`);
+    });
+
+    return sqls;
+  }
+
 
   public onCommit(conn: SqlConnection): void {
     let schema = conn.schema() as Schema;
@@ -209,27 +240,8 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   public commit(): Promise<TransactionResults> {
     this.ensureContext();
     this.context.prepare(this.toSql());
-    // TODO(arthurhsu): bookkeep indices
-    this.context.prepare(
-        `insert into "$rdb_table" values("${this.name}", "${this.dbName}")`);
-    this.columnType.forEach((type, name) => {
-      this.context.prepare(
-          'insert into "$rdb_column" values ' +
-          `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
-    });
-    if (this.schema._primaryKey && this.schema._primaryKey.length) {
-      this.context.prepare(
-          `insert into "$rdb_relation" values("pk", "${this.dbName}", ` +
-          `"${this.name}", "pk", "${this.schema._primaryKey.join(',')}", "", ` +
-          `"${this.schema._autoIncrement ? 'autoInc' : ''}")`);
-    }
-    this.indices.forEach(index => {
-      this.context.prepare(
-          `insert into "$rdb_relation" values("${index.name}", ` +
-          `"${this.dbName}", "${this.name}", "index",
-          "${JSON.stringify(index.column).replace(/\"/g, '\'')}", "", ` +
-          `"${index.unique ? 'unique' : ''}")`);
-    });
+    this.preCommitSqls().forEach(sql => this.context.prepare(sql));
+
     return this.context.commit();
   }
 
