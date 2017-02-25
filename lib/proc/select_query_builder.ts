@@ -137,7 +137,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     return this.subquery('except', query);
   }
 
-  public createBinderMap(): void {
+  public createBinderMap(): Map<number, BindableValueHolder> {
     if (this.searchCondition) {
       this.searchCondition.createBinderMap(this.boundValues);
     }
@@ -147,6 +147,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
         this.boundValues.set(value.index, value);
       }
     });
+    return this.boundValues;
   }
 
   public clone(): IQuery {

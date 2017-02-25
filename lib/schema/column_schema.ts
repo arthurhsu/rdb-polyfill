@@ -16,7 +16,7 @@
  */
 
 import {LogicalPredicate} from '../pred/logical_predicate';
-import {BinaryPredicateHolder, TernaryPredicateHolder, UnaryPredicateHolder} from '../pred/predicate_holder';
+import {BinaryPredicateHolder, InPredicateHolder, TernaryPredicateHolder, UnaryPredicateHolder} from '../pred/predicate_holder';
 import {IBindableValue} from '../spec/bindable_value';
 import {Column, IColumn} from '../spec/column';
 import {ColumnType, ComparableValueType} from '../spec/enums';
@@ -86,8 +86,7 @@ export class ColumnSchema extends Column {
   // clang-format off
   public in(values: ComparableValueType[]|IBindableValue|ISelectQuery):
       ILogicalPredicate {
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return new LogicalPredicate(new InPredicateHolder(this, values));
   }
   // clang-format on
 

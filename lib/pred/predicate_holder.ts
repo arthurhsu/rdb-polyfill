@@ -15,9 +15,13 @@
  * limitations under the License.
  */
 
+import {SelectQueryBuilder} from '../proc/select_query_builder';
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnSchema} from '../schema/column_schema';
+import {IBindableValue} from '../spec/bindable_value';
+import {ComparableValueType} from '../spec/enums';
 import {OperandType} from '../spec/predicate';
+import {ISelectQuery} from '../spec/select_query';
 
 export abstract class PredicateHolder {
   abstract toSql(): string;
@@ -90,5 +94,50 @@ export class TernaryPredicateHolder extends PredicateHolder {
         map.set(value.index, value);
       }
     });
+  }
+}
+
+export class InPredicateHolder extends PredicateHolder {
+  private subquery: SelectQueryBuilder;
+  private values: ComparableValueType[]|IBindableValue;
+
+  constructor(
+      readonly column: ColumnSchema,
+      values: ComparableValueType[]|IBindableValue|ISelectQuery) {
+    super();
+    this.subquery = (values instanceof SelectQueryBuilder) ? values : null;
+    this.values = (this.subquery === null) ?
+        (values as ComparableValueType[]|IBindableValue) : null;
+  }
+
+  public toSql(): string {
+    let rhs: string;
+    if (this.subquery) {
+      rhs = this.subquery.toSql();
+    } else if (this.values instanceof BindableValueHolder) {
+      if (Array.isArray(this.values.value)) {
+        rhs = this.values.value.map(v => PredicateHolder.eval(v)).join(', ');
+      } else {
+        rhs = this.values.toString();
+      }
+    } else {
+      let values = this.values as ComparableValueType[];
+      rhs = values.map(v => PredicateHolder.eval(v)).join(', ');
+    }
+    return `${this.column.fullName} in (${rhs})`;
+  }
+
+  public createBinderMap(map: Map<number, BindableValueHolder>) {
+    if (this.values && this.values instanceof BindableValueHolder) {
+      map.set(this.values.index, this.values);
+    } else if (this.subquery) {
+      // TODO(arthurhsu): refactor all createBinderMap to handle subquery
+      let subMap = this.subquery.createBinderMap();
+      subMap.forEach((v, k) => {
+        if (!map.has(k)) {
+          map.set(k, v);
+        }
+      });
+    }
   }
 }

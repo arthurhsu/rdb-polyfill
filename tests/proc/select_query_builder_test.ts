@@ -167,4 +167,38 @@ describe('SelectQueryBuilder', () => {
     assert.equal(expected1, selectBuilder.bind(1, 10).toSql());
     assert.equal(expected2, selectBuilder.clone().bind(2, 12).toSql());
   });
+
+  it('toSql_in', () => {
+    const expected = 'select * from foo where foo.id in (1, 2, 3, 4, 5)';
+    let selectBuilder =
+        conn.select()
+            .from(foo)
+            .where(foo['id'].in([1, 2, 3, 4, 5]));
+    assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
+  });
+
+  it('toSql_inBinder', () => {
+    const expected1 = 'select * from foo where foo.id in (1, 2, 3, 4, 5)';
+    const expected2 = 'select * from foo where foo.id in (6)';
+    let selectBuilder =
+        conn.select()
+            .from(foo)
+            .where(foo['id'].in(conn.bind(0)));
+    assert.equal(expected1, selectBuilder.bind([1, 2, 3, 4, 5]).toSql());
+    assert.equal(
+        expected1, selectBuilder.clone().bind([1, 2, 3, 4, 5]).toSql());
+    assert.equal(expected2, selectBuilder.bind(6).toSql());
+    assert.equal(expected2, selectBuilder.clone().bind(6).toSql());
+  });
+
+  it('toSql_inSubquery', () => {
+    const expected = 'select * from foo where foo.id in (select foo.id from foo)';
+    let selectBuilder =
+        conn.select()
+            .from(foo)
+            .where(foo['id'].in(conn.select(foo['id']).from(foo)));
+    assert.equal(expected, selectBuilder.toSql());
+    assert.equal(expected, selectBuilder.clone().toSql());
+  });
 });
