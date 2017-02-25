@@ -44,11 +44,11 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
       name: string, type: ColumnType, notNull?: boolean,
       defaultValue?: ValueType): ITableChanger {
     let columnDef = CommonBase.columnDefToSql(name, type, notNull);
-    this.sqls.push(`alter table ${this.name} add column ${columnDef}`);
+    let sql = `alter table ${this.name} add column ${columnDef}`;
     if (defaultValue !== undefined) {
-      // TODO(arthurhsu): implement
-      throw new Error('NotImplemented');
+      sql += ` default ${this.toValueString(defaultValue, type)}`;
     }
+    this.sqls.push(sql);
     return this;
   }
 

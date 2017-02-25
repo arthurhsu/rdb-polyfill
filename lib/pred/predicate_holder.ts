@@ -107,7 +107,8 @@ export class InPredicateHolder extends PredicateHolder {
     super();
     this.subquery = (values instanceof SelectQueryBuilder) ? values : null;
     this.values = (this.subquery === null) ?
-        (values as ComparableValueType[]|IBindableValue) : null;
+        (values as ComparableValueType[] | IBindableValue) :
+        null;
   }
 
   public toSql(): string {

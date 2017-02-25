@@ -224,7 +224,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.schema._foreignKey.forEach(fk => {
       sqls.push(
           `insert into "$rdb_relation" values("${fk.name}", ` +
-          `"${this.dbName}", "${this.name}", "fk", `+
+          `"${this.dbName}", "${this.name}", "fk", ` +
           `"${JSON.stringify(fk).replace(/\"/g, '\'')}", "", "")`);
     });
 

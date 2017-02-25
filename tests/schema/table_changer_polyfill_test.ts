@@ -34,8 +34,9 @@ describe('TableChangerPolyfill', () => {
 
   it('addColumn', () => {
     let changer = new TableChangerPolyfill(conn, 'foo', 'db');
-    const expected = 'alter table foo add column bar text not null';
-    changer.addColumn('bar', 'string', true);
+    const expected =
+        'alter table foo add column bar text not null default "baz"';
+    changer.addColumn('bar', 'string', true, 'baz');
     assert.equal(expected, changer.toSql());
   });
 });
