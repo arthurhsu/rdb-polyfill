@@ -23,6 +23,10 @@ Supported command line and options can be listed using `npm run gulp`.
 * Node module that features SQLite3 native code
   * Very limited support for `ALTER TABLE`
   * Temporarily using node-sqlite3 underneath, no support of observers.
+  * We will attempt for a native Sqlite C++ Node.js plugin, similar to the
+    node-sqlite3 but greatly simplified implementation. There will be no parser
+    exposed since RDB can directly construct necessary syntax tree. That may
+    happen in a separate repo.
 
 Other options considered:
 
