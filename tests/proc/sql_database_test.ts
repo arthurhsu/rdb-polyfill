@@ -33,6 +33,7 @@ describe('SqlDatabase', () => {
     assert.equal('blob', table['blob'].type);
     assert.equal('boolean', table['boolean'].type);
     assert.equal('date', table['date'].type);
+    assert.equal('integer', table['integer'].type);
     assert.equal('number', table['number'].type);
     assert.equal('string', table['string'].type);
     assert.equal('object', table['object'].type);
@@ -51,6 +52,7 @@ describe('SqlDatabase', () => {
           .column('blob', 'blob')
           .column('boolean', 'boolean')
           .column('date', 'date')
+          .column('integer', 'integer')
           .column('number', 'number')
           .column('string', 'string')
           .column('object', 'object')
@@ -96,6 +98,7 @@ describe('SqlDatabase', () => {
           .column('blob', 'blob')
           .column('boolean', 'boolean')
           .column('date', 'date')
+          .column('integer', 'integer')
           .column('number', 'number')
           .column('string', 'string')
           .column('object', 'object')
@@ -122,16 +125,17 @@ describe('SqlDatabase', () => {
     return inst.open(dbName).then(conn => {
       db = conn as SqlConnection;
       return db.createTable('foo')
+          .column('id', 'integer')
           .column('number', 'number')
           .column('string', 'string')
-          .primaryKey('number', true)
+          .primaryKey('id', true)
           .commit();
     }).then(() => {
       return inst2.open(dbName);
     }).then(db2 => {
       let tableSchema = db2.schema().table('foo') as any as TableSchema;
       assert.isTrue(tableSchema._autoIncrement);
-      assert.deepEqual(['number'], tableSchema._primaryKey);
+      assert.deepEqual(['id'], tableSchema._primaryKey);
       return Promise.all([db.close(), db2.close()]);
     }).then(() => {
       inst.drop(dbName);  // Ignore the results

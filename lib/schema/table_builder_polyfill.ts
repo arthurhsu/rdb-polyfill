@@ -81,15 +81,14 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
         throw new Error('SyntaxError');
       }
 
-      if (this.columnType.get(columns) != 'number') {
+      if (this.columnType.get(columns) != 'integer') {
         throw new Error('InvalidSchemaError');
       }
       let name = columns + ' ';
       for (let i = 0; i < this.columnSql.length; ++i) {
         if (this.columnSql[i].startsWith(name)) {
-          this.columnSql[i] =
-             `${name}integer primary key ` +
-             this.connection.autoIncrementKeyword;
+          this.columnSql[i] +=
+              ' primary key ' + this.connection.autoIncrementKeyword;
           break;
         }
       }

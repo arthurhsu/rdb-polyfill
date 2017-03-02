@@ -74,7 +74,7 @@ describe('TableBuilderPolyfill', () => {
                      'name text' +
                      ')';
     let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
-    builder.column('id', 'number')
+    builder.column('id', 'integer')
         .column('name', 'string')
         .primaryKey('id', true);
     assert.equal(expected, builder.toSql());
