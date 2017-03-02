@@ -52,7 +52,7 @@ export function createDB(): Promise<DatabaseConnection> {
       .primaryKey('id');
   let q2 = dbConnection
       .createTable('Emp')
-      .column('id', 'number', true)
+      .column('id', 'integer', true)
       .column('name', 'string', true)
       .column('deptId', 'string', true)
       .column('title', 'string')

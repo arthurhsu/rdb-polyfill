@@ -27,27 +27,27 @@ export class FunctionProvider implements IDatabaseFunctionProvider {
   }
 
   private ensureNumericColumn(col: IColumn): void {
-    if (col.type != 'number') {
+    if (col.type != 'number' && col.type != 'integer') {
       throw new Error('TypeError');
     }
   }
 
   private ensureComparableColumn(col: IColumn): void {
-    if (col.type != 'number' && col.type != 'date' && col.type != 'string') {
+    if (col.type != 'integer' && col.type != 'number' && col.type != 'date' && col.type != 'string') {
       throw new Error('TypeError');
     }
   }
 
   public avg(col: IColumn): IColumn {
     this.ensureNumericColumn(col);
-    return new AggregatedColumn('avg', 'number', col);
+    return new AggregatedColumn('avg', col.type, col);
   }
 
   public count(col?: IColumn): IColumn {
     if (col) {
       this.ensureNumericColumn(col);
     }
-    return new AggregatedColumn('count', 'number', col || null);
+    return new AggregatedColumn('count', 'integer', col || null);
   }
 
   public distinct(...col: IColumn[]): IColumn {
@@ -68,6 +68,6 @@ export class FunctionProvider implements IDatabaseFunctionProvider {
 
   public sum(col: IColumn): IColumn {
     this.ensureNumericColumn(col);
-    return new AggregatedColumn('sum', 'number', col);
+    return new AggregatedColumn('sum', col.type, col);
   }
 }

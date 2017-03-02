@@ -18,7 +18,7 @@
 import {IBindableValue} from './bindable_value';
 
 export type ColumnType =
-    'blob' | 'boolean' | 'date' | 'number' | 'string' | 'object';
+    'blob' | 'boolean' | 'date' | 'integer' | 'number' | 'string' | 'object';
 
 export type ValueType = ArrayBuffer | boolean | Date | number | string | Object;
 

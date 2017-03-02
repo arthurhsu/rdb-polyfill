@@ -35,15 +35,18 @@ describe('TableBuilderPolyfill', () => {
 
   it('toSql_Simple', () => {
     const expected = 'create table foo (' +
+                     'integer integer, ' +
                      'number real, ' +
                      'string text, ' +
                      'boolean integer, ' +
-                     'date real, ' +
+                     'date integer, ' +
                      'object text not null, ' +
                      'blob blob' +
                      ')';
     let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
-    builder.column('number', 'number')
+    builder
+        .column('integer', 'integer')
+        .column('number', 'number')
         .column('string', 'string')
         .column('boolean', 'boolean')
         .column('date', 'date')
@@ -54,12 +57,12 @@ describe('TableBuilderPolyfill', () => {
 
   it('toSql_singlePK', () => {
     const expected = 'create table foo (' +
-                     'id real, ' +
+                     'id integer, ' +
                      'name text, ' +
                      'primary key (id)' +
                      ')';
     let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
-    builder.column('id', 'number')
+    builder.column('id', 'integer')
         .column('name', 'string')
         .primaryKey('id');
     assert.equal(expected, builder.toSql());

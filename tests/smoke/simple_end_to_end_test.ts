@@ -32,7 +32,7 @@ describe('SimpleEndToEnd', () => {
           assert.isNotNull(conn);
           db = conn;
           return db.createTable('foo')
-                  .column('id', 'number')
+                  .column('id', 'integer')
                   .column('name', 'string')
                   .commit();
         }).then(() => {

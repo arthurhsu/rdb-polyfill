@@ -30,7 +30,7 @@ describe('Tx', () => {
     db = new MockNativeDB();
     conn = new SqlConnection(db, new Schema('db', 1));
     return conn.createTable('foo')
-        .column('id', 'number')
+        .column('id', 'integer')
         .column('name', 'string')
         .commit()
         .then(() => {
@@ -60,10 +60,10 @@ describe('Tx', () => {
 
   it('exec_SimpleDDL', () => {
     let bar = conn.createTable('bar')
-                  .column('id', 'number')
+                  .column('id', 'integer')
                   .column('name', 'string');
     let fuz = conn.createTable('fuz')
-                  .column('id', 'number')
+                  .column('id', 'integer')
                   .column('name', 'string');
     return conn.createTransaction('readwrite')
                .exec([bar, fuz])
@@ -94,10 +94,10 @@ describe('Tx', () => {
 
   it('attach_SimpleDDL', () => {
     let bar = conn.createTable('bar')
-                  .column('id', 'number')
+                  .column('id', 'integer')
                   .column('name', 'string');
     let fuz = conn.createTable('fuz')
-                  .column('id', 'number')
+                  .column('id', 'integer')
                   .column('name', 'string');
     let tx = conn.createTransaction('readwrite');
     return tx

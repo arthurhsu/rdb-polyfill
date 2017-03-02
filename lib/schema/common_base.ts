@@ -25,12 +25,13 @@ export class CommonBase {
       case 'blob':
         return 'blob';
 
-      case 'number':
-      case 'date':
-        return 'real';
-
       case 'boolean':
+      case 'integer':
+      case 'date':
         return 'integer';
+
+      case 'number':
+        return 'real';
 
       case 'string':
       case 'object':
