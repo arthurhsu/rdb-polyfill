@@ -224,7 +224,6 @@ describe('SqlDatabase', () => {
       return inst2.open(dbName);
     }).then(db2 => {
       let tableSchema = db2.schema().table('foo') as any as TableSchema;
-      console.log(tableSchema);
       assert.equal(1, tableSchema._foreignKey.length);
       let fk = tableSchema._foreignKey[0];
       assert.equal('fk_bid', fk.name);
