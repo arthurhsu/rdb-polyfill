@@ -20,7 +20,10 @@ import {IDatabaseFunctionProvider} from './database_function_provider';
 
 export type RDBStorageType = 'persistent' | 'temporary';
 
-export interface OpenDatabaseOptions { storageType: RDBStorageType; }
+export interface OpenDatabaseOptions {
+  storageType: RDBStorageType;
+  filePath?: string;
+}
 
 export interface IRelationalDatabase {
   readonly fn: IDatabaseFunctionProvider;

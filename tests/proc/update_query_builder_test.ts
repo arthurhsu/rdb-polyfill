@@ -18,30 +18,72 @@
 import * as chai from 'chai';
 import {UpdateQueryBuilder} from '../../lib/proc/update_query_builder';
 import {Table} from '../../lib/spec/table';
-import {MockConnection} from '../../testing/mock_connection';
+import {Sqlite3Connection} from '../../lib/proc/sqlite3_connection';
+import {Sqlite3Database} from '../../lib/proc/sqlite3_database';
 
 const assert = chai.assert;
 
 describe('UpdateQueryBuilder', () => {
   let foo: Table;
-  let conn: MockConnection;
+  let connection: Sqlite3Connection;
+  let db: Sqlite3Database;
+
   before(() => {
-    conn = new MockConnection();
-    return conn.createFoo().then(() => foo = conn.schema().table('foo'));
+    db = new Sqlite3Database();
+    return db.open('bar').then(conn => {
+      connection = conn as Sqlite3Connection;
+      assert.isNotNull(connection);
+      return connection.createTable('foo')
+          .column('id', 'number')
+          .column('name', 'string')
+          .column('date', 'date')
+          .column('boolean', 'boolean')
+          .column('object', 'object')
+          .primaryKey('id')
+          .commit();
+    }).then(() => foo = connection.schema().table('foo'));
   });
 
-  it('toSql_simple', () => {
+  function checkRowCount(count: number): Promise<void> {
+    return connection.simpleGet('select count(*) from foo;').then(res => {
+      assert.equal(count, res[0]['count(*)']);
+    });
+  }
+
+  beforeEach(() => {
+    return connection.simpleRun([
+      'insert into foo values(1, "bar", 1499466194434, 1, null);',
+      'insert into foo values(2, "baz", 1499466194438, 0, null);'
+    ]).then(() => {
+      return checkRowCount(2);
+    });
+  });
+
+  afterEach(() => {
+    return connection.simpleRun(['delete from foo;']);
+  });
+
+  it('update_simple', () => {
     let now = new Date();
-    const expected = 'update foo set name="bar", ' +
-                     `date=${now.getTime()}, boolean=1 where foo.id = 1`;
+    const expected = 'update foo set name="bag", ' +
+                     `date=${now.getTime()}, boolean=1 where foo.id = 2;`;
 
     let updateBuilder =
-        conn.update(foo)
-            .set(foo['name'], 'bar')
+        connection.update(foo)
+            .set(foo['name'], 'bag')
             .set(foo['date'], now)
             .set(foo['boolean'], true)
-            .where(foo['id'].eq(1)) as UpdateQueryBuilder;
-    assert.equal(expected, updateBuilder.toSql());
-    assert.equal(expected, updateBuilder.clone().toSql());
+            .where(foo['id'].eq(2)) as UpdateQueryBuilder;
+    assert.equal(expected, updateBuilder.toSql()[0]);
+    assert.equal(expected, updateBuilder.clone().toSql()[0]);
+    updateBuilder.commit().then(() => {
+      return connection.simpleGet('select * from foo where foo.id = 2;');
+    }).then(res => {
+      assert.equal(1, res.length);
+      let row = res[0];
+      assert.equal('bag', row['name'])
+      assert.equal(now.getTime(), row['date']);
+      assert.equal(1, row['boolean']);
+    });
   });
 });

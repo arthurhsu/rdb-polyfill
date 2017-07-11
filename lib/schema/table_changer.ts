@@ -16,37 +16,39 @@
  */
 
 import {QueryBase} from '../proc/query_base';
-import {SqlConnection} from '../proc/sql_connection';
+import {Sqlite3Connection} from '../proc/sqlite3_connection';
+import {Sqlite3Context} from '../proc/sqlite3_context';
 import {ColumnType, ForeignKeyAction, ForeignKeyTiming, ValueType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
 import {IndexedColumnDefinition} from '../spec/table_builder';
 import {IColumnChanger, ITableChanger} from '../spec/table_changer';
-import {CommonBase} from './common_base';
+import {SqlHelper} from './sql_helper';
 
-export class TableChangerPolyfill extends QueryBase implements ITableChanger {
+export class TableChanger extends QueryBase implements ITableChanger {
   private dbName: string;
   private sqls: string[];
 
-  constructor(
-      connection: SqlConnection, readonly name: string, dbName: string) {
-    super(connection, true);
+  constructor(readonly connection: Sqlite3Connection, public name: string,
+      dbName: string) {
+    super(connection);
     this.dbName = dbName;
     this.sqls = [];
   }
 
   public rename(newTableName: string): ITableChanger {
-    this.sqls.push(`alter table ${this.name} rename to ${newTableName}`);
+    this.sqls.push(`alter table ${this.name} rename to ${newTableName};`);
+    this.name = newTableName;
     return this;
   }
 
   public addColumn(
       name: string, type: ColumnType, notNull?: boolean,
       defaultValue?: ValueType): ITableChanger {
-    let columnDef = CommonBase.columnDefToSql(name, type, notNull);
+    let columnDef = SqlHelper.columnDefToSql(name, type, notNull);
     let sql = `alter table ${this.name} add column ${columnDef}`;
     if (defaultValue !== undefined) {
-      sql += ` default ${this.toValueString(defaultValue, type)}`;
+      sql += ` default ${this.toQuotedValueString(defaultValue, type)};`;
     }
     this.sqls.push(sql);
     return this;
@@ -94,19 +96,21 @@ export class TableChangerPolyfill extends QueryBase implements ITableChanger {
   }
 
   public commit(): Promise<TransactionResults> {
-    // TODO(arthurhsu): update existing cached schema
-    return super.commit();
+    // TODO(arthurhsu): implement
+    throw new Error('NotImplemented');
   }
 
-  public toSql(): string {
-    return this.sqls.join('; ');
+  public toSql(): string[] {
+    return this.sqls;
   }
 
   public clone(): IQuery {
-    throw new Error('UnsupportedError');
+    // By spec, clone() is not supported.
+    throw new Error('SyntaxError');
   }
 
-  public createBinderMap(): void {
-    // Do nothing.
-  }
+  public attach(context: Sqlite3Context) {
+    // TODO(arthurhsu): implement reportTableChange to schema
+    throw new Error('NotImplemented');
+  } 
 }

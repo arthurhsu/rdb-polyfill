@@ -16,24 +16,20 @@
  */
 
 import * as chai from 'chai';
-import {TableBuilderPolyfill} from '../../lib/schema/table_builder_polyfill';
-import {MockConnection} from '../../testing/mock_connection';
+import {TableBuilder} from '../../lib/schema/table_builder';
 
 const assert = chai.assert;
 
-describe('TableBuilderPolyfill', () => {
-  let conn: MockConnection;
-  before(() => conn = new MockConnection());
-
+describe('TableBuilder', () => {
   it('throws_DuplicateColumn', () => {
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+    let builder = new TableBuilder(null, 'foo', 'db');
     assert.throws(() => {
       builder.column('number', 'number')
              .column('number', 'number');
     });
   });
 
-  it('toSql_Simple', () => {
+  it('tableBuilder_toSql_Simple', () => {
     const expected = 'create table foo (' +
                      'integer integer, ' +
                      'number real, ' +
@@ -42,8 +38,8 @@ describe('TableBuilderPolyfill', () => {
                      'date integer, ' +
                      'object text not null, ' +
                      'blob blob' +
-                     ')';
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+                     ');';
+    let builder = new TableBuilder(null, 'foo', 'db');
     builder
         .column('integer', 'integer')
         .column('number', 'number')
@@ -52,92 +48,96 @@ describe('TableBuilderPolyfill', () => {
         .column('date', 'date')
         .column('object', 'object', true)
         .column('blob', 'blob');
-    assert.equal(expected, builder.toSql());
+    assert.equal(expected, builder.toSql()[0]);
   });
 
-  it('toSql_singlePK', () => {
+  it('tableBuilder_toSql_singlePK', () => {
     const expected = 'create table foo (' +
                      'id integer, ' +
                      'name text, ' +
                      'primary key (id)' +
-                     ')';
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+                     ');';
+    let builder = new TableBuilder(null, 'foo', 'db');
     builder.column('id', 'integer')
         .column('name', 'string')
         .primaryKey('id');
-    assert.equal(expected, builder.toSql());
+    assert.equal(expected, builder.toSql()[0]);
   });
 
-  it('toSql_autoIncPK', () => {
+  it('tableBuilder_toSql_autoIncPK', () => {
     const expected = 'create table foo (' +
                      'id integer primary key autoincrement, ' +
                      'name text' +
-                     ')';
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+                     ');';
+    let builder = new TableBuilder(null, 'foo', 'db');
     builder.column('id', 'integer')
         .column('name', 'string')
         .primaryKey('id', true);
-    assert.equal(expected, builder.toSql());
+    assert.equal(expected, builder.toSql()[0]);
   });
 
-  it('toSql_complexPK', () => {
+  it('tableBuilder_toSql_complexPK', () => {
     const expected = 'create table foo (' +
                      'id real, ' +
                      'name text, ' +
                      'primary key (id, name)' +
-                     ')';
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+                     ');';
+    let builder = new TableBuilder(null, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
         .primaryKey(['id', 'name']);
-    assert.equal(expected, builder.toSql());
+    assert.equal(expected, builder.toSql()[0]);
   });
 
-  it('toSql_simpleIndex', () => {
-    const expected = 'create table foo (id real, name text); ' +
-                     'create index idx on foo (id)';
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+  it('tableBuilder_toSql_simpleIndex', () => {
+    const expected = [
+      'create table foo (id real, name text);',
+      'create index idx on foo (id);'
+    ];
+    let builder = new TableBuilder(null, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
         .index('idx', 'id');
-    assert.equal(expected, builder.toSql());
+    assert.deepEqual(expected, builder.toSql());
   });
 
-  it('toSql_uniqueIndex', () => {
-    const expected = 'create table foo (id real, name text); ' +
-                     'create unique index idx on foo (id)';
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+  it('tableBuilder_toSql_uniqueIndex', () => {
+    const expected = [
+      'create table foo (id real, name text);',
+      'create unique index idx on foo (id);'
+    ];
+    let builder = new TableBuilder(null, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
         .index('idx', 'id', true);
-    assert.equal(expected, builder.toSql());
+    assert.deepEqual(expected, builder.toSql());
   });
 
-  it('toSql_singleFK', () => {
+  it('tableBuilder_toSql_singleFK', () => {
     const expected = 'create table foo (id real, name text, ' +
                      'constraint fk_id foreign key (id) references bar(id) ' +
-                     'on update cascade on delete cascade deferrable)';
-    let builder = new TableBuilderPolyfill(conn, 'foo', 'db');
+                     'on update cascade on delete cascade deferrable);';
+    let builder = new TableBuilder(null, 'foo', 'db');
     builder.column('id', 'number')
         .column('name', 'string')
         .foreignKey('fk_id', 'id', 'bar.id', 'cascade', 'deferrable');
-    assert.equal(expected, builder.toSql());
+    assert.equal(expected, builder.toSql()[0]);
   });
 
-  it('toSql_multiFK', () => {
+  it('tableBuilder_toSql_multiFK', () => {
     const expected =
         'create table playlist (sid text, aid text, author text, title text, ' +
         'constraint fk_album foreign key (aid, author) ' +
         'references album(id, author), ' +
         'constraint fk_song foreign key (sid, title) ' +
-        'references song(id, title))';
-    let builder = new TableBuilderPolyfill(conn, 'playlist', 'db');
+        'references song(id, title));';
+    let builder = new TableBuilder(null, 'playlist', 'db');
     builder.column('sid', 'string')
         .column('aid', 'string')
         .column('author', 'string')
         .column('title', 'string')
         .foreignKey('fk_album', ['aid', 'author'], ['album.id', 'album.author'])
         .foreignKey('fk_song', ['sid', 'title'], ['song.id', 'song.title']);
-    assert.equal(expected, builder.toSql());
+    assert.equal(expected, builder.toSql()[0]);
   });
 });

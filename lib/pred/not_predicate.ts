@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ILogicalPredicate} from '../spec/predicate';
 import {LogicalPredicateBase} from './logical_predicate_base';
 
@@ -30,11 +29,6 @@ export class NotPredicate extends LogicalPredicateBase {
   public toSql(): string {
     this.baseSql = `not (${this.predicate.toSql()})`;
     return super.toSql();
-  }
-
-  public createBinderMap(map: Map<number, BindableValueHolder>) {
-    this.predicate.createBinderMap(map);
-    super.createBinderMap(map);
   }
 
   public clone(): NotPredicate {

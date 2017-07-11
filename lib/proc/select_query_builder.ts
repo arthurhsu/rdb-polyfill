@@ -16,7 +16,6 @@
  */
 
 import {LogicalPredicate} from '../pred/logical_predicate';
-import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnSchema} from '../schema/column_schema';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
@@ -28,7 +27,7 @@ import {IQuery} from '../spec/query';
 import {ISelectQuery} from '../spec/select_query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SqlConnection} from './sql_connection';
+import {Sqlite3Connection} from './sqlite3_connection';
 
 type SubQueryType = {
   op: string,
@@ -53,7 +52,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private subqueries: SubQueryType[];
   private joins: JoinType[];
 
-  constructor(connection: SqlConnection, schema: Schema, columns: IColumn[]) {
+  constructor(connection: Sqlite3Connection, schema: Schema, columns: IColumn[]) {
     super(connection);
     this.tables = new Map<string, TableSchema>();
     this.schema = schema;
@@ -137,19 +136,6 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     return this.subquery('except', query);
   }
 
-  public createBinderMap(): Map<number, BindableValueHolder> {
-    if (this.searchCondition) {
-      this.searchCondition.createBinderMap(this.boundValues);
-    }
-
-    [this.skipCount, this.limitCount].forEach(value => {
-      if (value instanceof BindableValueHolder) {
-        this.boundValues.set(value.index, value);
-      }
-    });
-    return this.boundValues;
-  }
-
   public clone(): IQuery {
     let that =
         new SelectQueryBuilder(this.connection, this.schema, this.columns);
@@ -159,12 +145,8 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     if (this.searchCondition) {
       that.searchCondition = this.searchCondition.clone();
     }
-    that.limitCount = (this.limitCount instanceof BindableValueHolder) ?
-        this.limitCount.clone() :
-        this.limitCount;
-    that.skipCount = (this.skipCount instanceof BindableValueHolder) ?
-        this.skipCount.clone() :
-        this.skipCount;
+    that.limitCount = this.limitCount;
+    that.skipCount = this.skipCount;
     that.ordering = this.ordering.concat([]);
     that.grouping = this.grouping.concat([]);
     that.subqueries = this.subqueries.concat([]);
@@ -177,7 +159,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
                               table.getName();
   }
 
-  public toSql(): string {
+  public toSql(terminating = true): string[] {
     let projection = this.columns.length ?
         this.columns.map(col => col.fullName).join(', ') :
         '*';
@@ -223,6 +205,10 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
       });
       sql = `${sql} ${subquerySqls.join(' ')}`;
     }
-    return sql;
+
+    // Note that SELECT queries are not terminated in semicolons because
+    // it's not worth doing it and put a bunch of engineering efforts for
+    // handling subqueries.
+    return [sql];
   }
 }

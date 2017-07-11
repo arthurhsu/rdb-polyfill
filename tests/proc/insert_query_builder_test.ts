@@ -17,43 +17,69 @@
 
 import * as chai from 'chai';
 import {InsertQueryBuilder} from '../../lib/proc/insert_query_builder';
+import {Sqlite3Connection} from '../../lib/proc/sqlite3_connection';
+import {Sqlite3Database} from '../../lib/proc/sqlite3_database';
 import {Table} from '../../lib/spec/table';
-import {MockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('InsertQueryBuilder', () => {
   let foo: Table;
-  let conn: MockConnection;
+  let connection: Sqlite3Connection;
+  let db: Sqlite3Database;
+
   before(() => {
-    conn = new MockConnection();
-    return conn.createFoo().then(() => foo = conn.schema().table('foo'));
+    db = new Sqlite3Database();
+    return db.open('bar').then(conn => {
+      connection = conn as Sqlite3Connection;
+      assert.isNotNull(connection);
+      return connection.createTable('foo')
+          .column('id', 'number')
+          .column('name', 'string')
+          .column('date', 'date')
+          .column('boolean', 'boolean')
+          .column('object', 'object')
+          .primaryKey('id')
+          .commit();
+    }).then(() => foo = connection.schema().table('foo'));
   });
 
-  it('toSql_simple', () => {
+  afterEach(() => {
+    return connection.simpleRun(['delete from foo;']);
+  });
+
+  it('insert_singleRow', () => {
     let now = new Date();
     let obj = {foo: 1, bar: 2};
-    const expected = 'insert into foo(id,name,date,boolean,object) values(' +
-                     `1,"bar",${now.getTime()},1,"${JSON.stringify(obj)}")`;
+    const expected =
+        'insert into foo(id,name,date,boolean,object) values(?,?,?,?,?);';
 
-    let insertBuilder = conn.insert().into(foo).values({
+    let insertBuilder = connection.insert().into(foo).values({
       id: 1,
       name: 'bar',
       date: now,
       boolean: true,
       object: obj
     }) as InsertQueryBuilder;
-    assert.equal(expected, insertBuilder.toSql());
-    assert.equal(expected, insertBuilder.clone().toSql());
+    assert.equal(expected, insertBuilder.toSql()[0]);
+    assert.equal(expected, insertBuilder.clone().toSql()[0]);
+    return insertBuilder.commit().then(() => {
+      return connection.simpleGet('select * from foo;');
+    }).then(res => {
+      assert.equal(1, res.length);
+      assert.equal(1, res[0]['id']);
+      assert.equal('bar', res[0]['name']);
+      assert.equal(1, res[0]['boolean']);
+      assert.equal(now.getTime(), res[0]['date']);
+      assert.equal(JSON.stringify(obj), res[0]['object']);
+    });
   });
 
-  it('toSql_multiRow', () => {
+  it('insert_multiRow', () => {
     let now = new Date();
     let obj = {foo: 1, bar: 2};
-    const expected = 'insert into foo(id,name,date,boolean,object) values(' +
-                     `1,"bar",${now.getTime()},1,"${JSON.stringify(obj)}");\n` +
-                     'insert into foo(id,name,date,boolean,object) values(' +
-                     `2,"ror",${now.getTime()},0,"${JSON.stringify(obj)}")`;
+    const expected =
+        'insert into foo(id,name,date,boolean,object) values(?,?,?,?,?);';
 
     let values = [
       {
@@ -72,8 +98,138 @@ describe('InsertQueryBuilder', () => {
       }
     ];
     let insertBuilder =
-        conn.insert().into(foo).values(values) as InsertQueryBuilder;
-    assert.equal(expected, insertBuilder.toSql());
-    assert.equal(expected, insertBuilder.clone().toSql());
+        connection.insert().into(foo).values(values) as InsertQueryBuilder;
+    assert.equal(expected, insertBuilder.toSql()[0]);
+    assert.equal(expected, insertBuilder.clone().toSql()[0]);
+    return insertBuilder.commit().then(() => {
+      return connection.simpleGet('select * from foo order by id;');
+    }).then(res => {
+      assert.equal(2, res.length);
+      assert.equal(1, res[0]['id']);
+      assert.equal('bar', res[0]['name']);
+      assert.equal(1, res[0]['boolean']);
+      assert.equal(now.getTime(), res[0]['date']);
+      assert.equal(JSON.stringify(obj), res[0]['object']);
+      assert.equal(2, res[1]['id']);
+      assert.equal('ror', res[1]['name']);
+      assert.equal(0, res[1]['boolean']);
+      assert.equal(now.getTime(), res[1]['date']);
+      assert.equal(JSON.stringify(obj), res[1]['object']);
+    });
+  });
+
+  it('insert_bindSingleRow', () => {
+    let now = new Date();
+    let obj = {foo: 1, bar: 2};
+    let wildcard = connection.bind(0);
+    let insertBuilder =
+        connection.insert().into(foo).values(wildcard) as InsertQueryBuilder;
+    insertBuilder.bind({
+      id: 1,
+      name: 'bar',
+      date: now,
+      boolean: true,
+      object: obj
+    });
+    return insertBuilder.commit().then(() => {
+      return connection.simpleGet('select * from foo;');
+    }).then(res => {
+      assert.equal(1, res.length);
+      assert.equal(1, res[0]['id']);
+      assert.equal('bar', res[0]['name']);
+      assert.equal(1, res[0]['boolean']);
+      assert.equal(now.getTime(), res[0]['date']);
+      assert.equal(JSON.stringify(obj), res[0]['object']);
+    });
+  });
+
+  it('insert_bindMultiRow', () => {
+    let now = new Date();
+    let obj = {foo: 1, bar: 2};
+    let wildcard = connection.bind(0);
+    let values = [
+      {
+        id: 1,
+        name: 'bar',
+        date: now,
+        boolean: true,
+        object: obj
+      },
+      {
+        id: 2,
+        name: 'ror',
+        date: now,
+        boolean: false,
+        object: obj
+      }
+    ];
+    let insertBuilder =
+        connection.insert().into(foo).values(wildcard) as InsertQueryBuilder;
+    insertBuilder.bind(values);
+    return insertBuilder.commit().then(() => {
+      return connection.simpleGet('select * from foo order by id;');
+    }).then(res => {
+      assert.equal(2, res.length);
+      assert.equal(1, res[0]['id']);
+      assert.equal('bar', res[0]['name']);
+      assert.equal(1, res[0]['boolean']);
+      assert.equal(now.getTime(), res[0]['date']);
+      assert.equal(JSON.stringify(obj), res[0]['object']);
+      assert.equal(2, res[1]['id']);
+      assert.equal('ror', res[1]['name']);
+      assert.equal(0, res[1]['boolean']);
+      assert.equal(now.getTime(), res[1]['date']);
+      assert.equal(JSON.stringify(obj), res[1]['object']);
+    });
+  });
+
+  it('replace', () => {
+    let now = new Date();
+    let obj = {foo: 1, bar: 2};
+    const expected =
+        'insert or replace into foo(id,name,date,boolean,object) ' +
+        'values(?,?,?,?,?);';
+
+    let wildcard = connection.bind(0);
+    let insertBuilder =
+        connection.insertOrReplace().into(foo).values(wildcard) as
+            InsertQueryBuilder;
+    assert.equal(expected, insertBuilder.toSql()[0]);
+    assert.equal(expected, insertBuilder.clone().toSql()[0]);
+    insertBuilder.bind({
+      id: 1,
+      name: 'bar',
+      date: now,
+      boolean: true,
+      object: obj
+    });
+    return insertBuilder.commit().then(() => {
+      return connection.simpleGet('select * from foo;');
+    }).then(res => {
+      assert.equal(1, res.length);
+      assert.equal(1, res[0]['id']);
+      assert.equal('bar', res[0]['name']);
+      assert.equal(1, res[0]['boolean']);
+      assert.equal(now.getTime(), res[0]['date']);
+      assert.equal(JSON.stringify(obj), res[0]['object']);
+
+      insertBuilder.bind({
+        id: 1,
+        name: 'bar2',
+        date: now,
+        boolean: false,
+        object: obj
+      });
+      return insertBuilder.commit();
+    }).then(res => {
+      return connection.simpleGet('select * from foo;');
+    }).then(res => {
+      assert.equal(1, res.length);
+      assert.equal(1, res[0]['id']);
+      assert.equal('bar2', res[0]['name']);
+      assert.equal(0, res[0]['boolean']);
+      assert.equal(now.getTime(), res[0]['date']);
+      assert.equal(JSON.stringify(obj), res[0]['object']);
+    });
   });
 });

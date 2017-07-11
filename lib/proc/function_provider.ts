@@ -33,7 +33,8 @@ export class FunctionProvider implements IDatabaseFunctionProvider {
   }
 
   private ensureComparableColumn(col: IColumn): void {
-    if (col.type != 'integer' && col.type != 'number' && col.type != 'date' && col.type != 'string') {
+    if (col.type != 'integer' && col.type != 'number' && col.type != 'date' &&
+        col.type != 'string') {
       throw new Error('TypeError');
     }
   }

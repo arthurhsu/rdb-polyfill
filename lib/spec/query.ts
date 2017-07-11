@@ -21,5 +21,5 @@ export interface IQuery extends IExecutionContext {
   explain(): Promise<string>;
   bind(...values: any[]): IQuery;
   clone(): IQuery;
-  toSql(): string;
+  toSql(): string[];
 }

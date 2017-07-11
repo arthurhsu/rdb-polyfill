@@ -16,24 +16,45 @@
  */
 
 import * as chai from 'chai';
-import {FunctionProvider} from '../../lib/proc/function_provider';
 import {SelectQueryBuilder} from '../../lib/proc/select_query_builder';
+import {Sqlite3Connection} from '../../lib/proc/sqlite3_connection';
+import {Sqlite3Database} from '../../lib/proc/sqlite3_database';
 import {Table} from '../../lib/spec/table';
-import {MockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('SelectQueryBuilder', () => {
   let foo: Table;
-  let conn: MockConnection;
-  let fn: FunctionProvider;
+  let conn: Sqlite3Connection;
+  let db: Sqlite3Database;
+
   before(() => {
-    fn = new FunctionProvider();
-    conn = new MockConnection();
-    return conn.createFoo().then(() => foo = conn.schema().table('foo'));
+    db = new Sqlite3Database();
+    return db.open('bar').then(connection => {
+      conn = connection as Sqlite3Connection;
+      assert.isNotNull(connection);
+      return connection.createTable('foo')
+          .column('id', 'number')
+          .column('name', 'string')
+          .column('date', 'date')
+          .column('boolean', 'boolean')
+          .column('object', 'object')
+          .primaryKey('id')
+          .commit();
+    }).then(() => {
+      foo = conn.schema().table('foo');
+      return conn.simpleRun([
+        'insert into foo values(1, "bar", 1499466194434, 1, null);',
+        'insert into foo values(2, "baz", 1499466194438, 0, null);'
+      ]);
+    }).then(() => {
+      return conn.simpleGet('select count(*) from foo;')
+    }).then(res => {
+      assert.equal(2, res[0]['count(*)']);
+    });
   });
 
-  it('toSql_simple', () => {
+  it('select_toSql_simple', () => {
     const expected =
         'select * from foo where foo.boolean = 1' +
         ' order by foo.id asc, foo.name desc' +
@@ -46,12 +67,13 @@ describe('SelectQueryBuilder', () => {
             .orderBy(foo['id'])
             .orderBy(foo['name'], 'desc')
             .groupBy(foo['date']) as SelectQueryBuilder;
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_simpleBind', () => {
-    const expected = 'select * from foo where foo.boolean = 1 limit 2 skip 3';
+  it('select_toSql_simpleBind', () => {
+    const expected =
+        'select * from foo where foo.boolean = ?1 limit ?2 skip ?3';
 
     let bind = [conn.bind(0), conn.bind(1), conn.bind(2)];
     let selectBuilder =
@@ -61,14 +83,12 @@ describe('SelectQueryBuilder', () => {
             .skip(bind[2])
             .limit(bind[1]) as
         SelectQueryBuilder;
-    assert.equal(expected, selectBuilder.bind(true, 2, 3).toSql());
-
-    const expected2 = 'select * from foo where foo.boolean = 0 limit 3 skip 2';
-    assert.equal(expected2, selectBuilder.bind(false, 3, 2).toSql());
-    assert.equal(expected, selectBuilder.clone().bind(true, 2, 3).toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.bind(false, 3, 2).toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_selfJoin', () => {
+  it('select_toSql_selfJoin', () => {
     const expected = 'select a.id, a.name from foo a, foo b' +
                      ' where (a.id = b.id) and (a.boolean = 1)';
     let a = foo.as('a');
@@ -77,11 +97,11 @@ describe('SelectQueryBuilder', () => {
         conn.select(a['id'], a['name'])
             .from(a, b)
             .where(a['id'].eq(b['id']).and(a['boolean'].eq(true)));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_subquery', () => {
+  it('select_toSql_subquery', () => {
     const expected =
         'select foo.id from foo where foo.boolean = 1 union ' +
         '(select foo.id from foo where foo.name = "b" intersect ' +
@@ -95,39 +115,39 @@ describe('SelectQueryBuilder', () => {
                             .where(foo['boolean'].eq(false))
                     )
             );
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_avg', () => {
+  it('select_toSql_avg', () => {
     const expected = 'select avg(foo.id) from foo where foo.boolean = 1';
     let selectBuilder =
-        conn.select(fn.avg(foo['id']))
+        conn.select(db.fn.avg(foo['id']))
             .from(foo)
             .where(foo['boolean'].eq(true));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_count', () => {
+  it('select_toSql_count', () => {
     const expected =
         'select count(foo.id), count(*) from foo where foo.boolean = 1';
     let selectBuilder =
-        conn.select(fn.count(foo['id']), fn.count())
+        conn.select(db.fn.count(foo['id']), db.fn.count())
             .from(foo)
             .where(foo['boolean'].eq(true));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_distinct', () => {
+  it('select_toSql_distinct', () => {
     const expected = 'select distinct foo.name from foo';
-    let selectBuilder = conn.select(fn.distinct(foo['name'])).from(foo);
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    let selectBuilder = conn.select(db.fn.distinct(foo['name'])).from(foo);
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_innerJoin', () => {
+  it('select_toSql_innerJoin', () => {
     const expected = 'select a.id, a.name from foo a' +
                      ' inner join foo b on b.id = a.id where a.boolean = 1';
     let a = foo.as('a');
@@ -137,68 +157,66 @@ describe('SelectQueryBuilder', () => {
             .from(a)
             .innerJoin(b, b['id'].eq(a['id']))
             .where(a['boolean'].eq(true));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_startsWith', () => {
+  it('select_toSql_startsWith', () => {
     const expected = 'select * from foo where foo.name like "bar%"';
     let selectBuilder =
         conn.select().from(foo).where(foo['name'].startsWith('bar'));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_endsWith', () => {
+  it('select_toSql_endsWith', () => {
     const expected = 'select * from foo where foo.name like "%bar"';
     let selectBuilder =
         conn.select().from(foo).where(foo['name'].endsWith('bar'));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_betweenBinder', () => {
-    const expected1 = 'select * from foo where foo.id between 1 and 10';
-    const expected2 = 'select * from foo where foo.id between 2 and 12';
+  it('select_toSql_betweenBinder', () => {
+    const expected = 'select * from foo where foo.id between ?1 and ?2';
     let selectBuilder =
         conn.select()
             .from(foo)
             .where(foo['id'].between(conn.bind(0), conn.bind(1)));
-    assert.equal(expected1, selectBuilder.bind(1, 10).toSql());
-    assert.equal(expected2, selectBuilder.clone().bind(2, 12).toSql());
+    assert.equal(expected, selectBuilder.bind(1, 10).toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_in', () => {
+  it('select_toSql_in', () => {
     const expected = 'select * from foo where foo.id in (1, 2, 3, 4, 5)';
     let selectBuilder =
         conn.select()
             .from(foo)
             .where(foo['id'].in([1, 2, 3, 4, 5]));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_inBinder', () => {
-    const expected1 = 'select * from foo where foo.id in (1, 2, 3, 4, 5)';
-    const expected2 = 'select * from foo where foo.id in (6)';
+  it('select_toSql_inBinder', () => {
+    const expected = 'select * from foo where foo.id in (?1)';
     let selectBuilder =
         conn.select()
             .from(foo)
             .where(foo['id'].in(conn.bind(0)));
-    assert.equal(expected1, selectBuilder.bind([1, 2, 3, 4, 5]).toSql());
-    assert.equal(
-        expected1, selectBuilder.clone().bind([1, 2, 3, 4, 5]).toSql());
-    assert.equal(expected2, selectBuilder.bind(6).toSql());
-    assert.equal(expected2, selectBuilder.clone().bind(6).toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
+    assert.equal(expected, selectBuilder.bind(6).toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().bind(6).toSql()[0]);
   });
 
-  it('toSql_inSubquery', () => {
-    const expected = 'select * from foo where foo.id in (select foo.id from foo)';
+  it('select_toSql_inSubquery', () => {
+    const expected =
+        'select * from foo where foo.id in (select foo.id from foo)';
     let selectBuilder =
         conn.select()
             .from(foo)
             .where(foo['id'].in(conn.select(foo['id']).from(foo)));
-    assert.equal(expected, selectBuilder.toSql());
-    assert.equal(expected, selectBuilder.clone().toSql());
+    assert.equal(expected, selectBuilder.toSql()[0]);
+    assert.equal(expected, selectBuilder.clone().toSql()[0]);
   });
 });

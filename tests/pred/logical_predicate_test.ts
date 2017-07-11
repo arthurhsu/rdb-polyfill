@@ -19,6 +19,7 @@ import * as chai from 'chai';
 import {LogicalPredicate} from '../../lib/pred/logical_predicate';
 import {NotPredicate} from '../../lib/pred/not_predicate';
 import {BinaryPredicateHolder, UnaryPredicateHolder} from '../../lib/pred/predicate_holder';
+import {BindableValueHolder} from '../../lib/schema/bindable_value_holder';
 import {ColumnSchema} from '../../lib/schema/column_schema';
 import {TableSchema} from '../../lib/schema/table_schema';
 
@@ -56,5 +57,21 @@ describe('LogicalPredicate', () => {
         'not (((foo.id = 1) and (foo.ts > 300)) or (foo.pic is not null))';
     assert.equal(expected, pred2.toSql());
     assert.equal(expected, pred2.clone().toSql());
+  });
+
+  it('toSql_bind', () => {
+    let col1 = new ColumnSchema(foo, 'id', 'string', false);
+    let col2 = new ColumnSchema(foo, 'ts', 'date', false);
+    let col3 = new ColumnSchema(foo, 'pic', 'blob', true);
+    let holder1 = new BindableValueHolder(0);
+    let holder2 = new BindableValueHolder(1);
+    let binaryOp1 = new BinaryPredicateHolder(col1, '=', holder1);
+    let binaryOp2 = new BinaryPredicateHolder(col2, '>', holder2);
+    let unaryOp = new UnaryPredicateHolder(col3, 'is not null');
+    let pred = new LogicalPredicate(binaryOp1);
+    pred.and(new LogicalPredicate(binaryOp2), new LogicalPredicate(unaryOp));
+    let expected = '(foo.id = ?1) and (foo.ts > ?2) and (foo.pic is not null)';
+    assert.equal(expected, pred.toSql());
+    assert.equal(expected, pred.clone().toSql());
   });
 });

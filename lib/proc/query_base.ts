@@ -19,91 +19,87 @@ import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnType} from '../spec/enums';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
-import {SqlConnection} from './sql_connection';
-import {SqlExecutionContext} from './sql_execution_context';
+import {Sqlite3Connection} from './sqlite3_connection';
+import {Sqlite3Context} from './sqlite3_context';
+import {Stmt} from './stmt';
 
 export abstract class QueryBase implements IQuery {
-  protected connection: SqlConnection;
-  protected context: SqlExecutionContext;
-  protected boundValues: Map<number, BindableValueHolder>;
+  protected connection: Sqlite3Connection;
+  protected context: Sqlite3Context;
+  protected boundValues: Map<number, any>;
   protected finalized: boolean;
 
-  constructor(connection: SqlConnection, readonly postCommitCallback = false) {
+  constructor(connection: Sqlite3Connection) {
     this.connection = connection;
     this.context = null;
     this.finalized = false;
-    this.boundValues = new Map<number, BindableValueHolder>();
+    this.boundValues = new Map<number, any>();
   }
 
-  public attach(context: SqlExecutionContext): void {
-    this.context = context.associate(this);
+  public attach(context: Sqlite3Context): void {
+    this.context = context;
+    let sqls = this.preCommitSqls().concat(this.toSql());
+    sqls.forEach(sql => {
+      let needBinding = (sql.indexOf('?') != -1);
+      let stmt =
+          new Stmt(this.connection.getNativeDb(), sql, false, needBinding);
+      context.attach(stmt);
+    });
   }
 
   public explain(): Promise<string> {
-    // TODO(arthurhsu): implement
-    return Promise.resolve('Explain not implemented');
+    throw new Error('NotImplemented');
   }
 
   public bind(...values: any[]): IQuery {
-    if (this.boundValues.size == 0) {
-      this.createBinderMap();
-    }
-
-    if (this.boundValues.size > 0) {
-      for (let i = 0; i < values.length; ++i) {
-        if (this.boundValues.has(i)) {
-          this.boundValues.get(i).bind(values[i]);
-        }
-      }
+    for (let i = 0; i < values.length; ++i) {
+      this.boundValues.set(i, values[i]);
     }
     return this;
   }
 
-  abstract createBinderMap(): void;
   abstract clone(): IQuery;
-  abstract toSql(): string;
+  abstract toSql(): string[];
 
   public preCommitSqls(): string[] {
-    return null;
-  }
-
-  public onCommit(connection: SqlConnection): void {
-    throw new Error('UnknownError');
+    return [];
   }
 
   protected cloneBoundValues(source: QueryBase): void {
     source.boundValues.forEach((val, key) => {
-      this.boundValues.set(key, val.clone());
+      // Not really a deep copy.
+      this.boundValues.set(key, val);
     });
   }
 
-  protected ensureContext(): void {
-    if (this.context === null) {
-      this.attach(this.connection.createContext());
-    }
-  }
-
+  // Generic commit routine, except insert query builder.
   public commit(): Promise<TransactionResults> {
-    this.ensureContext();
-    let sqls = this.toSql().split(';\n');
-    sqls.forEach(sql => this.context.prepare(sql));
-    return this.context.commit();
+    let implicitContext = false;
+    if (this.context === null) {
+      implicitContext = true;
+      this.attach(this.connection.getImplicitContext());
+    }
+
+    return this.context.commit().then(res => {
+      if (implicitContext) {
+        this.context = null;
+        return res;
+      }
+    });
   }
 
   public rollback(): Promise<void> {
-    this.ensureContext();
+    if (this.context === null) {
+      return Promise.resolve();
+    }
     return this.context.rollback();
   }
 
   protected toValueString(value: any, type: ColumnType): string {
-    if (value instanceof BindableValueHolder) {
-      return this.toValueString(value.value, type);
-    }
-
     switch (type) {
       case 'integer':
         return value.toPrecision(1).toString();
-        
+
       case 'number':
         return value.toString();
 
@@ -114,14 +110,24 @@ export abstract class QueryBase implements IQuery {
         return value ? '1' : '0';
 
       case 'string':
-        return `"${value}"`;
+        return value;
 
       case 'object':
-        return `"${JSON.stringify(value)}"`;
+        return JSON.stringify(value);
+
+      case 'blob':
+        return BindableValueHolder.binToHex(value as ArrayBuffer);
 
       default:
-        // TODO(arthurhsu): implement blob
         throw new Error('NotImplemented');
     }
+  }
+
+  protected toQuotedValueString(value: any, type: ColumnType): string {
+    let val = this.toValueString(value, type);
+    if (type == 'string' || type == 'object' || type == 'blob') {
+      val = `"${val}"`;
+    }
+    return val;
   }
 }

@@ -15,4 +15,4 @@
  * limitations under the License.
  */
 
-export interface IBindableValue { readonly value: any; }
+export interface IBindableValue { readonly index: number; }

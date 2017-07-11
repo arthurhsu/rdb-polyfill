@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ILogicalPredicate} from '../spec/predicate';
 
 export abstract class LogicalPredicateBase implements ILogicalPredicate {
@@ -57,11 +56,5 @@ export abstract class LogicalPredicateBase implements ILogicalPredicate {
       lhs = `(${lhs}) ${target.sql} ${rhs}`;
     }
     return lhs;
-  }
-
-  public createBinderMap(map: Map<number, BindableValueHolder>) {
-    this.chain.forEach(target => {
-      target.operands.forEach(op => op.createBinderMap(map));
-    });
   }
 }

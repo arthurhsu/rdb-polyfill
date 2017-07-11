@@ -17,16 +17,16 @@
 
 import {validateName} from '../base/assert';
 import {QueryBase} from '../proc/query_base';
-import {SqlConnection} from '../proc/sql_connection';
+import {Sqlite3Connection} from '../proc/sqlite3_connection';
+import {Sqlite3Context} from '../proc/sqlite3_context';
 import {ColumnType, ForeignKeyAction, ForeignKeyTiming} from '../spec/enums';
-import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
 import {IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder} from '../spec/table_builder';
-import {CommonBase} from './common_base';
-import {Schema} from './schema';
+
+import {SqlHelper} from './sql_helper';
 import {TableSchema} from './table_schema';
 
-export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
+export class TableBuilder extends QueryBase implements ITableBuilder {
   private columnSql: string[];
   private constraintSql: string[];
   private columnType: Map<string, ColumnType>;
@@ -34,9 +34,9 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   private dbName: string;
   private nameUsed: Set<string>;
 
-  constructor(
-      connection: SqlConnection, readonly name: string, dbName: string) {
-    super(connection, true);
+  constructor(readonly connection: Sqlite3Connection, readonly name: string,
+      dbName: string) {
+    super(connection);
     this.columnSql = [];
     this.constraintSql = [];
     this.columnType = new Map<string, ColumnType>();
@@ -59,11 +59,16 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.nameUsed.add(name);
   }
 
+  public attach(context: Sqlite3Context) {
+    super.attach(context);
+    context.reportTableChange(this.name, this.schema);
+  }
+
   public column(name: string, type: ColumnType, notNull = false):
       ITableBuilder {
     this.checkName(name, true);
     this.columnType.set(name, type);
-    this.columnSql.push(CommonBase.columnDefToSql(name, type, notNull));
+    this.columnSql.push(SqlHelper.columnDefToSql(name, type, notNull));
     this.schema.column(name, type, notNull);
     return this;
   }
@@ -87,16 +92,18 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
       let name = columns + ' ';
       for (let i = 0; i < this.columnSql.length; ++i) {
         if (this.columnSql[i].startsWith(name)) {
-          this.columnSql[i] +=
-              ' primary key ' + this.connection.autoIncrementKeyword;
+          this.columnSql[i] += ' primary key autoincrement';
           break;
         }
       }
       return this;
     }
 
-    let index = CommonBase.normalizeIndex(columns, this.columnType);
-    this.constraintSql.push(CommonBase.indexToSql('primary key', index));
+    if (!Array.isArray(columns)) {
+      this.schema._notNull.add(columns);
+    }
+    let index = SqlHelper.normalizeIndex(columns, this.columnType);
+    this.constraintSql.push(SqlHelper.indexToSql('primary key', index));
     return this;
   }
 
@@ -159,20 +166,20 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     this.checkName(name, true);
     this.schema._indices.push({
       name: name,
-      column: CommonBase.normalizeIndex(columns, this.columnType),
+      column: SqlHelper.normalizeIndex(columns, this.columnType),
       unique: unique
     });
 
     return this;
   }
 
-  private getIndexSql(): string {
+  private getIndexSql(): string[] {
     return this.schema._indices.map(index => {
       let unique = index.unique ? 'unique ' : '';
-      return CommonBase.indexToSql(
+      return SqlHelper.indexToSql(
           `create ${unique}index ${index.name} on ${this.name}`,
-          index.column as IndexedColumnSpec[]);
-    }).join('; ');
+          index.column as IndexedColumnSpec[]) + ';';
+    });
   }
 
   private getColumnSql(): string {
@@ -184,7 +191,7 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
   }
 
   // Finalize the builder and create the SQL statement.
-  public toSql(): string {
+  public toSql(): string[] {
     let column = this.getColumnSql();
     if (column === null) {
       throw new Error('InvalidSchemaError');
@@ -193,32 +200,33 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     let desc = constraint ? `${column}, ${constraint}` : column;
     let fkSql = this.getFKSql() || '';
     let indexSql = this.getIndexSql();
-    let mainSql = `create table ${this.name} (${desc}${fkSql})`;
-    return indexSql ? `${mainSql}; ${indexSql}` : mainSql;
+    let mainSql = `create table ${this.name} (${desc}${fkSql});`;
+    return [].concat(mainSql).concat(indexSql);
   }
 
   public preCommitSqls(): string[] {
     let sqls: string[] = [];
 
     sqls.push(
-        `insert into "$rdb_table" values("${this.name}", "${this.dbName}")`);
+        `insert into "$rdb_table" values("${this.name}", "${this.dbName}");`);
     this.columnType.forEach((type, name) => {
+      let nul = this.schema._notNull.has(name) ? 1 : 0;
       sqls.push(
-          'insert into "$rdb_column" values ' +
-          `("${name}", "${this.dbName}", "${this.name}", "${type}")`);
+          'insert into "$rdb_column" values (' +
+          `"${name}", "${this.dbName}", "${this.name}", "${type}", ${nul});`);
     });
     if (this.schema._primaryKey && this.schema._primaryKey.length) {
       sqls.push(
           `insert into "$rdb_relation" values("pk", "${this.dbName}", ` +
           `"${this.name}", "pk", "${this.schema._primaryKey.join(',')}", "", ` +
-          `"${this.schema._autoIncrement ? 'autoInc' : ''}")`);
+          `"${this.schema._autoIncrement ? 'autoInc' : ''}");`);
     }
     this.schema._indices.forEach(index => {
       sqls.push(
           `insert into "$rdb_relation" values("${index.name}", ` +
-          `"${this.dbName}", "${this.name}", "index",
-          "${JSON.stringify(index.column).replace(/\"/g, '\'')}", "", ` +
-          `"${index.unique ? 'unique' : ''}")`);
+          `"${this.dbName}", "${this.name}", "index",` +
+          `"${JSON.stringify(index.column).replace(/\"/g, '\'')}", "", ` +
+          `"${index.unique ? 'unique' : ''}");`);
     });
     this.schema._foreignKey.forEach(fk => {
       sqls.push(
@@ -230,30 +238,12 @@ export class TableBuilderPolyfill extends QueryBase implements ITableBuilder {
     return sqls;
   }
 
-
-  public onCommit(conn: SqlConnection): void {
-    let schema = conn.schema() as Schema;
-    schema.reportTableChange(this.schema.getName(), this.schema);
-  }
-
-  public commit(): Promise<TransactionResults> {
-    this.ensureContext();
-    this.context.prepare(this.toSql());
-    this.preCommitSqls().forEach(sql => this.context.prepare(sql));
-
-    return this.context.commit();
-  }
-
   public getSchema(): TableSchema {
     return this.schema;
   }
 
   public clone(): IQuery {
-    // Does not support for this query.
-    throw new Error('UnsupportedError');
-  }
-
-  public createBinderMap(): void {
-    // Do nothing.
+    // By spec, clone() is not supported.
+    throw new Error('SyntaxError');
   }
 }

@@ -19,23 +19,29 @@ import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
+import {ColumnType} from '../spec/enums';
+import {TransactionResults} from '../spec/execution_context';
 import {IInsertQuery} from '../spec/insert_query';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SqlConnection} from './sql_connection';
+import {Sqlite3Connection} from './sqlite3_connection';
 
 export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   private replace: boolean;
   private table: TableSchema;
   private schema: Schema;
-  private value: Object|Object[];
+  private value: Object[];
+  private keys: string[];
+  private types: string[];
+  private nullable: boolean[];
 
-  constructor(connection: SqlConnection, schema: Schema, replace = false) {
+  constructor(connection: Sqlite3Connection, schema: Schema, replace = false) {
     super(connection);
     this.replace = replace;
     this.table = null;
     this.schema = schema;
+    this.keys = null;
   }
 
   public into(table: ITable): IInsertQuery {
@@ -47,20 +53,24 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     if (this.replace && this.table._primaryKey === null) {
       throw new Error('IntegrityError');
     }
+    this.keys = Array.from(this.table._columns.keys());
+    this.types = this.keys.map(k => {
+      return this.table._columns.get(k).type;
+    });
+    this.nullable = this.keys.map(k => {
+      return this.table._columns.get(k).nullable;
+    });
     return this;
   }
 
   public values(rows: Object|Object[]|IBindableValue): IInsertQuery {
     if (rows instanceof BindableValueHolder) {
-      this.boundValues.set(rows.index, rows);
+      // This query can have only one bounded value.
+      this.boundValues.set(0, rows);
     } else {
-      this.value = rows;
+      this.value = Array.isArray(rows) ? rows : [rows];
     }
     return this;
-  }
-
-  public createBinderMap(): void {
-    // Do nothing, already handled in values().
   }
 
   public clone(): IQuery {
@@ -68,39 +78,71 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
         new InsertQueryBuilder(this.connection, this.schema, this.replace);
     that.table = this.table;
     that.value = this.value;
-    that.cloneBoundValues(this);
+    that.keys = this.keys;
+    that.types = this.types;
+    that.nullable = this.nullable;
     return that;
   }
 
-  private getValueString(keys: string[], value: Object): string {
-    return keys
-        .map(key => {
-          let type = this.table._columns.get(key).type;
-          return super.toValueString(value[key], type);
-        })
-        .join(',');
-  }
-
-  private getSingleSql(key: string, val: string): string {
-    let prefix = this.replace ? 'insert or replace' : 'insert';
-    return `${prefix} into ${this.table.getName()}(${key}) values(${val})`;
-  }
-
-  public toSql(): string {
-    if (this.table === null ||
-        (this.value === undefined && this.boundValues.size == 0)) {
+  public toSql(): string[] {
+    if (this.table === null) {
       throw new Error('SyntaxError');
     }
 
-    let keys = Array.from(this.table._columns.keys());
-    let keyString = keys.join(',');
-    if (Array.isArray(this.value)) {
-      return this.value
-          .map(v => this.getSingleSql(keyString, this.getValueString(keys, v)))
-          .join(';\n');
-    } else {
-      return this.getSingleSql(
-          keyString, this.getValueString(keys, this.value));
+    let prefix = this.replace ? 'insert or replace' : 'insert';
+    let keyString = this.keys.join(',');
+    let val = '?,'.repeat(this.keys.length - 1) + '?';
+    return [
+      `${prefix} into ${this.table.getName()}(${keyString}) values(${val});`
+    ];
+  }
+
+  private convertValue(val: Object): any[] {
+    let result: any[] = this.keys.map((k, i) => {
+      if (val.hasOwnProperty(k)) {
+        return super.toValueString(val[k], this.types[i] as ColumnType);
+      } else if (this.nullable[i]) {
+        return 'null';
+      } else {
+        throw new Error('DataError');
+      }
+    });
+
+    return result;
+  }
+
+  public commit(): Promise<TransactionResults> {
+    let implicitContext = false;
+    if (this.context === null) {
+      implicitContext = true;
+      this.attach(this.connection.getImplicitContext());
     }
+
+    if (this.value) {
+      this.value.forEach(v => {
+        this.context.bind(this.convertValue(v));
+      });
+    } else if (this.boundValues.size > 0) {
+      let val = this.boundValues.get(0);
+      if (!val) {
+        throw new Error('BindingError');
+      }
+      if (Array.isArray(val)) {
+        // multi-rows
+        val.forEach(v => {
+          this.context.bind(this.convertValue(v));
+        });
+      } else {
+        this.context.bind(this.convertValue(val));
+      }
+    } else {
+      throw new Error('SyntaxError');
+    }
+
+    return this.context.commit().then(() => {
+      if (implicitContext) {
+        this.context = null;
+      }
+    });
   }
 }

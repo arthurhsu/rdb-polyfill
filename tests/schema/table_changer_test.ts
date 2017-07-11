@@ -16,27 +16,23 @@
  */
 
 import * as chai from 'chai';
-import {TableChangerPolyfill} from '../../lib/schema/table_changer_polyfill';
-import {MockConnection} from '../../testing/mock_connection';
+import {TableChanger} from '../../lib/schema/table_changer';
 
 const assert = chai.assert;
 
 describe('TableChangerPolyfill', () => {
-  let conn: MockConnection;
-  before(() => conn = new MockConnection());
-
-  it('rename', () => {
-    let changer = new TableChangerPolyfill(conn, 'foo', 'db');
-    const expected = 'alter table foo rename to bar';
+  it('tableChanger_rename', () => {
+    let changer = new TableChanger(null, 'foo', 'db');
+    const expected = 'alter table foo rename to bar;';
     changer.rename('bar');
-    assert.equal(expected, changer.toSql());
+    assert.equal(expected, changer.toSql()[0]);
   });
 
-  it('addColumn', () => {
-    let changer = new TableChangerPolyfill(conn, 'foo', 'db');
+  it('tableChanger_addColumn', () => {
+    let changer = new TableChanger(null, 'foo', 'db');
     const expected =
-        'alter table foo add column bar text not null default "baz"';
+        'alter table foo add column bar text not null default "baz";';
     changer.addColumn('bar', 'string', true, 'baz');
-    assert.equal(expected, changer.toSql());
+    assert.equal(expected, changer.toSql()[0]);
   });
 });

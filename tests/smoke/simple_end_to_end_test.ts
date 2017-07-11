@@ -40,13 +40,13 @@ describe('SimpleEndToEnd', () => {
           return db.insert().into(table).values(payloads).commit();
         }).then(() => {
           return db.select().from(table).where(table['id'].eq(1)).commit();
-        }).then((rows: Object[]) => {
+        }).then((rows: object[]) => {
           assert.equal(1, rows.length);
           assert.deepEqual(payloads[0], rows[0]);
           return db.update(table).set(table['name'], 'nono').commit();
         }).then(() => {
           return db.select(table['name']).from(table).commit();
-        }).then((rows: Object[]) => {
+        }).then((rows: object[]) => {
           assert.equal(2, rows.length);
           assert.deepEqual({'name': 'nono'}, rows[0]);
           assert.deepEqual({'name': 'nono'}, rows[1]);

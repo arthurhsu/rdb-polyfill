@@ -23,14 +23,14 @@ import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SqlConnection} from './sql_connection';
+import {Sqlite3Connection} from './sqlite3_connection';
 
 export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
   private table: TableSchema;
   private schema: Schema;
   private searchCondition: LogicalPredicate;
 
-  constructor(connection: SqlConnection, schema: Schema) {
+  constructor(connection: Sqlite3Connection, schema: Schema) {
     super(connection);
     this.table = null;
     this.schema = schema;
@@ -51,12 +51,6 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
     return this;
   }
 
-  public createBinderMap(): void {
-    if (this.searchCondition) {
-      this.searchCondition.createBinderMap(this.boundValues);
-    }
-  }
-
   public clone(): IQuery {
     let that = new DeleteQueryBuilder(this.connection, this.schema);
     that.table = this.table;
@@ -66,15 +60,15 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
     return that;
   }
 
-  public toSql(): string {
+  public toSql(): string[] {
     if (this.table === null) {
       throw new Error('SyntaxError');
     }
 
     let sql = `delete from ${this.table.getName()}`;
-    if (this.searchCondition != null) {
-      sql += ` where ${(this.searchCondition.toSql())}`;
-    }
-    return sql;
+    sql += (this.searchCondition != null)
+        ? ` where ${(this.searchCondition.toSql())};`
+        : ';';
+    return [sql];
   }
 }

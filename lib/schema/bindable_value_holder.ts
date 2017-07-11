@@ -18,26 +18,19 @@
 import {IBindableValue} from '../spec/bindable_value';
 
 export class BindableValueHolder implements IBindableValue {
-  private val: any;
-  constructor(readonly index: number) {}
-
-  public get value(): any {
-    return this.val;
-  }
-
-  public bind(val: any): void {
-    this.val = val;
+  constructor(readonly index: number) {
+    if (!Number.isInteger(index) || index < 0) {
+      throw new Error('SyntaxError');
+    }
   }
 
   public clone(): BindableValueHolder {
     let that = new BindableValueHolder(this.index);
-    that.val = this.val;
     return that;
   }
 
   public toString(): string {
-    return (this.val === undefined) ? `?${this.index}` :
-                                      BindableValueHolder.format(this.val);
+    return `?${this.index + 1}`;
   }
 
   // ArrayBuffer to hex string.
