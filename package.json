@@ -46,9 +46,12 @@
     "mocha": "^3.1.2",
     "nopt": "^3.0.6",
     "source-map-support": "^0.4.6",
-    "sqlite3": "^3.1.8",
     "through2": "^2.0.1",
+    "tmp": "0.0.31",
     "tslint": "^3.15.1",
-    "typescript": "^2.1.4"
+    "typescript": "^2.3.3"
+  },
+  "dependencies": {
+    "sqlite3": "^3.1.8"
   }
 }

@@ -17,66 +17,112 @@
 
 import * as chai from 'chai';
 import {DeleteQueryBuilder} from '../../lib/proc/delete_query_builder';
+import {Sqlite3Connection} from '../../lib/proc/sqlite3_connection';
+import {Sqlite3Database} from '../../lib/proc/sqlite3_database';
 import {Table} from '../../lib/spec/table';
-import {MockConnection} from '../../testing/mock_connection';
 
 const assert = chai.assert;
 
 describe('DeleteQueryBuilder', () => {
   let foo: Table;
-  let conn: MockConnection;
+  let connection: Sqlite3Connection;
+  let db: Sqlite3Database;
+
   before(() => {
-    conn = new MockConnection();
-    return conn.createFoo().then(() => foo = conn.schema().table('foo'));
+    db = new Sqlite3Database();
+    return db.open('bar').then(conn => {
+      connection = conn as Sqlite3Connection;
+      assert.isNotNull(connection);
+      return connection.createTable('foo')
+          .column('id', 'number')
+          .column('name', 'string')
+          .column('date', 'date')
+          .column('boolean', 'boolean')
+          .column('object', 'object')
+          .primaryKey('id')
+          .commit();
+    }).then(() => foo = connection.schema().table('foo'));
   });
 
-  it('toSql_simple', () => {
-    const expected = 'delete from foo';
-    let deleteBuilder = conn.delete().from(foo) as DeleteQueryBuilder;
-    assert.equal(expected, deleteBuilder.toSql());
-    assert.equal(expected, deleteBuilder.clone().toSql());
+  function checkRowCount(count: number): Promise<void> {
+    return connection.simpleGet('select count(*) from foo;').then(res => {
+      assert.equal(count, res[0]['count(*)']);
+    });
+  }
+
+  beforeEach(() => {
+    return connection.simpleRun([
+      'insert into foo values(1, "bar", 1499466194434, 1, null);',
+      'insert into foo values(2, "baz", 1499466194438, 0, null);'
+    ]).then(() => {
+      return checkRowCount(2);
+    });
   });
 
-  it('toSql_oneSearchCondition', () => {
-    const expected = 'delete from foo where foo.boolean = 1';
+  afterEach(() => {
+    return connection.simpleRun(['delete from foo;']);
+  });
+
+  it('delete_all', () => {
+    const expected = 'delete from foo;';
+    let deleteBuilder = connection.delete().from(foo) as DeleteQueryBuilder;
+    assert.equal(expected, deleteBuilder.toSql()[0]);
+    assert.equal(expected, deleteBuilder.clone().toSql()[0]);
+    deleteBuilder.commit().then(() => {
+      return checkRowCount(0);
+    });
+  });
+
+  it('delete_oneSearchCondition', () => {
+    const expected = 'delete from foo where foo.boolean = 1;';
     let deleteBuilder =
-        conn.delete().from(foo).where(foo['boolean'].eq(true)) as
+        connection.delete().from(foo).where(foo['boolean'].eq(true)) as
         DeleteQueryBuilder;
-    assert.equal(expected, deleteBuilder.toSql());
-    assert.equal(expected, deleteBuilder.clone().toSql());
+    assert.equal(expected, deleteBuilder.toSql()[0]);
+    assert.equal(expected, deleteBuilder.clone().toSql()[0]);
+    deleteBuilder.commit().then(() => {
+      return checkRowCount(1);
+    });
   });
 
-  it('toSql_simpleAndSearchCondition', () => {
+  it('delete_simpleAndSearchCondition', () => {
     const expected =
-        'delete from foo where (foo.boolean = 1) and (foo.id = 1)';
+        'delete from foo where (foo.boolean = 1) and (foo.id = 1);';
     let deleteBuilder =
-        conn.delete().from(foo)
+        connection.delete().from(foo)
             .where(foo['boolean'].eq(true).and(foo['id'].eq(1))) as
         DeleteQueryBuilder;
-    assert.equal(expected, deleteBuilder.toSql());
-    assert.equal(expected, deleteBuilder.clone().toSql());
+    assert.equal(expected, deleteBuilder.toSql()[0]);
+    assert.equal(expected, deleteBuilder.clone().toSql()[0]);
+    deleteBuilder.commit().then(() => {
+      return checkRowCount(1);
+    });
   });
 
-  it('toSql_simpleOrUnbound', () => {
+  it('delete_simpleOrUnbound', () => {
     const expected =
-        'delete from foo where (foo.boolean = ?1) or (foo.id = ?0)';
+        'delete from foo where (foo.boolean = ?2) or (foo.id = ?1);';
     let deleteBuilder =
-        conn.delete().from(foo)
-            .where(foo['boolean'].eq(conn.bind(1)).or(
-                foo['id'].eq(conn.bind(0)))) as DeleteQueryBuilder;
-    assert.equal(expected, deleteBuilder.toSql());
-    assert.equal(expected, deleteBuilder.clone().toSql());
+        connection.delete().from(foo)
+            .where(foo['boolean'].eq(connection.bind(1)).or(
+                foo['id'].eq(connection.bind(0)))) as DeleteQueryBuilder;
+    assert.equal(expected, deleteBuilder.toSql()[0]);
+    assert.equal(expected, deleteBuilder.clone().toSql()[0]);
   });
 
-  it('toSql_simpleAndBounded', () => {
+  it('delete_simpleAndBounded', () => {
     const expected =
-        'delete from foo where (foo.boolean = 1) and (foo.id = 1)';
+        'delete from foo where (foo.boolean = ?2) and (foo.id = ?1);';
     let deleteBuilder =
-        conn.delete().from(foo)
-            .where(foo['boolean'].eq(conn.bind(1)).and(
-                foo['id'].eq(conn.bind(0))))
+        connection.delete().from(foo)
+            .where(foo['boolean'].eq(connection.bind(1)).and(
+                foo['id'].eq(connection.bind(0))))
             .bind(1, true) as DeleteQueryBuilder;
-    assert.equal(expected, deleteBuilder.toSql());
-    assert.equal(expected, deleteBuilder.clone().bind(1, true).toSql());
+    assert.equal(expected, deleteBuilder.toSql()[0]);
+    assert.equal(expected, deleteBuilder.clone().bind(1, true).toSql()[0]);
+    deleteBuilder.commit().then(() => {
+      // Nothing match, should still have two rows.
+      return checkRowCount(2);
+    });
   });
 });

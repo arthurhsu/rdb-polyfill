@@ -63,7 +63,7 @@ export class TableSchema implements ITable {
     return this._alias;
   }
 
-  public column(name: string, type: ColumnType, notNull = false) {
+  public column(name: string, type: ColumnType, notNull = false): TableSchema {
     let col = new ColumnSchema(this, name, type, !notNull);
     this._columns.set(name, col);
     if (notNull) {
@@ -72,9 +72,10 @@ export class TableSchema implements ITable {
     Object.defineProperty(
         this, name,
         {configurable: false, enumerable: false, value: col, writable: false});
+    return this;
   }
 
-  public as(alias: string) {
+  public clone(alias?: string): TableSchema {
     let that = new TableSchema(this._name, alias);
     that._columns = new Map<string, ColumnSchema>();
     this._columns.forEach(col => {
@@ -95,5 +96,9 @@ export class TableSchema implements ITable {
     that._indices = this._indices;
     that._notNull = this._notNull;
     return that;
+  }
+
+  public as(alias: string): TableSchema {
+    return this.clone(alias);
   }
 }

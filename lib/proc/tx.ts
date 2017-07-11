@@ -15,33 +15,22 @@
  * limitations under the License.
  */
 
-import {TableBuilderPolyfill} from '../schema/table_builder_polyfill';
-import {TableChangerPolyfill} from '../schema/table_changer_polyfill';
 import {TransactionMode} from '../spec/enums';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
-import {IQuery} from '../spec/query';
 import {ITransaction} from '../spec/transaction';
-import {NativeDB} from './native_db';
-import {QueryBase} from './query_base';
-import {SqlConnection} from './sql_connection';
+import {Sqlite3Connection} from './sqlite3_connection';
 
 export class Tx implements ITransaction {
-  private connection: SqlConnection;
-  private db: NativeDB;
+  private connection: Sqlite3Connection;
   private finalized: boolean;
   private started: boolean;
   private results: TransactionResults;
-  private allowDDL: boolean;
-  private toNotify: QueryBase[];
 
   public constructor(
-      connection: SqlConnection, readonly mode: TransactionMode) {
+      connection: Sqlite3Connection, readonly mode: TransactionMode) {
     this.connection = connection;
-    this.db = this.connection.db;
     this.finalized = false;
     this.started = false;
-    this.allowDDL = this.db.supportTransactionalSchemaChange();
-    this.toNotify = [];
   }
 
   public begin(): Promise<void> {
@@ -49,19 +38,7 @@ export class Tx implements ITransaction {
       throw new Error('TransactionStateError');
     }
     this.started = true;
-    return this.db.exec('begin transaction');
-  }
-
-  private checkDDL(q: IExecutionContext): void {
-    if (!this.allowDDL && (q instanceof TableBuilderPolyfill ||
-                           q instanceof TableChangerPolyfill)) {
-      throw new Error('UnsupportedError');
-    }
-  }
-
-  private getSql(q: IExecutionContext): string {
-    return (q as (TableBuilderPolyfill | TableChangerPolyfill | IQuery))
-        .toSql();
+    return Promise.resolve();
   }
 
   public exec(queries: IExecutionContext[]): Promise<TransactionResults> {
@@ -69,63 +46,17 @@ export class Tx implements ITransaction {
       throw new Error('TransactionStateError');
     }
 
-    this.started = true;
-    this.finalized = true;
-    let sqls: string[] = [];
-    queries.forEach(q => {
-      if (q instanceof Tx) {
-        throw new Error('TransactionStateError');
-      }
-
-      this.checkDDL(q);
-
-      // TODO(arthurhsu): readonly/readwrite check
-      sqls.push(this.getSql(q));
-
-      if (q instanceof QueryBase) {
-        let preCommitSqls = q.preCommitSqls();
-        if (preCommitSqls !== null) {
-          sqls = sqls.concat(preCommitSqls);
-        }
-      }
-    });
-
-    // db#run() already offered transactional support.
-    return this.db.run(sqls).then(results => {
-      this.results = results;
-      queries.forEach(q => {
-        if (q instanceof QueryBase && q.postCommitCallback) {
-          q.onCommit(this.connection);
-        }
-      });
-      return results;
-    });
+    // TODO(arthurhsu): implement
+    throw new Error('NotImplemented');
   }
 
   public attach(query: IExecutionContext): Promise<TransactionResults> {
-    if (!this.started) {
+    if (!this.started || this.finalized) {
       throw new Error('TransactionStateError');
     }
 
-    this.checkDDL(query);
-    if (query instanceof QueryBase && query.postCommitCallback) {
-      this.toNotify.push(query);
-    }
-
-    let sql = this.getSql(query);
-    if (sql.startsWith('select')) {
-      return this.db.get(sql).then(results => {
-        this.results = results;
-      });
-    }
-
-    if (query instanceof QueryBase) {
-      let preCommitSqls = query.preCommitSqls();
-      if (preCommitSqls !== null) {
-        sql += `; ${preCommitSqls.join(';')}`;
-      }
-    }
-    return this.db.exec(sql);
+    // TODO(arthurhsu): implement
+    throw new Error('NotImplemented');
   }
 
   public commit(): Promise<TransactionResults> {
@@ -138,10 +69,8 @@ export class Tx implements ITransaction {
       return Promise.resolve(null);
     }
 
-    return this.db.exec('commit').then(() => {
-      this.toNotify.forEach(q => q.onCommit(this.connection));
-      return this.results;
-    });
+    // TODO(arthurhsu): implement
+    throw new Error('NotImplemented');
   }
 
   public rollback(): Promise<void> {
@@ -155,6 +84,7 @@ export class Tx implements ITransaction {
       return Promise.resolve(null);
     }
 
-    return this.db.exec('rollback');
+    // TODO(arthurhsu): implement
+    throw new Error('NotImplemented');
   }
 }
