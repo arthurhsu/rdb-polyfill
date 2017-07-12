@@ -18,26 +18,19 @@
 import {IBindableValue} from '../spec/bindable_value';
 
 export class BindableValueHolder implements IBindableValue {
-  private val: any;
-  constructor(readonly index: number) {}
-
-  public get value(): any {
-    return this.val;
-  }
-
-  public bind(val: any): void {
-    this.val = val;
+  constructor(readonly index: number) {
+    if (!Number.isInteger(index) || index < 0) {
+      throw new Error('SyntaxError');
+    }
   }
 
   public clone(): BindableValueHolder {
     let that = new BindableValueHolder(this.index);
-    that.val = this.val;
     return that;
   }
 
   public toString(): string {
-    return (this.val === undefined) ? `?${this.index}` :
-                                      BindableValueHolder.format(this.val);
+    return `?${this.index + 1}`;
   }
 
   // ArrayBuffer to hex string.
@@ -53,6 +46,22 @@ export class BindableValueHolder implements IBindableValue {
       s += chr.length < 2 ? '0' + chr : chr;
     }
     return s;
+  }
+
+  public static hexToBin(hex: string): ArrayBuffer {
+    if (!hex || hex.length < 2) {
+      return null;
+    }
+
+    if (hex.length % 2 != 0) {
+      hex = '0' + hex;
+    }
+    let buffer = new ArrayBuffer(hex.length / 2);
+    let uint8Array = new Uint8Array(buffer);
+    for (let i = 0, j = 0; i < hex.length; i += 2) {
+      uint8Array[j++] = parseInt(hex.substr(i, 2), 16);
+    }
+    return buffer;
   }
 
   public static format(value: any, prefix = '', postfix = ''): string {

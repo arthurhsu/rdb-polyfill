@@ -15,6 +15,6 @@
  * limitations under the License.
  */
 
-import {SqlDatabase} from './proc/sql_database';
+import {Sqlite3Database} from './proc/sqlite3_database';
 
-export const rdb: SqlDatabase = new SqlDatabase(__dirname);
+export const rdb: Sqlite3Database = new Sqlite3Database();

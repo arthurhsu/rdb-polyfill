@@ -15,14 +15,12 @@
  * limitations under the License.
  */
 
-import * as chai from 'chai';
-import {SqlConnection} from '../../lib/proc/sql_connection';
-import {Schema} from '../../lib/schema/schema';
-import {MockNativeDB} from '../../testing/mock_native_db';
+//import * as chai from 'chai';
 
-const assert = chai.assert;
+//const assert = chai.assert;
 
 describe('Tx', () => {
+  /*
   let db: MockNativeDB;
   let conn: SqlConnection;
 
@@ -110,4 +108,5 @@ describe('Tx', () => {
           assert.equal('fuz', conn.schema().table('fuz').getName());
         });
   });
+  */
 });

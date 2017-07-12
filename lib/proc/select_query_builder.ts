@@ -16,19 +16,19 @@
  */
 
 import {LogicalPredicate} from '../pred/logical_predicate';
-import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnSchema} from '../schema/column_schema';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {Order} from '../spec/enums';
+import {TransactionResults} from '../spec/execution_context';
 import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
 import {ISelectQuery} from '../spec/select_query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
-import {SqlConnection} from './sql_connection';
+import {Sqlite3Connection} from './sqlite3_connection';
 
 type SubQueryType = {
   op: string,
@@ -52,8 +52,9 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   private grouping: string[];
   private subqueries: SubQueryType[];
   private joins: JoinType[];
+  private conversion: Map<string, string>;
 
-  constructor(connection: SqlConnection, schema: Schema, columns: IColumn[]) {
+  constructor(connection: Sqlite3Connection, schema: Schema, columns: IColumn[]) {
     super(connection);
     this.tables = new Map<string, TableSchema>();
     this.schema = schema;
@@ -63,6 +64,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     this.subqueries = [];
     this.joins = [];
     columns.forEach(col => this.columns.push(col as ColumnSchema));
+    this.conversion = null;
   }
 
   public from(...tables: ITable[]): ISelectQuery {
@@ -137,19 +139,6 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     return this.subquery('except', query);
   }
 
-  public createBinderMap(): Map<number, BindableValueHolder> {
-    if (this.searchCondition) {
-      this.searchCondition.createBinderMap(this.boundValues);
-    }
-
-    [this.skipCount, this.limitCount].forEach(value => {
-      if (value instanceof BindableValueHolder) {
-        this.boundValues.set(value.index, value);
-      }
-    });
-    return this.boundValues;
-  }
-
   public clone(): IQuery {
     let that =
         new SelectQueryBuilder(this.connection, this.schema, this.columns);
@@ -159,12 +148,8 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     if (this.searchCondition) {
       that.searchCondition = this.searchCondition.clone();
     }
-    that.limitCount = (this.limitCount instanceof BindableValueHolder) ?
-        this.limitCount.clone() :
-        this.limitCount;
-    that.skipCount = (this.skipCount instanceof BindableValueHolder) ?
-        this.skipCount.clone() :
-        this.skipCount;
+    that.limitCount = this.limitCount;
+    that.skipCount = this.skipCount;
     that.ordering = this.ordering.concat([]);
     that.grouping = this.grouping.concat([]);
     that.subqueries = this.subqueries.concat([]);
@@ -177,7 +162,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
                               table.getName();
   }
 
-  public toSql(): string {
+  public toSql(terminating = true): string[] {
     let projection = this.columns.length ?
         this.columns.map(col => col.fullName).join(', ') :
         '*';
@@ -223,6 +208,62 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
       });
       sql = `${sql} ${subquerySqls.join(' ')}`;
     }
-    return sql;
+
+    // Note that SELECT queries are not terminated in semicolons because
+    // it's not worth doing it and put a bunch of engineering efforts for
+    // handling subqueries.
+    return [sql];
+  }
+
+  private ensureConversionTable(): void {
+    if (this.conversion) {
+      return;  // already constructed
+    }
+
+    this.conversion = new Map<string, string>();
+    let columns: ColumnSchema[] = [];
+    if (this.columns.length) {
+      columns = this.columns;
+    } else {
+      this.tables.forEach(table => {
+        columns = columns.concat(Array.from(table._columns.values()));
+      });
+    }
+
+    columns.forEach(col => {
+      if (col.type == 'blob' || col.type == 'boolean' ||
+          col.type == 'date' || col.type == 'object') {
+        if (col.alias) {
+          this.conversion.set(col.alias, col.type);
+        } else {
+          this.conversion.set(col.fullName, col.type);
+          this.conversion.set(col.name, col.type);
+        }
+      }
+    });
+  }
+
+  private convertProjection(res: object[]): object[] {
+    this.ensureConversionTable();
+    return res.map(o => {
+      let val = {};
+      for (let key in o) {
+        if (this.conversion.has(key)) {
+          val[key] = this.toValue(o[key], this.conversion.get(key));
+        } else {
+          val[key] = o[key];
+        }
+      }
+      return val;
+    });
+  }
+
+  public commit(): Promise<TransactionResults> {
+    return super.commit().then((res: object[]) => {
+      if (res) {
+        return this.convertProjection(res);
+      }
+      return [];
+    });
   }
 }

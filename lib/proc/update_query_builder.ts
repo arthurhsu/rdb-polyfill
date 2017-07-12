@@ -16,7 +16,6 @@
  */
 
 import {LogicalPredicate} from '../pred/logical_predicate';
-import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnSchema} from '../schema/column_schema';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
@@ -27,7 +26,7 @@ import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {IUpdateQuery} from '../spec/update_query';
 import {QueryBase} from './query_base';
-import {SqlConnection} from './sql_connection';
+import {Sqlite3Connection} from './sqlite3_connection';
 
 export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
   private table: TableSchema;
@@ -36,7 +35,7 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
   private values: ValueType[];
   private searchCondition: LogicalPredicate;
 
-  constructor(connection: SqlConnection, schema: Schema, table: ITable) {
+  constructor(connection: Sqlite3Connection, schema: Schema, table: ITable) {
     super(connection);
     this.table = table as TableSchema;
     this.schema = schema;
@@ -60,18 +59,6 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
     return this;
   }
 
-  public createBinderMap(): void {
-    if (this.searchCondition) {
-      this.searchCondition.createBinderMap(this.boundValues);
-    }
-
-    this.values.forEach(value => {
-      if (value instanceof BindableValueHolder) {
-        this.boundValues.set(value.index, value);
-      }
-    });
-  }
-
   public clone(): IQuery {
     let that = new UpdateQueryBuilder(this.connection, this.schema, this.table);
     that.columns = this.columns;
@@ -82,20 +69,20 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
     return that;
   }
 
-  public toSql(): string {
+  public toSql(): string[] {
     if (this.columns.length == 0) {
       throw new Error('SyntaxError');
     }
 
     let setters = [];
     for (let i = 0; i < this.columns.length; ++i) {
-      let val = super.toValueString(this.values[i], this.columns[i].type);
+      let val = super.toQuotedValueString(this.values[i], this.columns[i].type);
       setters.push(`${this.columns[i].name}=${val}`);
     }
     let sql = `update ${this.table.getName()} set ${setters.join(', ')}`;
     if (this.searchCondition != null) {
-      sql += ` where ${this.searchCondition.toSql()}`;
+      sql += ` where ${this.searchCondition.toSql()};`;
     }
-    return sql;
+    return [sql];
   }
 }

@@ -18,8 +18,8 @@
 import {ColumnType} from '../spec/enums';
 import {IndexedColumnDefinition, IndexedColumnSpec} from '../spec/table_builder';
 
-// Common base methods for TableBuilder and TableChanger.
-export class CommonBase {
+// Helper methods for SQL generation.
+export class SqlHelper {
   static getSqlType(type: ColumnType): string {
     switch (type) {
       case 'blob':
@@ -45,7 +45,7 @@ export class CommonBase {
   static columnDefToSql(name: string, type: ColumnType, notNull = false):
       string {
     let postfix = notNull ? ' not null' : '';
-    let sqlType = CommonBase.getSqlType(type);
+    let sqlType = SqlHelper.getSqlType(type);
     return `${name} ${sqlType}${postfix}`;
   }
 
@@ -61,17 +61,17 @@ export class CommonBase {
       columnType: Map<string, ColumnType>): IndexedColumnSpec[] {
     let results: IndexedColumnSpec[] = [];
     if (typeof index == 'string') {
-      CommonBase.verifyColumnIsIndexable(index, columnType);
+      SqlHelper.verifyColumnIsIndexable(index, columnType);
       results.push({name: index, order: 'asc'});
     } else if (Array.isArray(index)) {
       if (typeof index[0] == 'string') {
         (index as string[]).forEach(k => {
-          CommonBase.verifyColumnIsIndexable(k, columnType);
+          SqlHelper.verifyColumnIsIndexable(k, columnType);
           results.push({'name': k, order: 'asc'});
         });
       } else {
         (index as IndexedColumnSpec[]).forEach(k => {
-          CommonBase.verifyColumnIsIndexable(k.name, columnType);
+          SqlHelper.verifyColumnIsIndexable(k.name, columnType);
           results.push(k);
         });
       }
@@ -79,7 +79,7 @@ export class CommonBase {
       // This must be tested after Array.isArray(index), because type of Array
       // is 'object'.
       let i = index as IndexedColumnSpec;
-      CommonBase.verifyColumnIsIndexable(i.name, columnType);
+      SqlHelper.verifyColumnIsIndexable(i.name, columnType);
       results.push(i);
     } else {  // invalid type
       throw new Error('SyntaxError');

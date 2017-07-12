@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {LogicalPredicateBase} from './logical_predicate_base';
 import {PredicateHolder} from './predicate_holder';
 
@@ -30,11 +29,6 @@ export class LogicalPredicate extends LogicalPredicateBase {
   public toSql(): string {
     this.baseSql = this.lhs.toSql();
     return super.toSql();
-  }
-
-  public createBinderMap(map: Map<number, BindableValueHolder>) {
-    this.lhs.createBinderMap(map);
-    super.createBinderMap(map);
   }
 
   public clone(): LogicalPredicate {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export type TransactionResults = void | Object[];
+export type TransactionResults = void | object[];
 export interface IExecutionContext {
   commit(): Promise<TransactionResults>;
   rollback(): Promise<void>;
