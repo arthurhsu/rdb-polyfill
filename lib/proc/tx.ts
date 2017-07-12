@@ -18,19 +18,24 @@
 import {TransactionMode} from '../spec/enums';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
 import {ITransaction} from '../spec/transaction';
+import {QueryBase} from './query_base';
 import {Sqlite3Connection} from './sqlite3_connection';
+import {Sqlite3Context} from './sqlite3_context';
 
 export class Tx implements ITransaction {
   private connection: Sqlite3Connection;
   private finalized: boolean;
   private started: boolean;
   private results: TransactionResults;
+  private context: Sqlite3Context;
 
   public constructor(
       connection: Sqlite3Connection, readonly mode: TransactionMode) {
+    // TODO(arthurhsu): honor transaction mode
     this.connection = connection;
     this.finalized = false;
     this.started = false;
+    this.context = null;
   }
 
   public begin(): Promise<void> {
@@ -41,13 +46,25 @@ export class Tx implements ITransaction {
     return Promise.resolve();
   }
 
+  private isQueryBase(query: IExecutionContext): boolean {
+    return query && query instanceof QueryBase;
+  }
+
   public exec(queries: IExecutionContext[]): Promise<TransactionResults> {
     if (this.started || this.finalized) {
       throw new Error('TransactionStateError');
     }
 
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    this.started = true;
+    this.finalized = true;
+    this.context = new Sqlite3Context(true, this.connection);
+
+    if (!queries.every(q => this.isQueryBase(q))) {
+      throw new Error('SyntaxError');
+    }
+
+    queries.forEach(q => (q as QueryBase).attach(this.context));
+    return this.context.commit();
   }
 
   public attach(query: IExecutionContext): Promise<TransactionResults> {
