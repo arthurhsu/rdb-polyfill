@@ -33,7 +33,11 @@ describe('SelectQueryBuilder', () => {
     return db.open('bar').then(connection => {
       conn = connection as Sqlite3Connection;
       assert.isNotNull(connection);
+<<<<<<< HEAD
       return conn.createTable('foo')
+=======
+      return connection.createTable('foo')
+>>>>>>> d1cc79abb97461db3df3a66b5c0c31db03f4339c
           .column('id', 'number')
           .column('name', 'string')
           .column('date', 'date')

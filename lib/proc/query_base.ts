@@ -41,9 +41,14 @@ export abstract class QueryBase implements IQuery {
     let sqls = this.preCommitSqls().concat(this.toSql());
     sqls.forEach(sql => {
       let needBinding = (sql.indexOf('?') != -1);
+<<<<<<< HEAD
       let hasResult = (sql.startsWith('select') || sql.startsWith('explain'));
       let stmt =
           new Stmt(this.connection.getNativeDb(), sql, hasResult, needBinding);
+=======
+      let stmt =
+          new Stmt(this.connection.getNativeDb(), sql, false, needBinding);
+>>>>>>> d1cc79abb97461db3df3a66b5c0c31db03f4339c
       context.attach(stmt);
     });
   }
@@ -84,8 +89,13 @@ export abstract class QueryBase implements IQuery {
     return this.context.commit().then(res => {
       if (implicitContext) {
         this.context = null;
+<<<<<<< HEAD
       }
       return res;
+=======
+        return res;
+      }
+>>>>>>> d1cc79abb97461db3df3a66b5c0c31db03f4339c
     });
   }
 
