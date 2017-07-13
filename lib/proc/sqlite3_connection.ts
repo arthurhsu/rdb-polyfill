@@ -61,8 +61,8 @@ export class Sqlite3Connection implements DatabaseConnection {
       readonly readOnly = false) {
     let mode = this.readOnly ? sqlite3.OPEN_READONLY : undefined;
     this.db = new sqlite3.Database(this.filePath, mode);
-//    this.db.on('trace', (sql) => { console.log(`running ${sql}`); });
-//    this.db.on('profile', (sql) => { console.log(`done ${sql}`); });
+    this.db.on('trace', (sql) => { console.log(`running ${sql}`); });
+    this.db.on('profile', (sql) => { console.log(`done ${sql}`); });
     this.dbSchema = null;
   }
 

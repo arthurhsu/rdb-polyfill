@@ -87,7 +87,7 @@ export class Stmt {
       this.db.run(this.sql, (err: Error) => {
         if (err) {
           console.error('ERROR:', this.sql, err.message);
-          resolver.reject(err);
+          resolver.reject(err.message);
         } else {
           resolver.resolve();
         }
@@ -104,7 +104,7 @@ export class Stmt {
         this.stmt.run(binding, (err: Error) => {
           if (err) {
             console.error('ERROR:', this.sql, err.message);
-            resolver.reject(err);
+            resolver.reject(err.message);
           } else {
             runner();
           }

@@ -20,7 +20,6 @@ import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {ColumnType} from '../spec/enums';
-import {TransactionResults} from '../spec/execution_context';
 import {IInsertQuery} from '../spec/insert_query';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
@@ -111,13 +110,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     return result;
   }
 
-  public commit(): Promise<TransactionResults> {
-    let implicitContext = false;
-    if (this.context === null) {
-      implicitContext = true;
-      this.attach(this.connection.getImplicitContext());
-    }
-
+  protected preCommit(): void {
     if (this.value) {
       this.value.forEach(v => {
         this.context.bind(this.convertValue(v));
@@ -138,11 +131,5 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     } else {
       throw new Error('SyntaxError');
     }
-
-    return this.context.commit().then(() => {
-      if (implicitContext) {
-        this.context = null;
-      }
-    });
   }
 }

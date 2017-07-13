@@ -21,6 +21,7 @@ import {ITransaction} from '../spec/transaction';
 import {QueryBase} from './query_base';
 import {Sqlite3Connection} from './sqlite3_connection';
 import {Sqlite3Context} from './sqlite3_context';
+import {Stmt} from './stmt';
 
 export class Tx implements ITransaction {
   private connection: Sqlite3Connection;
@@ -58,12 +59,15 @@ export class Tx implements ITransaction {
     this.started = true;
     this.finalized = true;
     this.context = new Sqlite3Context(true, this.connection);
+    let db = this.connection.getNativeDb();
+    this.context.attach(new Stmt(db, 'begin transaction;', false, false));
 
     if (!queries.every(q => this.isQueryBase(q))) {
       throw new Error('SyntaxError');
     }
 
     queries.forEach(q => (q as QueryBase).attach(this.context));
+    this.context.attach(new Stmt(db, 'commit;', false, false));
     return this.context.commit();
   }
 

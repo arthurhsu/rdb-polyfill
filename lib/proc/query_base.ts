@@ -38,7 +38,7 @@ export abstract class QueryBase implements IQuery {
 
   public attach(context: Sqlite3Context): void {
     this.context = context;
-    let sqls = this.preCommitSqls().concat(this.toSql());
+    let sqls = this.prefixSqls().concat(this.toSql());
     sqls.forEach(sql => {
       let needBinding = (sql.indexOf('?') != -1);
       let hasResult = (sql.startsWith('select') || sql.startsWith('explain'));
@@ -46,6 +46,7 @@ export abstract class QueryBase implements IQuery {
           new Stmt(this.connection.getNativeDb(), sql, hasResult, needBinding);
       context.attach(stmt);
     });
+    this.preCommit();
   }
 
   public explain(): Promise<string> {
@@ -62,7 +63,7 @@ export abstract class QueryBase implements IQuery {
   abstract clone(): IQuery;
   abstract toSql(): string[];
 
-  public preCommitSqls(): string[] {
+  public prefixSqls(): string[] {
     return [];
   }
 
@@ -71,6 +72,17 @@ export abstract class QueryBase implements IQuery {
       // Not really a deep copy.
       this.boundValues.set(key, val);
     });
+  }
+
+  // Additional pre-commit step, e.g. InsertBuilder value binding.
+  // The function will be called right after attaching to a context.
+  protected preCommit(): void {
+  }
+
+  // Additional post-commit step, e.g. SelectBuilder projection list.
+  // The function will be called right after commit returns.
+  protected postCommit(res: TransactionResults): TransactionResults {
+    return res;
   }
 
   // Generic commit routine, except insert query builder.
@@ -85,7 +97,7 @@ export abstract class QueryBase implements IQuery {
       if (implicitContext) {
         this.context = null;
       }
-      return res;
+      return this.postCommit(res);
     });
   }
 

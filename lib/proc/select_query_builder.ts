@@ -258,12 +258,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
     });
   }
 
-  public commit(): Promise<TransactionResults> {
-    return super.commit().then((res: object[]) => {
-      if (res) {
-        return this.convertProjection(res);
-      }
-      return [];
-    });
+  protected postCommit(res: TransactionResults): TransactionResults {
+    return res ? this.convertProjection(res as object[]) : [];
   }
 }

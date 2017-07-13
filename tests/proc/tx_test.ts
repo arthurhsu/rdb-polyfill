@@ -55,8 +55,11 @@ describe('Tx', () => {
     let q1 = conn.insert().into(foo).values({id: 1, name: '2'});
     let q2 = conn.insert().into(foo).values({id: 1, name: '3'});
     return conn.createTransaction('readwrite').exec([q1, q2]).then(() => {
+      throw new Error('NOTREACH: should not be here');
+    }, e => {
       return conn.select().from(foo).commit();
     }).then((res: object[]) => {
+      console.log(res);
       assert.equal(0, res.length);
     });
   });

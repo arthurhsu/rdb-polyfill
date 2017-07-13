@@ -204,7 +204,7 @@ export class TableBuilder extends QueryBase implements ITableBuilder {
     return [].concat(mainSql).concat(indexSql);
   }
 
-  public preCommitSqls(): string[] {
+  public prefixSqls(): string[] {
     let sqls: string[] = [];
 
     sqls.push(
