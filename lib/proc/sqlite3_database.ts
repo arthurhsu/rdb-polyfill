@@ -37,6 +37,8 @@ export class Sqlite3Database implements IRelationalDatabase {
     }
 
     if (!opt || opt.storageType == 'temporary') {
+      // TODO(arthurhsu): node-sqlite3 does not support shared cache
+      // ideally we want to open `file:${name}?mode=memory&cache=shared`
       opt = {storageType: 'temporary' as RDBStorageType, filePath: ':memory:'};
     } else if (opt.storageType == 'persistent') {
       if (!opt.filePath || opt.filePath.trim().length == 0) {

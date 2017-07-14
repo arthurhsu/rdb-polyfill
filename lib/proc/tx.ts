@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {Resolver} from '../base/resolver';
 import {TransactionMode} from '../spec/enums';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
 import {ITransaction} from '../spec/transaction';
@@ -58,17 +59,34 @@ export class Tx implements ITransaction {
 
     this.started = true;
     this.finalized = true;
+
+    // TODO(arthurhsu): we need connection pooling here. A connection
+    // can have only one in-flight transaction, otherwise it will throw
+    // TRANSACTION IN TRANSACTION error.
+    // Connection pooling is currently not possible for in-memory database
+    // since node-sqlite3 does not support shared cache.
     this.context = new Sqlite3Context(true, this.connection);
     let db = this.connection.getNativeDb();
-    this.context.attach(new Stmt(db, 'begin transaction;', false, false));
+    let resolver = new Resolver<TransactionResults>();
+    db.serialize(() => {
+      this.context.attach(new Stmt(db, 'begin transaction;', false, false));
 
-    if (!queries.every(q => this.isQueryBase(q))) {
-      throw new Error('SyntaxError');
-    }
+      if (!queries.every(q => this.isQueryBase(q))) {
+        throw new Error('SyntaxError');
+      }
 
-    queries.forEach(q => (q as QueryBase).attach(this.context));
-    this.context.attach(new Stmt(db, 'commit;', false, false));
-    return this.context.commit();
+      queries.forEach(q => (q as QueryBase).attach(this.context));
+      this.context.attach(new Stmt(db, 'commit;', false, false));
+      this.context.commit().then(res => {
+        resolver.resolve(res);
+      }, e => {
+        // SQLite3 is still in the failing transaction, need to rollback.
+        db.run('rollback;', () => {
+          resolver.reject(e);
+        });
+      });
+    });
+    return resolver.promise;
   }
 
   public attach(query: IExecutionContext): Promise<TransactionResults> {
