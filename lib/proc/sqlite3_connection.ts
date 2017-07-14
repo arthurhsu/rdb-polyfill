@@ -41,6 +41,7 @@ import {IUpdateQuery} from '../spec/update_query';
 import {DeleteQueryBuilder} from './delete_query_builder';
 import {InsertQueryBuilder} from './insert_query_builder';
 import {SelectQueryBuilder} from './select_query_builder';
+import {Tx} from './tx';
 import {UpdateQueryBuilder} from './update_query_builder';
 
 /* tslint:disable */
@@ -263,7 +264,7 @@ export class Sqlite3Connection implements DatabaseConnection {
   }
 
   public createTransaction(mode?: TransactionMode): ITransaction {
-    throw new Error('NotImplemented');
+    return new Tx(this, mode || 'readwrite' as TransactionMode);
   }
 
   public close(): Promise<Error> {
