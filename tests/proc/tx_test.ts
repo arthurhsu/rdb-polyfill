@@ -59,12 +59,10 @@ describe('Tx', () => {
     }, e => {
       return conn.select().from(foo).commit();
     }).then((res: object[]) => {
-      console.log(res);
       assert.equal(0, res.length);
     });
   });
 
-  /*
   it('exec_SimpleDDL', () => {
     let bar = conn.createTable('bar')
                   .column('id', 'integer')
@@ -80,6 +78,7 @@ describe('Tx', () => {
                });
   });
 
+  /*
   it('attach_SimpleDML', () => {
     let expected = 'begin transaction;' +
                    'insert into foo(id,name) values(1,"2");' +
