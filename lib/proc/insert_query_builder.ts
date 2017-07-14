@@ -25,6 +25,7 @@ import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
 import {QueryBase} from './query_base';
 import {Sqlite3Connection} from './sqlite3_connection';
+import {Sqlite3Context} from './sqlite3_context';
 
 export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
   private replace: boolean;
@@ -110,10 +111,10 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     return result;
   }
 
-  protected preCommit(): void {
+  protected preCommit(context: Sqlite3Context): void {
     if (this.value) {
       this.value.forEach(v => {
-        this.context.bind(this.convertValue(v));
+        context.bind(this.convertValue(v));
       });
     } else if (this.boundValues.size > 0) {
       let val = this.boundValues.get(0);
@@ -123,10 +124,10 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
       if (Array.isArray(val)) {
         // multi-rows
         val.forEach(v => {
-          this.context.bind(this.convertValue(v));
+          context.bind(this.convertValue(v));
         });
       } else {
-        this.context.bind(this.convertValue(val));
+        context.bind(this.convertValue(val));
       }
     } else {
       throw new Error('SyntaxError');

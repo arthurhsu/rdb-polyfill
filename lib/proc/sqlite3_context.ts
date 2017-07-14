@@ -25,12 +25,14 @@ export class Sqlite3Context implements IExecutionContext {
   private stmts: Stmt[];
   private finalized: boolean;
   private schemaMap: Map<string, TableSchema>;
+  private revertSchemaMap: Map<string, TableSchema>;
 
   constructor(readonly batchMode: boolean,
               readonly connection: Sqlite3Connection) {
     this.stmts = [];
     this.finalized = false;
     this.schemaMap = new Map<string, TableSchema>();
+    this.revertSchemaMap = new Map<string, TableSchema>();
   }
 
   private checkState(): void {
@@ -41,7 +43,42 @@ export class Sqlite3Context implements IExecutionContext {
 
   public attach(stmt: Stmt): void {
     this.checkState();
+    if (stmt.sql.startsWith('alter table') ||
+        stmt.sql.startsWith('drop table')) {
+      throw new Error(
+          'NotSupported: SQLite does not support rollback alter/drop table');
+    }
     this.stmts.push(stmt);
+  }
+
+  // Execute all stmts in queue and empty the queue.
+  public consumeAll(): Promise<TransactionResults> {
+    let results: TransactionResults = undefined;
+    let runner = (): Promise<TransactionResults> => {
+      if (this.stmts.length <= 0) {
+        return Promise.resolve(results);
+      }
+
+      let stmt = this.stmts.shift();
+      return stmt.hasResults ?
+          stmt.all().then(res => {
+            results = res;
+            return runner();
+          }) :
+          stmt.run().then(() => {
+            return runner();
+          });
+    };
+    return runner().then(res => {
+      let schema: Schema = this.connection.schema() as Schema;
+      this.schemaMap.forEach((tableSchema, name) => {
+        if (!this.revertSchemaMap.has(name)) {
+          this.revertSchemaMap.set(name, schema.tableSchema(name) || null);
+        }
+        schema.reportTableChange(name, tableSchema);
+      });
+      return res;
+    });
   }
 
   public bind(args: any|any[]): void {
@@ -64,35 +101,7 @@ export class Sqlite3Context implements IExecutionContext {
       return this.connection.simpleRun(['commit;']);
     }
 
-    let results: TransactionResults = undefined;
-    let stmts = this.stmts;
-    let index = 0;
-    let runner = (): Promise<TransactionResults> => {
-      if (index >= stmts.length) {
-        return Promise.resolve(results);
-      }
-
-      let stmt = stmts[index];
-      index++;
-      return stmt.hasResults ?
-          stmt.all().then(res => {
-            results = res;
-            return runner();
-          }) :
-          stmt.run().then(() => {
-            return runner();
-          });
-    };
-    return runner().then(res => {
-      // Now report schema changes, if any
-      if (this.schemaMap.size > 0) {
-        let schema: Schema = this.connection.schema() as Schema;
-        this.schemaMap.forEach((tableSchema, name) => {
-          schema.reportTableChange(name, tableSchema);
-        });
-      }
-      return res;
-    });
+    return this.consumeAll();
   }
 
   public rollback(): Promise<void> {
@@ -100,6 +109,10 @@ export class Sqlite3Context implements IExecutionContext {
     this.finalized = true;
 
     if (!this.batchMode) {
+      let schema: Schema = this.connection.schema() as Schema;
+      this.revertSchemaMap.forEach((tableSchema, name) => {
+        schema.reportTableChange(name, tableSchema);
+      });
       return this.connection.simpleRun(['rollback;']);
     }
 

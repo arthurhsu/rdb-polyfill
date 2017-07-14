@@ -38,6 +38,10 @@ export class Schema implements IDatabaseSchema {
     return this.tables.get(name) as ITable as Table;
   }
 
+  public tableSchema(name: string): TableSchema {
+    return this.tables.get(name);
+  }
+
   public listTables(): string[] {
     return Array.from(this.tables.keys());
   }

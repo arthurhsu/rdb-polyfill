@@ -25,19 +25,16 @@ import {Stmt} from './stmt';
 
 export abstract class QueryBase implements IQuery {
   protected connection: Sqlite3Connection;
-  protected context: Sqlite3Context;
   protected boundValues: Map<number, any>;
   protected finalized: boolean;
 
   constructor(connection: Sqlite3Connection) {
     this.connection = connection;
-    this.context = null;
     this.finalized = false;
     this.boundValues = new Map<number, any>();
   }
 
   public attach(context: Sqlite3Context): void {
-    this.context = context;
     let sqls = this.prefixSqls().concat(this.toSql());
     sqls.forEach(sql => {
       let needBinding = (sql.indexOf('?') != -1);
@@ -46,7 +43,7 @@ export abstract class QueryBase implements IQuery {
           new Stmt(this.connection.getNativeDb(), sql, hasResult, needBinding);
       context.attach(stmt);
     });
-    this.preCommit();
+    this.preCommit(context);
   }
 
   public explain(): Promise<string> {
@@ -76,7 +73,7 @@ export abstract class QueryBase implements IQuery {
 
   // Additional pre-commit step, e.g. InsertBuilder value binding.
   // The function will be called right after attaching to a context.
-  protected preCommit(): void {
+  protected preCommit(context: Sqlite3Context): void {
   }
 
   // Additional post-commit step, e.g. SelectBuilder projection list.
@@ -87,25 +84,16 @@ export abstract class QueryBase implements IQuery {
 
   // Generic commit routine, except insert query builder.
   public commit(): Promise<TransactionResults> {
-    let implicitContext = false;
-    if (this.context === null) {
-      implicitContext = true;
-      this.attach(this.connection.getImplicitContext());
-    }
+    let context = this.connection.getImplicitContext();
+    this.attach(context);
 
-    return this.context.commit().then(res => {
-      if (implicitContext) {
-        this.context = null;
-      }
+    return context.commit().then(res => {
       return this.postCommit(res);
     });
   }
 
   public rollback(): Promise<void> {
-    if (this.context === null) {
-      return Promise.resolve();
-    }
-    return this.context.rollback();
+    return Promise.resolve();
   }
 
   protected toValueString(value: any, type: ColumnType): string {
