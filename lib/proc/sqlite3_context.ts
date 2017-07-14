@@ -25,12 +25,14 @@ export class Sqlite3Context implements IExecutionContext {
   private stmts: Stmt[];
   private finalized: boolean;
   private schemaMap: Map<string, TableSchema>;
+  private revertSchemaMap: Map<string, TableSchema>;
 
   constructor(readonly batchMode: boolean,
               readonly connection: Sqlite3Connection) {
     this.stmts = [];
     this.finalized = false;
     this.schemaMap = new Map<string, TableSchema>();
+    this.revertSchemaMap = new Map<string, TableSchema>();
   }
 
   private checkState(): void {
@@ -41,6 +43,11 @@ export class Sqlite3Context implements IExecutionContext {
 
   public attach(stmt: Stmt): void {
     this.checkState();
+    if (stmt.sql.startsWith('alter table') ||
+        stmt.sql.startsWith('drop table')) {
+      throw new Error(
+          'NotSupported: SQLite does not support rollback alter/drop table');
+    }
     this.stmts.push(stmt);
   }
 
@@ -62,7 +69,16 @@ export class Sqlite3Context implements IExecutionContext {
             return runner();
           });
     };
-    return runner();
+    return runner().then(res => {
+      let schema: Schema = this.connection.schema() as Schema;
+      this.schemaMap.forEach((tableSchema, name) => {
+        if (!this.revertSchemaMap.has(name)) {
+          this.revertSchemaMap.set(name, schema.tableSchema(name) || null);
+        }
+        schema.reportTableChange(name, tableSchema);
+      });
+      return res;
+    });
   }
 
   public bind(args: any|any[]): void {
@@ -85,16 +101,7 @@ export class Sqlite3Context implements IExecutionContext {
       return this.connection.simpleRun(['commit;']);
     }
 
-    return this.consumeAll().then(res => {
-      // Now report schema changes, if any
-      if (this.schemaMap.size > 0) {
-        let schema: Schema = this.connection.schema() as Schema;
-        this.schemaMap.forEach((tableSchema, name) => {
-          schema.reportTableChange(name, tableSchema);
-        });
-      }
-      return res;
-    });
+    return this.consumeAll();
   }
 
   public rollback(): Promise<void> {
@@ -102,6 +109,10 @@ export class Sqlite3Context implements IExecutionContext {
     this.finalized = true;
 
     if (!this.batchMode) {
+      let schema: Schema = this.connection.schema() as Schema;
+      this.revertSchemaMap.forEach((tableSchema, name) => {
+        schema.reportTableChange(name, tableSchema);
+      });
       return this.connection.simpleRun(['rollback;']);
     }
 

@@ -63,7 +63,7 @@ describe('Tx', () => {
     });
   });
 
-  it('exec_SimpleDDL', () => {
+  it('exec_simpleDDL', () => {
     let bar = conn.createTable('bar')
                   .column('id', 'integer')
                   .column('name', 'string');
@@ -78,7 +78,7 @@ describe('Tx', () => {
                });
   });
 
-  it('attach_SimpleDML', () => {
+  it('attach_simpleDML', () => {
     let tx = conn.createTransaction('readwrite');
     let q1 = conn.insert().into(foo).values({id: 1, name: '2'});
     let q2 = conn.update(foo).set(foo['name'], '3');
@@ -104,8 +104,7 @@ describe('Tx', () => {
         });
   });
 
-  /*
-  it('attach_SimpleDDL', () => {
+  it('attach_simpleDDL', () => {
     let bar = conn.createTable('bar')
                   .column('id', 'integer')
                   .column('name', 'string');
@@ -113,15 +112,22 @@ describe('Tx', () => {
                   .column('id', 'integer')
                   .column('name', 'string');
     let tx = conn.createTransaction('readwrite');
+    assert.isUndefined(conn.schema().table('bar'));
+    assert.isUndefined(conn.schema().table('fuz'));
     return tx
         .begin()
         .then(() => tx.attach(bar))
-        .then(() => tx.attach(fuz))
-        .then(() => tx.commit())
         .then(() => {
           assert.equal('bar', conn.schema().table('bar').getName());
+          return tx.attach(fuz);
+        })
+        .then(() => {
           assert.equal('fuz', conn.schema().table('fuz').getName());
+          return tx.rollback();
+        })
+        .then(() => {
+          assert.isUndefined(conn.schema().table('bar'));
+          assert.isUndefined(conn.schema().table('fuz'));
         });
   });
-  */
 });
