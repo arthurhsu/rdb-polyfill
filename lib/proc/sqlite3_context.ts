@@ -44,6 +44,27 @@ export class Sqlite3Context implements IExecutionContext {
     this.stmts.push(stmt);
   }
 
+  // Execute all stmts in queue and empty the queue.
+  public consumeAll(): Promise<TransactionResults> {
+    let results: TransactionResults = undefined;
+    let runner = (): Promise<TransactionResults> => {
+      if (this.stmts.length <= 0) {
+        return Promise.resolve(results);
+      }
+
+      let stmt = this.stmts.shift();
+      return stmt.hasResults ?
+          stmt.all().then(res => {
+            results = res;
+            return runner();
+          }) :
+          stmt.run().then(() => {
+            return runner();
+          });
+    };
+    return runner();
+  }
+
   public bind(args: any|any[]): void {
     this.stmts.forEach(stmt => {
       if (stmt.needBinding) {
@@ -64,26 +85,7 @@ export class Sqlite3Context implements IExecutionContext {
       return this.connection.simpleRun(['commit;']);
     }
 
-    let results: TransactionResults = undefined;
-    let stmts = this.stmts;
-    let index = 0;
-    let runner = (): Promise<TransactionResults> => {
-      if (index >= stmts.length) {
-        return Promise.resolve(results);
-      }
-
-      let stmt = stmts[index];
-      index++;
-      return stmt.hasResults ?
-          stmt.all().then(res => {
-            results = res;
-            return runner();
-          }) :
-          stmt.run().then(() => {
-            return runner();
-          });
-    };
-    return runner().then(res => {
+    return this.consumeAll().then(res => {
       // Now report schema changes, if any
       if (this.schemaMap.size > 0) {
         let schema: Schema = this.connection.schema() as Schema;

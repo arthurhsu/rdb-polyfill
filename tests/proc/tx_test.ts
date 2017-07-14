@@ -78,26 +78,33 @@ describe('Tx', () => {
                });
   });
 
-  /*
   it('attach_SimpleDML', () => {
-    let expected = 'begin transaction;' +
-                   'insert into foo(id,name) values(1,"2");' +
-                   'update foo set name="3";' +
-                   'commit';
-    let foo = conn.schema().table('foo');
     let tx = conn.createTransaction('readwrite');
     let q1 = conn.insert().into(foo).values({id: 1, name: '2'});
     let q2 = conn.update(foo).set(foo['name'], '3');
+    let q3 = conn.select().from(foo);
+    let checker = (res: object[], name: string) => {
+      assert.equal(1, res.length);
+      assert.equal(1, res[0]['id']);
+      assert.equal(name, res[0]['name']);
+    };
+
     return tx
         .begin()
         .then(() => tx.attach(q1))
+        .then(() => tx.attach(q3))
+        .then(res => checker((res as object[]), '2'))
         .then(() => tx.attach(q2))
-        .then(() => tx.commit())
-        .then(() => {
-          assert.equal(expected, db.sqls.join(';'));
+        .then(() => tx.attach(q3))
+        .then(res => checker((res as object[]), '3'))
+        .then(() => tx.rollback())
+        .then(() => q3.commit())
+        .then((res: object[]) => {
+          assert.equal(0, res.length);
         });
   });
 
+  /*
   it('attach_SimpleDDL', () => {
     let bar = conn.createTable('bar')
                   .column('id', 'integer')

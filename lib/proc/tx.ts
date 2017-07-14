@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import {Database} from 'sqlite3';
 import {Resolver} from '../base/resolver';
 import {TransactionMode} from '../spec/enums';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
@@ -27,8 +28,6 @@ import {Stmt} from './stmt';
 export class Tx implements ITransaction {
   private connection: Sqlite3Connection;
   private finalized: boolean;
-  private started: boolean;
-  private results: TransactionResults;
   private context: Sqlite3Context;
 
   public constructor(
@@ -36,16 +35,46 @@ export class Tx implements ITransaction {
     // TODO(arthurhsu): honor transaction mode
     this.connection = connection;
     this.finalized = false;
-    this.started = false;
     this.context = null;
   }
 
+  // If there is anything wrong in an in-flight transaction, SQLite3 will be
+  // still in that failing transaction. This common error handler will make
+  // sure the transaction is rolled back and the connection is out of that
+  // faulty transaction.
+  private errorHandler<T>(db: Database, resolver: Resolver<T>, e: Error) {
+    db.run('rollback;', () => {
+      resolver.reject(e);
+    });
+  }
+
+  private defaultHandler<T>(db: Database, resolver: Resolver<T>, e: Error):
+      boolean {
+    if (e) {
+      this.errorHandler<T>(db, resolver, e);
+      return false;
+    }
+    return true;
+  }
+
   public begin(): Promise<void> {
-    if (this.started || this.finalized) {
+    if (this.context || this.finalized) {
       throw new Error('TransactionStateError');
     }
-    this.started = true;
-    return Promise.resolve();
+
+    // TODO(arthurhsu): we need connection pooling here, see explanation in
+    // exec() function.
+    let resolver = new Resolver<void>();
+    this.context = new Sqlite3Context(false, this.connection);
+    let db = this.connection.getNativeDb();
+    db.serialize(() => {
+      db.run('begin immediate transaction;', e => {
+        if (this.defaultHandler(db, resolver, e)) {
+          resolver.resolve();
+        }
+      });
+    });
+    return resolver.promise;
   }
 
   private isQueryBase(query: IExecutionContext): boolean {
@@ -53,11 +82,10 @@ export class Tx implements ITransaction {
   }
 
   public exec(queries: IExecutionContext[]): Promise<TransactionResults> {
-    if (this.started || this.finalized) {
+    if (this.context || this.finalized) {
       throw new Error('TransactionStateError');
     }
 
-    this.started = true;
     this.finalized = true;
 
     // TODO(arthurhsu): we need connection pooling here. A connection
@@ -77,39 +105,42 @@ export class Tx implements ITransaction {
 
       queries.forEach(q => (q as QueryBase).attach(this.context));
       this.context.attach(new Stmt(db, 'commit;', false, false));
-      this.context.commit().then(res => {
-        resolver.resolve(res);
-      }, e => {
-        // SQLite3 is still in the failing transaction, need to rollback.
-        db.run('rollback;', () => {
-          resolver.reject(e);
-        });
-      });
+      this.context.commit().then(
+          res => resolver.resolve(res),
+          e => this.errorHandler(db, resolver, e));
     });
     return resolver.promise;
   }
 
   public attach(query: IExecutionContext): Promise<TransactionResults> {
-    if (!this.started || this.finalized) {
+    if (this.context === null || this.finalized) {
       throw new Error('TransactionStateError');
     }
 
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    if (!this.isQueryBase(query)) {
+      throw new Error('SyntaxError: not a query');
+    }
+
+    (query as QueryBase).attach(this.context);
+    let db = this.connection.getNativeDb();
+    let resolver = new Resolver<TransactionResults>();
+    this.context.consumeAll().then(
+        res => resolver.resolve(res),
+        e => this.errorHandler(db, resolver, e));
+    return resolver.promise;
   }
 
   public commit(): Promise<TransactionResults> {
     if (this.finalized) {
-      return Promise.resolve(this.results);
+      return Promise.resolve();
     }
 
     this.finalized = true;
-    if (!this.started) {
+    if (this.context === null) {
       return Promise.resolve(null);
     }
 
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return this.context.commit();
   }
 
   public rollback(): Promise<void> {
@@ -118,12 +149,10 @@ export class Tx implements ITransaction {
     }
 
     this.finalized = true;
-    this.results = undefined;
-    if (!this.started) {
+    if (this.context === null) {
       return Promise.resolve(null);
     }
 
-    // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    return this.context.rollback();
   }
 }
