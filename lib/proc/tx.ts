@@ -92,7 +92,8 @@ export class Tx implements ITransaction {
     // can have only one in-flight transaction, otherwise it will throw
     // TRANSACTION IN TRANSACTION error.
     // Connection pooling is currently not possible for in-memory database
-    // since node-sqlite3 does not support shared cache.
+    // since node-sqlite3 does not support shared cache, and the spec said
+    // only one connection can be used per temporary database.
     this.context = new Sqlite3Context(true, this.connection);
     let db = this.connection.getNativeDb();
     let resolver = new Resolver<TransactionResults>();
