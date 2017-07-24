@@ -24,7 +24,7 @@ export function assert(condition: boolean, message = 'assertion failed'): void {
   /// #endif
 }
 
-const NAME_CHECKER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const NAME_CHECKER = /^[A-Za-z][A-Za-z0-9_]*$/;
 export function validateName(name: string): boolean {
   return NAME_CHECKER.test(name);
 }
