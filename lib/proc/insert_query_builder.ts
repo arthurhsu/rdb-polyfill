@@ -20,6 +20,7 @@ import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {ColumnType} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {IInsertQuery} from '../spec/insert_query';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
@@ -46,12 +47,13 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
 
   public into(table: ITable): IInsertQuery {
     if (this.table !== null) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('insert into must have a table');
     }
 
     this.table = table as TableSchema;
     if (this.replace && this.table._primaryKey === null) {
-      throw new Error('IntegrityError');
+      throw RDBError.IntegrityError(
+          `table ${table.getName()} has no primary key`);
     }
     this.keys = Array.from(this.table._columns.keys());
     this.types = this.keys.map(k => {
@@ -86,7 +88,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
 
   public toSql(): string[] {
     if (this.table === null) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('insert has no table');
     }
 
     let prefix = this.replace ? 'insert or replace' : 'insert';
@@ -104,7 +106,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
       } else if (this.nullable[i]) {
         return 'null';
       } else {
-        throw new Error('DataError');
+        throw RDBError.DataError();
       }
     });
 
@@ -119,7 +121,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
     } else if (this.boundValues.size > 0) {
       let val = this.boundValues.get(0);
       if (!val) {
-        throw new Error('BindingError');
+        throw RDBError.BindingError();
       }
       if (Array.isArray(val)) {
         // multi-rows
@@ -130,7 +132,7 @@ export class InsertQueryBuilder extends QueryBase implements IInsertQuery {
         context.bind(this.convertValue(val));
       }
     } else {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError();
     }
   }
 }

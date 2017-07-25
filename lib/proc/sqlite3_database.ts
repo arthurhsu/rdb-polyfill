@@ -17,6 +17,7 @@
 
 import {DatabaseConnection} from '../spec/database_connection';
 import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
+import {RDBError} from '../spec/errors';
 import {IRelationalDatabase, OpenDatabaseOptions, RDBStorageType} from '../spec/relational_database';
 import {FunctionProvider} from './function_provider';
 import {Sqlite3Connection} from './sqlite3_connection';
@@ -41,7 +42,7 @@ export class Sqlite3Database implements IRelationalDatabase {
       opt = {storageType: 'temporary' as RDBStorageType, filePath: ':memory:'};
     } else if (opt.storageType == 'persistent') {
       if (!opt.filePath || opt.filePath.trim().length == 0) {
-        throw new Error('FIXME: wrong file path');
+        throw RDBError.RuntimeError('FIXME: wrong file path');
       }
     }
     let connection = new Sqlite3Connection(name, opt.filePath, false);

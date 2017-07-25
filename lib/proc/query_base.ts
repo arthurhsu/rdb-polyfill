@@ -17,6 +17,7 @@
 
 import {BindableValueHolder} from '../schema/bindable_value_holder';
 import {ColumnType, ValueType} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
 import {Sqlite3Connection} from './sqlite3_connection';
@@ -47,7 +48,7 @@ export abstract class QueryBase implements IQuery {
   }
 
   public explain(): Promise<string> {
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public bind(...values: any[]): IQuery {
@@ -120,7 +121,7 @@ export abstract class QueryBase implements IQuery {
         return BindableValueHolder.binToHex(value as ArrayBuffer);
 
       default:
-        throw new Error('NotImplemented');
+        throw RDBError.RuntimeError('NotImplemented');
     }
   }
 
@@ -153,7 +154,7 @@ export abstract class QueryBase implements IQuery {
         return res;
 
       default:
-        throw new Error('DataError');
+        throw RDBError.DataError();
     }
   }
 }

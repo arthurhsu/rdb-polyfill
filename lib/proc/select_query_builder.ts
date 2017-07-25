@@ -22,6 +22,7 @@ import {TableSchema} from '../schema/table_schema';
 import {IBindableValue} from '../spec/bindable_value';
 import {IColumn} from '../spec/column';
 import {Order} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {TransactionResults} from '../spec/execution_context';
 import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
@@ -68,7 +69,9 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
   }
 
   public from(...tables: ITable[]): ISelectQuery {
-    if (tables.length == 0) throw new Error('SyntaxError');
+    if (tables.length == 0) {
+      throw RDBError.SyntaxError('select from must have table');
+    }
     tables.forEach(tbl => {
       let table = tbl as TableSchema;
       this.tables.set(table.getAlias() || table.getName(), table);
@@ -95,7 +98,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
 
   public limit(numberOfRows: number|IBindableValue): ISelectQuery {
     if (this.limitCount) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('limit already called');
     }
     this.limitCount = numberOfRows;
     return this;
@@ -103,7 +106,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
 
   public skip(numberOfRows: number|IBindableValue): ISelectQuery {
     if (this.skipCount) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('skip already called');
     }
     this.skipCount = numberOfRows;
     return this;
@@ -116,7 +119,7 @@ export class SelectQueryBuilder extends QueryBase implements ISelectQuery {
 
   public groupBy(...column: IColumn[]): ISelectQuery {
     if (this.grouping.length > 0) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('group by must have aggregated columns');
     }
     column.forEach(col => this.grouping.push(col.fullName));
     return this;

@@ -16,6 +16,7 @@
  */
 
 import {ColumnType} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {IndexedColumnDefinition, IndexedColumnSpec} from '../spec/table_builder';
 
 // Helper methods for SQL generation.
@@ -38,7 +39,7 @@ export class SqlHelper {
         return 'text';
 
       default:
-        throw new Error('InvalidSchemaError');
+        throw RDBError.InvalidSchemaError(`invalid type ${type}`);
     }
   }
 
@@ -53,7 +54,7 @@ export class SqlHelper {
       name: string, columnType: Map<string, ColumnType>): void {
     let type = columnType.get(name);
     if (type == 'blob' || type == 'object' || type === undefined) {
-      throw new Error('InvalidSchemaError');
+      throw RDBError.InvalidSchemaError(`${name} is not indexable`);
     }
   }
 
@@ -82,11 +83,11 @@ export class SqlHelper {
       SqlHelper.verifyColumnIsIndexable(i.name, columnType);
       results.push(i);
     } else {  // invalid type
-      throw new Error('SyntaxError');
+      throw RDBError.InvalidSchemaError(`wrong index specification`);
     }
 
     if (results.length == 0) {
-      throw new Error('SyntaxError');
+      throw RDBError.InvalidSchemaError(`empty index specification`);
     }
     return results;
   }

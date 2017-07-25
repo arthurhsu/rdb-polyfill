@@ -30,6 +30,7 @@ import {ObserverCallback} from '../spec/database_observer';
 import {IDatabaseSchema} from '../spec/database_schema';
 import {IDeleteQuery} from '../spec/delete_query';
 import {TransactionMode} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {IExecutionContext} from '../spec/execution_context';
 import {IInsertQuery} from '../spec/insert_query';
 import {ISelectQuery} from '../spec/select_query';
@@ -72,7 +73,7 @@ export class Sqlite3Connection implements DatabaseConnection {
 
   public simpleGet(sql: string): Promise<Object[]> {
     if (this.db === null) {
-      throw new Error('FIXME: invalid state');
+      throw RDBError.RuntimeError('FIXME: invalid state');
     }
 
     let resolver = new Resolver<Object[]>();
@@ -178,7 +179,7 @@ export class Sqlite3Connection implements DatabaseConnection {
                         break;
 
                       default:
-                        throw new Error('UnknownError');
+                        throw RDBError.RuntimeError('UnknownError');
                     }
                   });
                 }
@@ -244,7 +245,7 @@ export class Sqlite3Connection implements DatabaseConnection {
                 tableNames.filter(value => value.startsWith('$rdb_'));
             if (specialTables.length != 0 &&
                 specialTables.length != Sqlite3Connection.NUM_SPECIAL_TABLE) {
-              throw new Error('DataError: corrupted database');
+              throw RDBError.DataError('corrupted database');
             }
           }
           return specialTables.length ? this.getVersion() : Promise.resolve(0);
@@ -306,11 +307,11 @@ export class Sqlite3Connection implements DatabaseConnection {
   }
 
   public setVersion(version: number): IExecutionContext {
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public setForeignKeyCheck(value: boolean): IExecutionContext {
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public schema(): IDatabaseSchema {
@@ -323,19 +324,19 @@ export class Sqlite3Connection implements DatabaseConnection {
   }
 
   public alterTable(name: string): ITableChanger {
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public dropTable(name: string): IExecutionContext {
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public observe(query: ISelectQuery, callbackFn: ObserverCallback): string {
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public unobserve(observerKey: string): void {
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public getImplicitContext(): Sqlite3Context {

@@ -18,6 +18,7 @@
 import {Database} from 'sqlite3';
 import {Resolver} from '../base/resolver';
 import {TransactionMode} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
 import {ITransaction} from '../spec/transaction';
 import {QueryBase} from './query_base';
@@ -59,7 +60,7 @@ export class Tx implements ITransaction {
 
   public begin(): Promise<void> {
     if (this.context || this.finalized) {
-      throw new Error('TransactionStateError');
+      throw RDBError.TransactionStateError('transaction is finalized');
     }
 
     // TODO(arthurhsu): we need connection pooling here, see explanation in
@@ -83,7 +84,7 @@ export class Tx implements ITransaction {
 
   public exec(queries: IExecutionContext[]): Promise<TransactionResults> {
     if (this.context || this.finalized) {
-      throw new Error('TransactionStateError');
+      throw RDBError.TransactionStateError('transaction is finalized');
     }
 
     this.finalized = true;
@@ -101,7 +102,7 @@ export class Tx implements ITransaction {
       this.context.attach(new Stmt(db, 'begin transaction;', false, false));
 
       if (!queries.every(q => this.isQueryBase(q))) {
-        throw new Error('SyntaxError');
+        throw RDBError.SyntaxError('invalid query in transaction');
       }
 
       queries.forEach(q => (q as QueryBase).attach(this.context));
@@ -115,11 +116,11 @@ export class Tx implements ITransaction {
 
   public attach(query: IExecutionContext): Promise<TransactionResults> {
     if (this.context === null || this.finalized) {
-      throw new Error('TransactionStateError');
+      throw RDBError.TransactionStateError('transaction is finalized');
     }
 
     if (!this.isQueryBase(query)) {
-      throw new Error('SyntaxError: not a query');
+      throw RDBError.SyntaxError('not a query');
     }
 
     (query as QueryBase).attach(this.context);
@@ -146,7 +147,7 @@ export class Tx implements ITransaction {
 
   public rollback(): Promise<void> {
     if (this.finalized) {
-      throw new Error('TransactionStateError');
+      throw RDBError.TransactionStateError('transaction is finalized');
     }
 
     this.finalized = true;

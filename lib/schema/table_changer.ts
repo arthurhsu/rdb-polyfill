@@ -19,6 +19,7 @@ import {QueryBase} from '../proc/query_base';
 import {Sqlite3Connection} from '../proc/sqlite3_connection';
 import {Sqlite3Context} from '../proc/sqlite3_context';
 import {ColumnType, ForeignKeyAction, ForeignKeyTiming, ValueType} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {TransactionResults} from '../spec/execution_context';
 import {IQuery} from '../spec/query';
 import {IndexedColumnDefinition} from '../spec/table_builder';
@@ -56,18 +57,18 @@ export class TableChanger extends QueryBase implements ITableChanger {
 
   public dropColumn(name: string): ITableChanger {
     // TODO(arthurhsu): implement, heavy lifting is possible
-    throw new Error('NotSupported: SQLite does not have native support');
+    throw RDBError.UnsupportedError('SQLite does not have native support');
   }
 
   public addPrimaryKey(columns: string|string[]): ITableChanger {
     // TODO(arthurhsu): implement, heavy lifting is possible
-    throw new Error('NotSupported: SQLite does not have native support');
+    throw RDBError.UnsupportedError('SQLite does not have native support');
   }
 
   public dropPrimaryKey(): ITableChanger {
     // TODO(arthurhsu): implement, heavy lifting is possible
     // Note: SQLite does not support dropping primary key.
-    throw new Error('NotSupported: SQLite does not have native support');
+    throw RDBError.UnsupportedError('SQLite does not have native support');
   }
 
   public addForeignKey(
@@ -75,29 +76,29 @@ export class TableChanger extends QueryBase implements ITableChanger {
       action: ForeignKeyAction = 'restrict',
       timing: ForeignKeyTiming = 'immediate'): ITableChanger {
     // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public addIndex(
       name: string, columns: IndexedColumnDefinition,
       unique = false): ITableChanger {
     // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public dropConstraintOrIndex(name: string): ITableChanger {
     // TODO(arthurhsu): implement, heavy lifting is possible
-    throw new Error('NotSupported: SQLite does not have native support');
+    throw RDBError.UnsupportedError('SQLite does not have native support');
   }
 
   public setColumn(name: string): IColumnChanger {
     // TODO(arthurhsu): implement, heavy lifting is possible
-    throw new Error('NotSupported: SQLite does not have native support');
+    throw RDBError.UnsupportedError('SQLite does not have native support');
   }
 
   public commit(): Promise<TransactionResults> {
     // TODO(arthurhsu): implement
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   }
 
   public toSql(): string[] {
@@ -105,12 +106,12 @@ export class TableChanger extends QueryBase implements ITableChanger {
   }
 
   public clone(): IQuery {
-    // By spec, clone() is not supported.
-    throw new Error('SyntaxError');
+    // By spec, clone() is not provided in TableChanger.
+    throw RDBError.SyntaxError();
   }
 
   public attach(context: Sqlite3Context) {
     // TODO(arthurhsu): implement reportTableChange to schema
-    throw new Error('NotImplemented');
+    throw RDBError.RuntimeError('NotImplemented');
   } 
 }

@@ -21,6 +21,7 @@ import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {IColumn} from '../spec/column';
 import {ValueType} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
@@ -46,7 +47,8 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
 
   public set(column: IColumn, value: ValueType): IUpdateQuery {
     if (column.table != this.table.getName()) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError(
+          `${column.fullName} not in ${this.table.getName()}`);
     }
 
     this.columns.push(column as ColumnSchema);
@@ -71,7 +73,7 @@ export class UpdateQueryBuilder extends QueryBase implements IUpdateQuery {
 
   public toSql(): string[] {
     if (this.columns.length == 0) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('no column in update set');
     }
 
     let setters = [];

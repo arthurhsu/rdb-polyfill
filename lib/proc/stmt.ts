@@ -18,6 +18,7 @@
 import {Database, Statement} from 'sqlite3';
 
 import {Resolver} from '../base/resolver';
+import {RDBError} from '../spec/errors';
 import {TransactionResults} from '../spec/execution_context';
 
 export class Stmt {
@@ -37,7 +38,7 @@ export class Stmt {
 
   public all(): Promise<TransactionResults> {
     if (!this.select || this.finalized || !this.hasResults) {
-      throw new Error('FIXME: InternalError');
+      throw RDBError.RuntimeError('FIXME: InternalError');
     }
 
     let resolver = new Resolver<TransactionResults>();
@@ -55,7 +56,7 @@ export class Stmt {
     } else {
       if (this.boundValues.length != 1) {
         // Only allow one binding per select run
-        throw new Error('BindingError');
+        throw RDBError.BindingError();
       }
       this.stmt.all(this.boundValues[0], handler);
       this.stmt.finalize();
@@ -70,7 +71,7 @@ export class Stmt {
 
   public bind(args: any|any[]): Stmt {
     if (!this.needBinding) {
-      throw new Error('FIXME: InternalError');
+      throw RDBError.RuntimeError('FIXME: InternalError');
     }
 
     this.boundValues.push(args);
@@ -79,7 +80,7 @@ export class Stmt {
 
   public run(): Promise<void> {
     if (this.select || this.finalized || this.hasResults) {
-      throw new Error('FIXME: InternalError');
+      throw RDBError.RuntimeError('FIXME: InternalError');
     }
 
     let resolver = new Resolver<void>();

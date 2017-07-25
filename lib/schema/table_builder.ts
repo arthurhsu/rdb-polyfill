@@ -20,6 +20,7 @@ import {QueryBase} from '../proc/query_base';
 import {Sqlite3Connection} from '../proc/sqlite3_connection';
 import {Sqlite3Context} from '../proc/sqlite3_context';
 import {ColumnType, ForeignKeyAction, ForeignKeyTiming} from '../spec/enums';
+import {RDBError} from '../spec/errors';
 import {IQuery} from '../spec/query';
 import {IndexedColumnDefinition, IndexedColumnSpec, ITableBuilder} from '../spec/table_builder';
 
@@ -47,13 +48,13 @@ export class TableBuilder extends QueryBase implements ITableBuilder {
 
   private checkName(name: string, firstCheck = false): void {
     if (!validateName(name)) {
-      throw new Error('SyntaxError');
+      throw RDBError.InvalidSchemaError(`illegal name ${name}`);
     }
 
     let nameExists = this.nameUsed.has(name);
     let expectNameExists = !firstCheck;
     if (nameExists != expectNameExists) {
-      throw new Error('SyntaxError');
+      throw RDBError.InvalidSchemaError(`invalid name ${name}`);
     }
 
     this.nameUsed.add(name);
@@ -76,18 +77,20 @@ export class TableBuilder extends QueryBase implements ITableBuilder {
   public primaryKey(columns: string|string[], autoIncrement = false):
       ITableBuilder {
     if (this.schema._primaryKey !== null) {
-      throw new Error('SyntaxError');
+      throw RDBError.InvalidSchemaError('primary key already defined');
     }
 
     this.schema._primaryKey = [].concat(columns);
     this.schema._autoIncrement = autoIncrement;
     if (autoIncrement) {
       if (Array.isArray(columns)) {
-        throw new Error('SyntaxError');
+        throw RDBError.InvalidSchemaError(
+            'auto increment must be single column');
       }
 
       if (this.columnType.get(columns) != 'integer') {
-        throw new Error('InvalidSchemaError');
+        throw RDBError.InvalidSchemaError(
+            'auto increment must be integer column');
       }
       let name = columns + ' ';
       for (let i = 0; i < this.columnSql.length; ++i) {
@@ -114,7 +117,7 @@ export class TableBuilder extends QueryBase implements ITableBuilder {
     let localCols = [].concat(column);
     let remoteCols = [].concat(foreign);
     if (localCols.length == 0 || remoteCols.length == 0) {
-      throw new Error('SyntaxError');
+      throw RDBError.InvalidSchemaError('invalid foreign key spec');
     }
 
     localCols.forEach(c => this.checkName(c));
@@ -123,10 +126,10 @@ export class TableBuilder extends QueryBase implements ITableBuilder {
     remoteCols.forEach(ref => {
       let tokens = ref.split('.');
       if (tokens.length != 2) {
-        throw new Error('SyntaxError');
+        throw RDBError.InvalidSchemaError('invalid foreign key ref');
       }
       if (refTable !== null && tokens[0] != refTable) {
-        throw new Error('SyntaxError');
+        throw RDBError.InvalidSchemaError('invalid foreign key ref table');
       } else {
         refTable = tokens[0];
       }
@@ -194,7 +197,7 @@ export class TableBuilder extends QueryBase implements ITableBuilder {
   public toSql(): string[] {
     let column = this.getColumnSql();
     if (column === null) {
-      throw new Error('InvalidSchemaError');
+      throw RDBError.InvalidSchemaError('no columns');
     }
     let constraint = this.getConstraintSql();
     let desc = constraint ? `${column}, ${constraint}` : column;
@@ -243,7 +246,7 @@ export class TableBuilder extends QueryBase implements ITableBuilder {
   }
 
   public clone(): IQuery {
-    // By spec, clone() is not supported.
-    throw new Error('SyntaxError');
+    // By spec, clone() is not valid for TableBuilder.
+    throw RDBError.SyntaxError();
   }
 }

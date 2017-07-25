@@ -19,6 +19,7 @@ import {Sqlite3Connection} from './sqlite3_connection';
 import {Stmt} from './stmt';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
+import {RDBError} from '../spec/errors';
 import {IExecutionContext, TransactionResults} from '../spec/execution_context';
 
 export class Sqlite3Context implements IExecutionContext {
@@ -37,16 +38,17 @@ export class Sqlite3Context implements IExecutionContext {
 
   private checkState(): void {
     if (this.finalized) {
-      throw new Error('TransactionState');
+      throw RDBError.TransactionStateError('transaction already finalized');
     }
   }
 
   public attach(stmt: Stmt): void {
     this.checkState();
-    if (stmt.sql.startsWith('alter table') ||
-        stmt.sql.startsWith('drop table')) {
-      throw new Error(
-          'NotSupported: SQLite does not support rollback alter/drop table');
+    if (!this.batchMode && (
+        stmt.sql.startsWith('alter ') ||
+        stmt.sql.startsWith('drop ') ||
+        stmt.sql.startsWith('create '))) {
+      throw RDBError.UnsupportedError('sequence mode transaction of DDL');
     }
     this.stmts.push(stmt);
   }

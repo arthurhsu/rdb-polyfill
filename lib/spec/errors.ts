@@ -36,6 +36,10 @@ export class RDBError {
     return RDBError.error('ConstraintError', msg);
   }
 
+  static DataError(msg?: string): Error {
+    return RDBError.error('DataError', msg);
+  }
+
   static IntegrityError(msg?: string): Error {
     return RDBError.error('IntegrityError', msg);
   }

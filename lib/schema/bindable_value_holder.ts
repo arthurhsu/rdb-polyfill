@@ -16,11 +16,13 @@
  */
 
 import {IBindableValue} from '../spec/bindable_value';
+import {RDBError} from '../spec/errors';
 
 export class BindableValueHolder implements IBindableValue {
   constructor(readonly index: number) {
     if (!Number.isInteger(index) || index < 0) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError(
+          'binder index must be positive short integer');
     }
   }
 

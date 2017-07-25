@@ -104,30 +104,17 @@ describe('Tx', () => {
         });
   });
 
-  it('attach_simpleDDL', () => {
+  it('throws_attach_DDL', () => {
     let bar = conn.createTable('bar')
                   .column('id', 'integer')
                   .column('name', 'string');
-    let fuz = conn.createTable('fuz')
-                  .column('id', 'integer')
-                  .column('name', 'string');
     let tx = conn.createTransaction('readwrite');
-    assert.isUndefined(conn.schema().table('bar'));
-    assert.isUndefined(conn.schema().table('fuz'));
     return tx
         .begin()
-        .then(() => tx.attach(bar))
         .then(() => {
-          assert.equal('bar', conn.schema().table('bar').getName());
-          return tx.attach(fuz);
-        })
-        .then(() => {
-          assert.equal('fuz', conn.schema().table('fuz').getName());
-          return tx.rollback();
-        })
-        .then(() => {
-          assert.isUndefined(conn.schema().table('bar'));
-          assert.isUndefined(conn.schema().table('fuz'));
+          assert.throws(() => {
+            tx.attach(bar);
+          });
         });
   });
 });
