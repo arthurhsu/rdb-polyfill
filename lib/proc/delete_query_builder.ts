@@ -19,6 +19,7 @@ import {LogicalPredicate} from '../pred/logical_predicate';
 import {Schema} from '../schema/schema';
 import {TableSchema} from '../schema/table_schema';
 import {IDeleteQuery} from '../spec/delete_query';
+import {RDBError} from '../spec/errors';
 import {ILogicalPredicate} from '../spec/predicate';
 import {IQuery} from '../spec/query';
 import {ITable} from '../spec/table';
@@ -39,7 +40,7 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
 
   public from(table: ITable): IDeleteQuery {
     if (this.table !== null) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('missing table in delete from');
     }
 
     this.table = table as TableSchema;
@@ -62,7 +63,7 @@ export class DeleteQueryBuilder extends QueryBase implements IDeleteQuery {
 
   public toSql(): string[] {
     if (this.table === null) {
-      throw new Error('SyntaxError');
+      throw RDBError.SyntaxError('delete without table');
     }
 
     let sql = `delete from ${this.table.getName()}`;

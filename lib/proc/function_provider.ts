@@ -19,6 +19,7 @@ import {NotPredicate} from '../pred/not_predicate';
 import {AggregatedColumn} from '../schema/aggregated_column';
 import {IColumn} from '../spec/column';
 import {IDatabaseFunctionProvider} from '../spec/database_function_provider';
+import {RDBError} from '../spec/errors';
 import {ILogicalPredicate} from '../spec/predicate';
 
 export class FunctionProvider implements IDatabaseFunctionProvider {
@@ -28,14 +29,14 @@ export class FunctionProvider implements IDatabaseFunctionProvider {
 
   private ensureNumericColumn(col: IColumn): void {
     if (col.type != 'number' && col.type != 'integer') {
-      throw new Error('TypeError');
+      throw RDBError.TypeError(`${col.name} shall be numeric`);
     }
   }
 
   private ensureComparableColumn(col: IColumn): void {
     if (col.type != 'integer' && col.type != 'number' && col.type != 'date' &&
         col.type != 'string') {
-      throw new Error('TypeError');
+      throw RDBError.TypeError(`${col.name} shall be comparable`);
     }
   }
 
